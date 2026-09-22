@@ -97,7 +97,7 @@ cheap to add later is noted.
 | --- | --- |
 | Voice lessons, speech-to-text, text-to-speech | `VoiceProvider` is a separate interface; lesson events already carry the transcript shape |
 | Any AI provider before Phase 12; any AI at all in M1 to M4 | `NullAIProvider` is the default from Phase 1 |
-| Curriculum Studio UI and marketplace | Curricula are JSON files imported by script; `visibility` and `owner_user_id` columns exist |
+| Full Curriculum Studio editor and the marketplace | The minimal Studio (paste, validate, review, publish) is in Phase 4 and "generate with AI" in Phase 12 (D15); a structured editor and sharing between families are later. `visibility` and `owner_user_id` columns exist |
 | Invitation emails, pending guardians | `accepted_at` and `invited_by_user_id` columns exist |
 | Child accounts and child login | `students.user_id` can be added as one nullable column |
 | Lesson calendar, scheduling, reminders, notifications | "Upcoming" means "the next plan the engine would produce" |

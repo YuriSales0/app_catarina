@@ -165,7 +165,7 @@ curriculum and units so that publishing is immutable (D8).
 
 `id`, `subject_id` FK, `slug`, `name`, `description`, `source` (enum
 `curriculum_source`: `OFFICIAL` \| `SCHOOL` \| `FAMILY` \| `TEACHER` \|
-`TEXTBOOK` \| `IMPORTED` \| `MARKETPLACE`), `source_url` null,
+`TEXTBOOK` \| `IMPORTED` \| `AI_GENERATED` \| `MARKETPLACE`), `source_url` null,
 `owner_user_id` null (null means a system/shared curriculum), `visibility`
 (`PRIVATE` \| `SHARED` \| `PUBLIC`), `metadata`, `is_demo`, timestamps.
 
@@ -182,7 +182,8 @@ possible without leaking it, and what a marketplace would later build on
 `UNIQUE (curriculum_id, version)`. Publishing flips status and thereafter a
 trigger blocks changes to this version's units and objectives. `provenance`
 records where the content came from: the textbook and page range, the URL and
-retrieval date, the import job ID. Section 25 requires that the system always
+retrieval date, the import job ID, or for an `AI_GENERATED` draft the provider,
+model and prompt-template version (D15). Section 25 requires that the system always
 know where an objective came from, and this is where that lives.
 
 ### `curriculum_units`
@@ -522,7 +523,7 @@ value cannot be added to the database and forgotten in validation.
 ```
 platform_role      USER | ADMIN
 guardian_role      OWNER | GUARDIAN | TEACHER | VIEWER
-curriculum_source  OFFICIAL | SCHOOL | FAMILY | TEACHER | TEXTBOOK | IMPORTED | MARKETPLACE
+curriculum_source  OFFICIAL | SCHOOL | FAMILY | TEACHER | TEXTBOOK | IMPORTED | AI_GENERATED | MARKETPLACE
 curriculum_status  DRAFT | PUBLISHED | ARCHIVED
 visibility         PRIVATE | SHARED | PUBLIC
 objective_status   NOT_STARTED | INTRODUCED | PRACTISING | DEVELOPING | PROFICIENT | MASTERED

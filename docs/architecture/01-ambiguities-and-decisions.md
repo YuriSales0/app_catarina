@@ -397,6 +397,105 @@ the module knows which vendor answered.
 
 ---
 
+## D15 — How a user obtains a curriculum for any subject
+
+**Ambiguity.** The importer proposed in [12 §5](12-scope-review.md) reads a
+file from the repository. That works for one family and for nobody else. The
+brief's section 25 lists six possible curriculum sources but does not say how a
+user who wants their child to learn fractions, or the solar system, or German,
+actually gets a curriculum into the system.
+
+**Decision.** One funnel for every origin, and the file is just one transport.
+
+```
+any origin → draft in the curriculum schema → validation → human review → publish → engine
+```
+
+Nothing reaches the Next Lesson Engine without passing validation and being
+published as an immutable version. The origin varies; the gates do not. Three
+origins are supported, in order of effort for the user:
+
+1. **Catalogue.** The platform ships published curricula with
+   `visibility = 'PUBLIC'` and `source = 'OFFICIAL'`. The user picks one and
+   enrols the child. This is the common case and the cheapest for us.
+2. **AI-assisted generation inside the product.** The user describes the goal
+   and the child's age, optionally attaching source material. An AI provider
+   returns a *draft* in the same schema the file uses: units, objectives,
+   prerequisites, skills, error-tag vocabulary. The system validates it exactly
+   as it would validate a file. The user reviews it in a simple screen, edits or
+   accepts, and publishes. From then on it is an ordinary immutable version.
+3. **Import.** A pasted or uploaded file, later a URL or a document. Same
+   importer, different transport. Textbook ingestion is the sophisticated form
+   of this and stays out of the MVP.
+
+**What changes in the architecture.** Almost nothing, which is the point:
+
+- The importer's input is a validated object, not a path. The file loader, the
+  paste box and the AI adapter all produce that object.
+- `curriculum_source` gains `AI_GENERATED`. `curriculum_versions.provenance`
+  records the provider, model and prompt-template version for a generated
+  draft, so it is always known that a curriculum was born from a generation.
+- The review-and-publish screen, the minimal Curriculum Studio, is built in
+  Phase 4 accepting pasted YAML. Phase 12 adds the "generate with AI" button
+  that feeds the same screen. Sharing a family curriculum with others is the
+  marketplace and stays out of the MVP.
+- `AIProvider` gains `generateCurriculumDraft`, returning a `CurriculumDraftProposal`
+  like every other provider method: a proposal, not a write.
+
+**Why this is safe.** The AI is authoring, not executing. A badly generated
+curriculum produces poor lessons; it cannot fabricate evidence, change a
+learning state, or bypass a prerequisite, because it enters through the same
+gates as a hand-written file and is then read only by the deterministic engine.
+The invariants in the [README](README.md) hold unchanged.
+
+**Two risks named and mitigated.** A generated curriculum may have wrong
+prerequisites or bad granularity, and a user may accept it without reading.
+Mitigations: schema rules (a maximum number of objectives per unit, a
+prerequisite may only point to the same or an earlier unit, difficulty must not
+decrease along a prerequisite edge), review is mandatory before publish with
+the objective list shown in full, and stable objective identity (D8) means a
+correction later is a new version that keeps the child's history.
+
+**The curriculum file format.** YAML, because it is the format a parent can
+edit by hand, parsed and then validated by the same Zod schema that validates a
+generated draft. The Zod schema also emits a JSON Schema so an editor shows
+errors and completions while typing. Illustrative fragment:
+
+```yaml
+subject: english
+name: Inglês da Catarina e da Aurora
+version: 1.0.0
+source: FAMILY
+instruction_language: pt-BR
+target_language: en
+
+skills: [listening, speaking, vocabulary, grammar, pronunciation]
+
+error_tags:
+  NEG_AUX_MISSING: "Omite o auxiliar na negativa (I no have)"
+  THIRD_PERSON_S: "Esquece o -s da terceira pessoa"
+
+units:
+  - key: A1.U2
+    name: Falando de mim
+    objectives:
+      - key: EN.A1.HAVE.AFF
+        title: "I have..."
+        difficulty: 1
+        skills: [speaking, vocabulary]
+      - key: EN.A1.HAVE.NEG
+        title: "I don't have..."
+        difficulty: 2
+        skills: [speaking, grammar]
+        prerequisites: [EN.A1.HAVE.AFF]
+        error_tags: [NEG_AUX_MISSING]
+```
+
+`key` is the stable `objective_key` from D8. Renaming a title next year does
+not detach the child's history from it.
+
+---
+
 ## Open questions that need you
 
 These cannot be resolved from the brief, and my assumption is recorded so work is
@@ -412,4 +511,4 @@ not blocked. Each is cheap to change now and progressively less cheap later.
 | 6 | Whether a child ever logs in | No, not in the MVP; the parent opens the lesson |
 | 7 | Data residency | Neon in the EU region, given children in Europe |
 | 8 | Do you want Portuguese UI for parents | English first, with copy kept in one module so translation is not a rewrite |
-| 9 | Who authors the real English curriculum, and from what source | I draft it as a JSON file for your review; you edit it (see 12 §5) |
+| 9 | Who authors the real English curriculum, and from what source | I draft it as a YAML file for your review; you edit it (see 12 §5 and D15) |

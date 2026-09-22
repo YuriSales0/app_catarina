@@ -92,12 +92,16 @@ links and Apple are later providers against the same `users.id`),
 parent A cannot reach parent B's student through any route, and unauthorized
 access to an existing ID returns 404.
 
-**Phase 4 — Students, subjects, curricula.** CRUD with authorization, the JSON
-curriculum importer (used by both the demo seed and real family curricula, see
-[12 §5](12-scope-review.md)), curriculum publishing and freeze, the per-subject
-error-tag vocabulary, and "add a guardian by email of an existing user". Gate:
-publishing freezes a version; a second parent can see the same student; the
-demo and a real curriculum import through the same path.
+**Phase 4 — Students, subjects, curricula.** CRUD with authorization, the
+curriculum importer whose input is a validated object (fed by the YAML file
+loader for the demo seed and family curricula, and by a paste box in the
+minimal Curriculum Studio: paste, validate, review the full objective list,
+publish; see D15 and [12 §5](12-scope-review.md)), curriculum publishing and
+freeze, the per-subject error-tag vocabulary, the initial public catalogue
+(the two DEMO curricula), and "add a guardian by email of an existing user".
+Gate: publishing freezes a version; a second parent can see the same student;
+the demo seed, a family YAML file and a pasted draft all import through the
+same path and the same validation.
 
 **Phase 5 — Objective graph and knowledge state.** Prerequisite graph with cycle
 detection, `evaluateObjectiveState`, the state policy, transitions, the review
@@ -135,10 +139,13 @@ accessibility audit passes; every claim on screen links to its evidence.
 LESSON, one activity at a time, no IDs, no confidence scores, no dashboards.
 Gate: a real lesson with a real child, which is the only test that counts here.
 
-**Phase 12 — AI integration.** The `AIProvider` interface, one adapter, the
-teacher contract, proposal validation, rejection logging. Gate: the adversarial
-contract suite passes, and disabling the API key leaves the system fully
-functional.
+**Phase 12 — AI integration.** One adapter behind the `AIProvider` interface,
+the teacher contract wired in, proposal validation, rejection logging, and the
+"generate with AI" entry to the Curriculum Studio: `generateCurriculumDraft`
+produces a draft that lands in the same review-and-publish screen from Phase 4
+(D15). Gate: the adversarial contract suite passes; a generated draft with a
+prerequisite cycle or an objective outside its unit is rejected by validation
+before review; disabling the API key leaves the system fully functional.
 
 ---
 
@@ -158,6 +165,8 @@ interface AIProvider {
     Promise<Result<ExplanationProposal, ProviderError>>
   generateLessonReport(pack: LessonContextPack, observed: ObservedSection):
     Promise<Result<ReportNarrativeProposal, ProviderError>>
+  generateCurriculumDraft(request: CurriculumDraftRequest):
+    Promise<Result<CurriculumDraftProposal, ProviderError>>   // D15: authoring, not execution
 }
 ```
 
