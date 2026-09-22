@@ -1,0 +1,200 @@
+# English for young learners, aligned to the structure of Cambridge English
+# Qualifications: A1 Movers. Follows English Starters (Cambridge Pre A1 aligned).
+# Not an official Cambridge product; contains no Cambridge test material.
+
+schema_version: curriculum-file.v1
+subject: english
+subject_name: English
+slug: cambridge-yle-movers
+name: English Movers (Cambridge A1 aligned)
+description: >
+  The second step after Starters, following the topic, grammar and vocabulary areas of
+  Cambridge A1 Movers: talking about the past, comparing, days and times, the weather,
+  and longer stories.
+version: 1.0.0
+source: FAMILY
+source_url: https://www.cambridgeenglish.org/exams-and-tests/movers/
+visibility: PUBLIC
+instruction_language: pt-BR
+target_language: en
+is_demo: false
+provenance:
+  origin: family-authored
+  aligned_to: Cambridge English Qualifications A1 Movers
+
+skills:
+  - key: listening
+    name: Listening
+  - key: speaking
+    name: Speaking
+  - key: reading
+    name: Reading
+  - key: writing
+    name: Writing
+  - key: vocabulary
+    name: Vocabulary
+  - key: grammar
+    name: Grammar
+  - key: pronunciation
+    name: Pronunciation
+
+error_tags:
+  PAST_FORM: Wrong past form (goed, eated, did went)
+  COMPARATIVE_FORM: Wrong comparative (more big, gooder)
+  MUST_HAVE_TO: Confuses must and have to
+  ADVERB_FREQ_ORDER: Frequency adverb in the wrong place
+  TIME_PREP: Wrong preposition with times and days (in Monday, at morning)
+  THIRD_PERSON_S: Missing third-person -s
+  NEG_AUX_MISSING: Negative without the auxiliary
+  QUESTION_FORM: Question without inversion or auxiliary
+  PRON_ED_ENDING: Regular past -ed ending mispronounced
+  L1_TRANSFER: Uses a Portuguese word or structure
+  VOCAB_UNKNOWN: Does not know the target word
+  COMPREHENSION: Did not understand the instruction or question
+
+units:
+  - key: M1
+    name: My week
+    description: Days, times, routines and how often you do things.
+    objectives:
+      - key: EN.M1.DAYS
+        title: Days of the week and times
+        description: Say the days of the week and tell the time to the hour and half hour.
+        difficulty: 2
+        skills: [vocabulary, speaking]
+        error_tags: [TIME_PREP, VOCAB_UNKNOWN]
+        teaching_notes:
+          vocabulary: [Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday, o'clock, half past, morning, afternoon, evening, night]
+          structures: ["It's three o'clock.", "On Monday I go swimming.", "in the morning"]
+      - key: EN.M1.ROUTINES
+        title: Daily routines with times
+        description: Describe a daily routine with times and days, for yourself and for someone else.
+        difficulty: 2
+        skills: [grammar, speaking]
+        prerequisites: [EN.M1.DAYS]
+        error_tags: [THIRD_PERSON_S, TIME_PREP]
+        teaching_notes:
+          structures: ["I get up at seven o'clock.", "She goes to school on Mondays.", "We have dinner in the evening."]
+      - key: EN.M1.FREQUENCY
+        title: "Always, sometimes, never"
+        description: Say how often you do things with always, usually, sometimes and never.
+        difficulty: 3
+        skills: [grammar, speaking]
+        prerequisites: [EN.M1.ROUTINES]
+        error_tags: [ADVERB_FREQ_ORDER, THIRD_PERSON_S]
+        teaching_notes:
+          structures: ["I always brush my teeth.", "She never eats fish.", "Do you sometimes play tennis?"]
+      - key: EN.M1.MUST
+        title: "Must and have to"
+        description: Say what you must and must not do, and what you have to do.
+        difficulty: 3
+        skills: [grammar, speaking]
+        prerequisites: [EN.M1.ROUTINES]
+        error_tags: [MUST_HAVE_TO, NEG_AUX_MISSING]
+        teaching_notes:
+          structures: ["You must wash your hands.", "We mustn't run here.", "I have to do my homework."]
+
+  - key: M2
+    name: Yesterday
+    description: Talking about the past.
+    objectives:
+      - key: EN.M2.WAS_WERE
+        title: "Was and were"
+        description: Say where people were and what things were like in the past.
+        difficulty: 2
+        skills: [grammar, speaking]
+        error_tags: [L1_TRANSFER, QUESTION_FORM]
+        teaching_notes:
+          structures: ["I was at the park.", "They were happy.", "Where were you yesterday?"]
+      - key: EN.M2.PAST_REG
+        title: Regular past simple
+        description: Talk about yesterday with regular past verbs.
+        difficulty: 3
+        skills: [grammar, speaking, pronunciation]
+        prerequisites: [EN.M2.WAS_WERE]
+        error_tags: [PAST_FORM, PRON_ED_ENDING]
+        teaching_notes:
+          vocabulary: [played, watched, cooked, walked, helped, cleaned, listened, jumped]
+          structures: ["I played football yesterday.", "She watched TV last night."]
+      - key: EN.M2.PAST_IRREG
+        title: Irregular past simple
+        description: Use the most common irregular past forms.
+        difficulty: 3
+        skills: [grammar, speaking]
+        prerequisites: [EN.M2.PAST_REG]
+        error_tags: [PAST_FORM]
+        teaching_notes:
+          vocabulary: [went, had, saw, ate, drank, got, came, took, made, said]
+          structures: ["We went to the beach.", "I had pizza.", "He saw a whale."]
+      - key: EN.M2.PAST_NEG_Q
+        title: "Didn't and Did you...?"
+        description: Make past negatives and questions with did.
+        difficulty: 3
+        skills: [grammar, speaking]
+        prerequisites: [EN.M2.PAST_IRREG]
+        error_tags: [PAST_FORM, NEG_AUX_MISSING, QUESTION_FORM]
+        teaching_notes:
+          structures: ["I didn't go to school.", "Did you see the film?", "What did you do yesterday?"]
+
+  - key: M3
+    name: Bigger and better
+    description: Comparing people, animals and things.
+    objectives:
+      - key: EN.M3.COMPARATIVE
+        title: Comparatives
+        description: Compare two things with -er and more.
+        difficulty: 3
+        skills: [grammar, speaking]
+        error_tags: [COMPARATIVE_FORM]
+        teaching_notes:
+          structures: ["A giraffe is taller than a horse.", "This book is more interesting."]
+      - key: EN.M3.SUPERLATIVE
+        title: Superlatives
+        description: Say which is the biggest, best or most exciting.
+        difficulty: 3
+        skills: [grammar, speaking]
+        prerequisites: [EN.M3.COMPARATIVE]
+        error_tags: [COMPARATIVE_FORM]
+        teaching_notes:
+          structures: ["The elephant is the biggest animal.", "It's the best day."]
+      - key: EN.M3.WEATHER
+        title: Weather and seasons
+        description: Talk about the weather today and in different seasons.
+        difficulty: 2
+        skills: [vocabulary, speaking]
+        error_tags: [VOCAB_UNKNOWN, L1_TRANSFER]
+        teaching_notes:
+          vocabulary: [sunny, cloudy, rainy, windy, snowy, hot, cold, spring, summer, autumn, winter]
+          structures: ["It's sunny today.", "In winter it's cold."]
+
+  - key: M4
+    name: Stories and places
+    description: Describing places and understanding longer stories.
+    objectives:
+      - key: EN.M4.PLACES
+        title: Places in town
+        description: Name places in town and say how to get there.
+        difficulty: 2
+        skills: [vocabulary, speaking]
+        error_tags: [VOCAB_UNKNOWN]
+        teaching_notes:
+          vocabulary: [shop, market, cinema, hospital, library, park, station, bus stop, café, supermarket]
+          structures: ["Go straight on.", "Turn left at the library."]
+      - key: EN.M4.STORY
+        title: Understand and retell a longer story
+        description: Follow a six-picture story with past tenses and retell it in order.
+        difficulty: 4
+        skills: [listening, speaking, reading]
+        prerequisites: [EN.M2.PAST_NEG_Q, EN.M3.COMPARATIVE]
+        error_tags: [COMPREHENSION, PAST_FORM]
+        teaching_notes:
+          structures: ["First... then... after that... in the end..."]
+      - key: EN.M4.WRITE
+        title: Write a short message
+        description: Write three or four connected sentences about your day.
+        difficulty: 4
+        skills: [writing, grammar]
+        prerequisites: [EN.M2.PAST_IRREG, EN.M1.ROUTINES]
+        error_tags: [PAST_FORM, THIRD_PERSON_S]
+        teaching_notes:
+          structures: ["Yesterday I went to the park. I played with my sister. It was fun."]

@@ -1,0 +1,79 @@
+# DEMO curriculum. Carries the exact prerequisite chain from section 9 of the
+# product brief so the engine's prerequisite behaviour can be demonstrated.
+schema_version: curriculum-file.v1
+subject: mathematics
+subject_name: Mathematics
+slug: demo-maths-early-number
+name: Early number (DEMO)
+description: A small demonstration syllabus for early arithmetic. Marked DEMO everywhere it appears.
+version: 1.0.0
+source: FAMILY
+visibility: PUBLIC
+instruction_language: pt-BR
+is_demo: true
+skills:
+  - key: arithmetic
+    name: Arithmetic
+  - key: problem_solving
+    name: Problem solving
+  - key: logical_reasoning
+    name: Logical reasoning
+error_tags:
+  COUNT_SKIP: Skips a number when counting
+  PLACE_VALUE: Confuses tens and units
+  OPERATION_CONFUSION: Adds when asked to subtract or the reverse
+  READ_PROBLEM: Misreads the word problem
+units:
+  - key: N1
+    name: Numbers to 20
+    objectives:
+      - key: DEMO.MA.NUM20
+        title: Numbers up to 20
+        description: Count, read and compare numbers up to 20.
+        difficulty: 1
+        skills: [arithmetic]
+        error_tags: [COUNT_SKIP]
+      - key: DEMO.MA.ADD20
+        title: Addition up to 20
+        difficulty: 2
+        skills: [arithmetic]
+        prerequisites: [DEMO.MA.NUM20]
+        error_tags: [COUNT_SKIP, OPERATION_CONFUSION]
+      - key: DEMO.MA.SUB20
+        title: Subtraction up to 20
+        difficulty: 2
+        skills: [arithmetic]
+        prerequisites: [DEMO.MA.ADD20]
+        error_tags: [OPERATION_CONFUSION]
+      - key: DEMO.MA.WORD20
+        title: Word problems up to 20
+        difficulty: 3
+        skills: [problem_solving, logical_reasoning]
+        prerequisites: [DEMO.MA.SUB20]
+        error_tags: [READ_PROBLEM, OPERATION_CONFUSION]
+  - key: N2
+    name: Numbers to 100
+    objectives:
+      - key: DEMO.MA.NUM100
+        title: Numbers up to 100
+        difficulty: 2
+        skills: [arithmetic]
+        prerequisites: [DEMO.MA.NUM20]
+        error_tags: [PLACE_VALUE]
+      - key: DEMO.MA.ADDSUB100
+        title: Addition and subtraction up to 100
+        difficulty: 3
+        skills: [arithmetic]
+        prerequisites: [DEMO.MA.WORD20, DEMO.MA.NUM100]
+        error_tags: [PLACE_VALUE, OPERATION_CONFUSION]
+      - key: DEMO.MA.DOUBLES
+        title: Doubles and halves
+        difficulty: 3
+        skills: [arithmetic, logical_reasoning]
+        prerequisites: [DEMO.MA.ADD20]
+      - key: DEMO.MA.WORD100
+        title: Word problems up to 100
+        difficulty: 4
+        skills: [problem_solving]
+        prerequisites: [DEMO.MA.ADDSUB100]
+        error_tags: [READ_PROBLEM]

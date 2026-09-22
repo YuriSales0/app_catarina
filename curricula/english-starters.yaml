@@ -1,0 +1,743 @@
+# English for young learners, aligned to the structure of Cambridge English
+# Qualifications: Pre A1 Starters (Young Learners).
+#
+# Provenance: authored for this family from the publicly documented Starters
+# syllabus areas (topics, grammar and vocabulary lists). It is not an official
+# Cambridge product and contains no Cambridge test material.
+
+schema_version: curriculum-file.v1
+subject: english
+subject_name: English
+slug: cambridge-yle-starters
+name: English Starters (Cambridge Pre A1 aligned)
+description: >
+  A first English syllabus for children aged 6 to 8, following the topic, grammar and
+  vocabulary areas of Cambridge Pre A1 Starters. Six units, each ending in language the
+  child can actually use: introducing themselves, describing people and animals, saying
+  where things are, talking about what they like and what they are doing.
+version: 1.0.0
+source: FAMILY
+source_url: https://www.cambridgeenglish.org/exams-and-tests/starters/
+visibility: PUBLIC
+instruction_language: pt-BR
+target_language: en
+is_demo: false
+provenance:
+  origin: family-authored
+  aligned_to: Cambridge English Qualifications Pre A1 Starters
+  notes: Structure and topic coverage follow the public Starters syllabus; content is original.
+
+skills:
+  - key: listening
+    name: Listening
+    description: Understanding spoken English at word, phrase and short-story level.
+  - key: speaking
+    name: Speaking
+    description: Producing words, phrases and short exchanges.
+  - key: reading
+    name: Reading
+    description: Recognising written words and short sentences.
+  - key: writing
+    name: Writing
+    description: Copying and writing single words and very short phrases.
+  - key: vocabulary
+    name: Vocabulary
+    description: Knowing and using topic words.
+  - key: grammar
+    name: Grammar
+    description: Using the structures of the level accurately.
+  - key: pronunciation
+    name: Pronunciation
+    description: Producing the sounds of English clearly enough to be understood.
+
+error_tags:
+  OMIT_ARTICLE: Omits the article (I have cat)
+  WRONG_ARTICLE: Wrong article (a apple, an dog)
+  NEG_AUX_MISSING: Negative without the auxiliary (I no have, she not like)
+  THIRD_PERSON_S: Missing third-person -s (she play)
+  PLURAL_S_MISSING: Missing plural -s (three cat)
+  BE_MISSING: Verb to be omitted (she happy)
+  BE_WRONG_FORM: Wrong form of to be (I is, they is)
+  HAVE_HAS: Confuses have and has
+  WORD_ORDER_ADJ: Adjective after the noun (a cat black)
+  PREP_CONFUSION: Preposition of place confused (in, on, under)
+  POSSESSIVE_CONFUSION: Confuses his and her, or the possessive 's
+  QUESTION_FORM: Question without inversion or auxiliary (you like apples?)
+  NUMBER_CONFUSION: Confuses numbers (13 and 30, 15 and 50)
+  PRON_TH: Pronunciation of th (three, this, mother)
+  PRON_H: Silent initial h (hat, house, horse)
+  PRON_FINAL_S: Final s not pronounced (cats, likes)
+  PRON_SHORT_LONG_I: Short and long i confused (ship, sheep)
+  L1_TRANSFER: Uses a Portuguese word or structure
+  VOCAB_UNKNOWN: Does not know the target word
+  COMPREHENSION: Did not understand the instruction or question
+
+units:
+  - key: S1
+    name: Hello!
+    description: Greeting people, saying who you are, counting and spelling.
+    objectives:
+      - key: EN.S1.GREET
+        title: Greet and say goodbye
+        description: Use hello, hi, good morning, goodbye and bye at the right moment, and reply when greeted.
+        difficulty: 1
+        estimated_sessions: 1
+        skills: [speaking, listening, vocabulary]
+        error_tags: [PRON_H, COMPREHENSION]
+        teaching_notes:
+          vocabulary: [hello, hi, good morning, good afternoon, goodbye, bye, please, thank you]
+          structures: ["Hello!", "Hi!", "Goodbye!", "Thank you."]
+          example_prompts:
+            - "Say hello to the puppet."
+            - "The puppet is leaving. What do you say?"
+          activity_ideas:
+            - "Greeting round with toys: each toy says hello and the child replies."
+            - "Morning and afternoon: show a sun rising or setting and choose the greeting."
+          success_criteria:
+            - "Replies to a greeting without prompting in Portuguese."
+            - "Chooses goodbye or bye when someone leaves."
+
+      - key: EN.S1.NAME
+        title: "My name is..."
+        description: Say your own name and ask someone else's name.
+        difficulty: 1
+        estimated_sessions: 1
+        skills: [speaking, listening, grammar]
+        prerequisites: [EN.S1.GREET]
+        error_tags: [BE_MISSING, L1_TRANSFER, QUESTION_FORM]
+        teaching_notes:
+          vocabulary: [name, I, you, my, your]
+          structures: ["My name is Catarina.", "I'm Aurora.", "What's your name?"]
+          example_prompts:
+            - "Ask the puppet its name."
+            - "The puppet asks: What's your name? Answer."
+          activity_ideas:
+            - "Name chain: each toy introduces itself, then asks the next one."
+            - "Pass the ball: whoever catches it says My name is..."
+          success_criteria:
+            - "Says My name is... or I'm... with the verb present."
+            - "Asks What's your name? as a question."
+
+      - key: EN.S1.NUM10
+        title: Numbers 1 to 10
+        description: Count from one to ten, recognise the number words when heard, and say how many objects there are up to ten.
+        difficulty: 1
+        estimated_sessions: 2
+        skills: [vocabulary, speaking, listening]
+        error_tags: [PRON_TH, NUMBER_CONFUSION, VOCAB_UNKNOWN]
+        teaching_notes:
+          vocabulary: [one, two, three, four, five, six, seven, eight, nine, ten]
+          structures: ["one, two, three...", "Three!"]
+          example_prompts:
+            - "Count the blocks."
+            - "I say a number, you show the fingers."
+          activity_ideas:
+            - "Clap and count."
+            - "Number hunt: find three red things."
+          success_criteria:
+            - "Counts to ten in order without skipping."
+            - "Points to the right quantity when a number is said."
+
+      - key: EN.S1.AGE
+        title: "I'm seven"
+        description: Say your age and ask how old someone is.
+        difficulty: 1
+        estimated_sessions: 1
+        skills: [speaking, grammar]
+        prerequisites: [EN.S1.NAME, EN.S1.NUM10]
+        error_tags: [BE_MISSING, L1_TRANSFER, QUESTION_FORM]
+        teaching_notes:
+          vocabulary: [old, years]
+          structures: ["I'm seven.", "How old are you?", "She's five."]
+          example_prompts:
+            - "How old are you?"
+            - "Ask the puppet how old it is."
+          activity_ideas:
+            - "Birthday cake with candles: count and say I'm..."
+            - "Family ages: how old is your sister?"
+          success_criteria:
+            - "Says I'm + number, not I have + number."
+
+      - key: EN.S1.NUM20
+        title: Numbers 11 to 20
+        description: Count from eleven to twenty and recognise the number words.
+        difficulty: 2
+        estimated_sessions: 2
+        skills: [vocabulary, speaking, listening]
+        prerequisites: [EN.S1.NUM10]
+        error_tags: [NUMBER_CONFUSION, PRON_TH, PRON_FINAL_S]
+        teaching_notes:
+          vocabulary: [eleven, twelve, thirteen, fourteen, fifteen, sixteen, seventeen, eighteen, nineteen, twenty]
+          structures: ["eleven, twelve, thirteen..."]
+          example_prompts:
+            - "Count on from ten."
+            - "Which is bigger, thirteen or fifteen?"
+          activity_ideas:
+            - "Hopscotch to twenty."
+            - "Number bingo with 11 to 20."
+          success_criteria:
+            - "Distinguishes thirteen from thirty-style confusions and says teen numbers clearly."
+
+      - key: EN.S1.ALPHABET
+        title: The alphabet and spelling your name
+        description: Say the alphabet and spell your own name letter by letter.
+        difficulty: 2
+        estimated_sessions: 2
+        skills: [speaking, listening, pronunciation, reading]
+        prerequisites: [EN.S1.NAME]
+        error_tags: [L1_TRANSFER, PRON_H, VOCAB_UNKNOWN]
+        teaching_notes:
+          vocabulary: [a, b, c, letter, spell]
+          structures: ["C-A-T-A-R-I-N-A", "How do you spell it?"]
+          example_prompts:
+            - "Spell your name."
+            - "I spell a word, you write it."
+          activity_ideas:
+            - "Alphabet song, then the letters of the child's name on cards."
+            - "Spell a toy's name."
+          success_criteria:
+            - "Names the letters in English (not Portuguese letter names)."
+
+  - key: S2
+    name: Colours and things
+    description: Naming things around you, saying what colour they are and how many there are.
+    objectives:
+      - key: EN.S2.COLOURS
+        title: Colours
+        description: Name the basic colours and answer What colour is it?
+        difficulty: 1
+        estimated_sessions: 1
+        skills: [vocabulary, speaking, listening]
+        error_tags: [VOCAB_UNKNOWN, BE_MISSING]
+        teaching_notes:
+          vocabulary: [red, blue, green, yellow, orange, purple, pink, brown, black, white, grey]
+          structures: ["It's red.", "What colour is it?"]
+          example_prompts:
+            - "What colour is the ball?"
+            - "Find something blue."
+          activity_ideas:
+            - "Colour hunt around the room."
+            - "Mix paints and name the result."
+          success_criteria:
+            - "Names at least eight colours on sight."
+
+      - key: EN.S2.THIS_THAT
+        title: "This is a... / That is a..."
+        description: Point at a near or far object and name it with this or that and the article a or an.
+        difficulty: 1
+        estimated_sessions: 1
+        skills: [grammar, speaking, vocabulary]
+        prerequisites: [EN.S2.COLOURS]
+        error_tags: [OMIT_ARTICLE, WRONG_ARTICLE, BE_MISSING]
+        teaching_notes:
+          vocabulary: [this, that, pen, book, bag, chair, table, apple, egg]
+          structures: ["This is a pen.", "That is an apple."]
+          example_prompts:
+            - "Point to something near you and tell me what it is."
+            - "What's that on the table?"
+          activity_ideas:
+            - "Near and far: objects at arm's length versus across the room."
+            - "An or a: sort picture cards by first sound."
+          success_criteria:
+            - "Uses a or an with the noun, and this for near, that for far."
+
+      - key: EN.S2.WHAT_IS
+        title: "What's this? It's a..."
+        description: Ask what something is and answer with It's a/an.
+        difficulty: 1
+        estimated_sessions: 1
+        skills: [speaking, listening, grammar]
+        prerequisites: [EN.S2.THIS_THAT]
+        error_tags: [OMIT_ARTICLE, QUESTION_FORM, BE_MISSING]
+        teaching_notes:
+          vocabulary: [what]
+          structures: ["What's this?", "It's a kite.", "What's that?"]
+          example_prompts:
+            - "Hide a toy in a bag. Ask: What's this?"
+            - "Mystery object: feel it and guess."
+          activity_ideas:
+            - "Feely bag."
+            - "Half-covered picture guessing."
+          success_criteria:
+            - "Asks What's this? and answers It's a/an..."
+
+      - key: EN.S2.PLURALS
+        title: "How many? Three cats."
+        description: Make regular plurals and answer How many? with a number and a plural noun.
+        difficulty: 2
+        estimated_sessions: 2
+        skills: [grammar, speaking, vocabulary]
+        prerequisites: [EN.S1.NUM10, EN.S2.THIS_THAT]
+        error_tags: [PLURAL_S_MISSING, PRON_FINAL_S, NUMBER_CONFUSION]
+        teaching_notes:
+          vocabulary: [cats, dogs, balls, books, pens, cars]
+          structures: ["How many cats?", "Three cats.", "There are two balls."]
+          example_prompts:
+            - "How many pencils are on the table?"
+            - "Count the ducks in the picture."
+          activity_ideas:
+            - "Snap: one cat or two cats?"
+            - "Count and say: bring me four books."
+          success_criteria:
+            - "Adds the plural s and pronounces it."
+
+      - key: EN.S2.TOYS
+        title: "Toys: I have a..."
+        description: Name common toys and say which ones you have.
+        difficulty: 1
+        estimated_sessions: 1
+        skills: [vocabulary, speaking]
+        prerequisites: [EN.S2.THIS_THAT]
+        error_tags: [OMIT_ARTICLE, VOCAB_UNKNOWN, L1_TRANSFER]
+        teaching_notes:
+          vocabulary: [ball, doll, kite, robot, teddy bear, car, train, boat, bike, game]
+          structures: ["I have a doll.", "I've got a kite."]
+          example_prompts:
+            - "What toys do you have?"
+            - "Show me a toy and tell me about it."
+          activity_ideas:
+            - "Toy box: take one out and say I have a..."
+            - "Toy shop role play."
+          success_criteria:
+            - "Names six toys and says I have a + toy."
+
+      - key: EN.S2.HAVE_NEG
+        title: "I don't have a..."
+        description: Say what you do not have using don't have or haven't got.
+        difficulty: 2
+        estimated_sessions: 2
+        skills: [grammar, speaking]
+        prerequisites: [EN.S2.TOYS]
+        error_tags: [NEG_AUX_MISSING, OMIT_ARTICLE, L1_TRANSFER]
+        teaching_notes:
+          vocabulary: [don't, haven't, no]
+          structures: ["I don't have a robot.", "I haven't got a bike."]
+          example_prompts:
+            - "Look at the toy box. What don't you have?"
+            - "The puppet says it has a plane. Do you have a plane?"
+          activity_ideas:
+            - "Have and don't have: sort toy cards into two boxes and say each one."
+            - "Guess my toy: I don't have a ball, I don't have a doll..."
+          success_criteria:
+            - "Uses don't or haven't, never I no have."
+
+  - key: S3
+    name: My family and my body
+    description: Talking about the people in your family and describing what people look like.
+    objectives:
+      - key: EN.S3.FAMILY
+        title: Family words
+        description: Name family members and introduce them with This is my...
+        difficulty: 1
+        estimated_sessions: 1
+        skills: [vocabulary, speaking]
+        prerequisites: [EN.S2.THIS_THAT]
+        error_tags: [VOCAB_UNKNOWN, PRON_TH, L1_TRANSFER]
+        teaching_notes:
+          vocabulary: [mother, mum, father, dad, sister, brother, grandmother, grandma, grandfather, grandpa, baby, family]
+          structures: ["This is my mum.", "This is my brother."]
+          example_prompts:
+            - "Show me a family photo and tell me who they are."
+          activity_ideas:
+            - "Family tree with drawings."
+            - "Finger family song."
+          success_criteria:
+            - "Introduces at least four family members."
+
+      - key: EN.S3.POSSESSIVE
+        title: "My, your, his, her and Sara's"
+        description: Use my, your, his, her and the possessive 's to say whose something is.
+        difficulty: 2
+        estimated_sessions: 2
+        skills: [grammar, speaking]
+        prerequisites: [EN.S3.FAMILY]
+        error_tags: [POSSESSIVE_CONFUSION, L1_TRANSFER]
+        teaching_notes:
+          vocabulary: [my, your, his, her]
+          structures: ["This is her bag.", "That's Tom's car.", "His name is Ben."]
+          example_prompts:
+            - "Whose bag is this?"
+            - "Point to your sister's shoes."
+          activity_ideas:
+            - "Whose is it? Mix up family belongings."
+            - "His or her: sort pictures of boys and girls with their things."
+          success_criteria:
+            - "Chooses his for a boy and her for a girl."
+
+      - key: EN.S3.BODY
+        title: Parts of the body and face
+        description: Name the main parts of the body and face.
+        difficulty: 1
+        estimated_sessions: 1
+        skills: [vocabulary, listening, speaking]
+        error_tags: [VOCAB_UNKNOWN, PRON_H, PLURAL_S_MISSING]
+        teaching_notes:
+          vocabulary: [head, hair, face, eyes, ears, nose, mouth, arm, hand, leg, foot, feet]
+          structures: ["Touch your nose.", "These are my hands."]
+          example_prompts:
+            - "Touch your head. Touch your feet."
+          activity_ideas:
+            - "Head, shoulders, knees and toes."
+            - "Draw a monster and label it."
+          success_criteria:
+            - "Points to ten body parts on request."
+
+      - key: EN.S3.BE_ADJ
+        title: "It's big. She's happy."
+        description: Describe things and people with common adjectives after the verb to be.
+        difficulty: 2
+        estimated_sessions: 1
+        skills: [grammar, vocabulary, speaking]
+        prerequisites: [EN.S2.COLOURS]
+        error_tags: [BE_MISSING, BE_WRONG_FORM, WORD_ORDER_ADJ]
+        teaching_notes:
+          vocabulary: [big, small, old, new, happy, sad, clean, dirty, long, short, young]
+          structures: ["It's big.", "She's happy.", "They're dirty.", "a big dog"]
+          example_prompts:
+            - "Is the elephant big or small?"
+            - "How does the boy feel?"
+          activity_ideas:
+            - "Opposites memory game."
+            - "Feelings faces."
+          success_criteria:
+            - "Puts the adjective before the noun (a big dog) and uses the right form of be."
+
+      - key: EN.S3.HAVE_GOT_DESC
+        title: "She's got long hair"
+        description: Describe what people look like with have got, has got and colours.
+        difficulty: 3
+        estimated_sessions: 2
+        skills: [grammar, speaking, vocabulary]
+        prerequisites: [EN.S3.BODY, EN.S3.POSSESSIVE, EN.S3.BE_ADJ]
+        error_tags: [HAVE_HAS, POSSESSIVE_CONFUSION, WORD_ORDER_ADJ]
+        teaching_notes:
+          vocabulary: [long, short, blond, dark, curly, straight]
+          structures: ["She has got long hair.", "He's got blue eyes.", "I've got small hands."]
+          example_prompts:
+            - "Describe your sister."
+            - "Guess who: she's got curly hair and brown eyes."
+          activity_ideas:
+            - "Guess who with family photos."
+            - "Draw and describe a monster friend."
+          success_criteria:
+            - "Uses has got for he and she, have got for I and they."
+
+  - key: S4
+    name: Animals and where things are
+    description: Talking about animals, what they can do, and where things are.
+    objectives:
+      - key: EN.S4.ANIMALS
+        title: Animals
+        description: Name common pet, farm and wild animals.
+        difficulty: 1
+        estimated_sessions: 1
+        skills: [vocabulary, speaking, listening]
+        error_tags: [VOCAB_UNKNOWN, PRON_SHORT_LONG_I, PLURAL_S_MISSING]
+        teaching_notes:
+          vocabulary: [cat, dog, fish, bird, horse, cow, sheep, goat, duck, chicken, mouse, monkey, elephant, giraffe, crocodile, hippo, snake, spider, frog]
+          structures: ["It's a sheep.", "They're cows."]
+          example_prompts:
+            - "What animal is this?"
+            - "What sound does a cow make?"
+          activity_ideas:
+            - "Animal sounds guessing."
+            - "Farm and zoo sorting."
+          success_criteria:
+            - "Names twelve animals on sight."
+
+      - key: EN.S4.CAN
+        title: "A bird can fly. A fish can't walk."
+        description: Say what animals and people can and cannot do.
+        difficulty: 2
+        estimated_sessions: 2
+        skills: [grammar, speaking, listening]
+        prerequisites: [EN.S4.ANIMALS]
+        error_tags: [NEG_AUX_MISSING, L1_TRANSFER, QUESTION_FORM]
+        teaching_notes:
+          vocabulary: [fly, swim, run, jump, walk, climb, sing, talk]
+          structures: ["A bird can fly.", "A fish can't walk.", "Can you swim?", "Yes, I can. No, I can't."]
+          example_prompts:
+            - "Can a frog jump?"
+            - "Tell me two things you can do and one you can't."
+          activity_ideas:
+            - "Can or can't: act out animals."
+            - "Superhero game: I can fly!"
+          success_criteria:
+            - "Uses can and can't with the base verb."
+
+      - key: EN.S4.THERE_IS
+        title: "There is... / There are..."
+        description: Say what exists in a picture or a room with there is and there are.
+        difficulty: 2
+        estimated_sessions: 2
+        skills: [grammar, speaking]
+        prerequisites: [EN.S2.PLURALS]
+        error_tags: [PLURAL_S_MISSING, BE_WRONG_FORM, L1_TRANSFER]
+        teaching_notes:
+          vocabulary: [there]
+          structures: ["There is a cat.", "There are three dogs.", "Is there a bird?"]
+          example_prompts:
+            - "Look at the picture. What is there?"
+          activity_ideas:
+            - "Spot the difference."
+            - "Describe the messy room."
+          success_criteria:
+            - "Chooses there is for one and there are for more than one."
+
+      - key: EN.S4.PREP_PLACE
+        title: "In, on, under, next to"
+        description: Say where something is using prepositions of place.
+        difficulty: 2
+        estimated_sessions: 2
+        skills: [grammar, listening, speaking]
+        prerequisites: [EN.S4.THERE_IS]
+        error_tags: [PREP_CONFUSION, L1_TRANSFER]
+        teaching_notes:
+          vocabulary: [in, on, under, next to, behind, in front of, between]
+          structures: ["The cat is under the table.", "There's a ball in the box."]
+          example_prompts:
+            - "Put the teddy under the chair."
+            - "Where is the dog?"
+          activity_ideas:
+            - "Simon says with a toy: put it on, in, under."
+            - "Hide and seek with a puppet."
+          success_criteria:
+            - "Follows and gives instructions with six prepositions."
+
+      - key: EN.S4.WHERE
+        title: "Where's the...?"
+        description: Ask where something is and answer with a preposition.
+        difficulty: 2
+        estimated_sessions: 1
+        skills: [speaking, listening, grammar]
+        prerequisites: [EN.S4.PREP_PLACE]
+        error_tags: [QUESTION_FORM, PREP_CONFUSION, BE_MISSING]
+        teaching_notes:
+          vocabulary: [where]
+          structures: ["Where's the cat?", "It's on the bed.", "Where are the books?"]
+          example_prompts:
+            - "Ask me where your shoes are."
+          activity_ideas:
+            - "Treasure hunt with questions."
+          success_criteria:
+            - "Asks Where's / Where are and answers with a full place phrase."
+
+      - key: EN.S4.LIKE_ANIMALS
+        title: "I like cats. Do you like spiders?"
+        description: Say which animals you like and don't like, and ask others.
+        difficulty: 2
+        estimated_sessions: 1
+        skills: [grammar, speaking]
+        prerequisites: [EN.S4.ANIMALS]
+        error_tags: [NEG_AUX_MISSING, QUESTION_FORM, PLURAL_S_MISSING]
+        teaching_notes:
+          vocabulary: [like, don't like]
+          structures: ["I like dogs.", "I don't like spiders.", "Do you like cats?", "Yes, I do. No, I don't."]
+          example_prompts:
+            - "Do you like snakes?"
+            - "Tell me three animals you like."
+          activity_ideas:
+            - "Class survey with family members."
+            - "Thumbs up, thumbs down."
+          success_criteria:
+            - "Uses Do you like...? and answers Yes, I do or No, I don't."
+
+  - key: S5
+    name: Food, clothes and my house
+    description: Talking about food, what you are wearing, and your home.
+    objectives:
+      - key: EN.S5.FOOD
+        title: Food and drink
+        description: Name common food and drink.
+        difficulty: 1
+        estimated_sessions: 1
+        skills: [vocabulary, speaking]
+        error_tags: [VOCAB_UNKNOWN, WRONG_ARTICLE]
+        teaching_notes:
+          vocabulary: [apple, banana, orange, grapes, bread, cake, chicken, egg, fish, rice, ice cream, milk, water, juice, pizza, burger, chips, carrot, tomato]
+          structures: ["It's an apple.", "I want juice, please."]
+          example_prompts:
+            - "What's in your lunch box?"
+          activity_ideas:
+            - "Play shop."
+            - "Draw your favourite meal and label it."
+          success_criteria:
+            - "Names twelve food and drink words."
+
+      - key: EN.S5.LIKE_FOOD
+        title: "I like apples. I don't like fish."
+        description: Talk about food likes and dislikes, including for other people.
+        difficulty: 2
+        estimated_sessions: 2
+        skills: [grammar, speaking]
+        prerequisites: [EN.S4.LIKE_ANIMALS, EN.S5.FOOD]
+        error_tags: [THIRD_PERSON_S, NEG_AUX_MISSING, PLURAL_S_MISSING]
+        teaching_notes:
+          vocabulary: [likes, doesn't like, favourite]
+          structures: ["I like bananas.", "She likes pizza.", "He doesn't like fish.", "What's your favourite food?"]
+          example_prompts:
+            - "What does your sister like?"
+            - "What's your favourite food?"
+          activity_ideas:
+            - "Family food survey."
+            - "Restaurant role play."
+          success_criteria:
+            - "Adds s for he and she (she likes) and uses doesn't in the negative."
+
+      - key: EN.S5.CLOTHES
+        title: "Clothes: I'm wearing..."
+        description: Name clothes and say what you are wearing.
+        difficulty: 2
+        estimated_sessions: 2
+        skills: [vocabulary, grammar, speaking]
+        prerequisites: [EN.S2.COLOURS]
+        error_tags: [VOCAB_UNKNOWN, BE_MISSING, WORD_ORDER_ADJ]
+        teaching_notes:
+          vocabulary: [t-shirt, shirt, trousers, jeans, dress, skirt, shoes, socks, hat, jacket, shorts, glasses]
+          structures: ["I'm wearing a red t-shirt.", "She's wearing a hat."]
+          example_prompts:
+            - "What are you wearing today?"
+            - "Describe what I'm wearing."
+          activity_ideas:
+            - "Dress the paper doll."
+            - "Fashion show with commentary."
+          success_criteria:
+            - "Says I'm wearing + a + colour + clothing item."
+
+      - key: EN.S5.HOUSE
+        title: My house
+        description: Name rooms and furniture and say what is in each room.
+        difficulty: 2
+        estimated_sessions: 2
+        skills: [vocabulary, grammar, speaking]
+        prerequisites: [EN.S4.THERE_IS]
+        error_tags: [VOCAB_UNKNOWN, PREP_CONFUSION, PLURAL_S_MISSING]
+        teaching_notes:
+          vocabulary: [house, flat, bedroom, bathroom, kitchen, living room, garden, bed, table, chair, sofa, lamp, television, door, window]
+          structures: ["There's a bed in the bedroom.", "There are two chairs in the kitchen."]
+          example_prompts:
+            - "Tell me about your bedroom."
+          activity_ideas:
+            - "Draw your house and give a tour."
+            - "Doll's house: put things in rooms and say where."
+          success_criteria:
+            - "Names five rooms and eight items and places them with there is / there are."
+
+      - key: EN.S5.PRES_CONT
+        title: "He's eating. What are you doing?"
+        description: Say what people are doing now using the present continuous.
+        difficulty: 3
+        estimated_sessions: 3
+        skills: [grammar, speaking, listening]
+        prerequisites: [EN.S5.CLOTHES]
+        error_tags: [BE_MISSING, BE_WRONG_FORM, QUESTION_FORM, L1_TRANSFER]
+        teaching_notes:
+          vocabulary: [eating, drinking, sleeping, reading, playing, running, jumping, swimming, singing, drawing]
+          structures: ["He's eating.", "They're playing football.", "What are you doing?", "I'm reading."]
+          example_prompts:
+            - "Look at the picture. What is the girl doing?"
+            - "Mime an action; I ask what you're doing."
+          activity_ideas:
+            - "Charades."
+            - "Freeze frame: everyone freezes, describe each person."
+          success_criteria:
+            - "Uses be + verb-ing with the right form of be."
+
+  - key: S6
+    name: School, sports and stories
+    description: School life, sports and hobbies, routines, and understanding a short story.
+    objectives:
+      - key: EN.S6.SCHOOL
+        title: School and classroom instructions
+        description: Name school things and follow and give classroom instructions.
+        difficulty: 1
+        estimated_sessions: 1
+        skills: [vocabulary, listening, speaking]
+        error_tags: [COMPREHENSION, VOCAB_UNKNOWN]
+        teaching_notes:
+          vocabulary: [school, teacher, classroom, desk, board, pencil, pen, rubber, ruler, book, bag, open, close, sit down, stand up, listen, look, draw, write]
+          structures: ["Open your book.", "Sit down, please.", "Listen and point."]
+          example_prompts:
+            - "Stand up. Sit down. Open your book."
+          activity_ideas:
+            - "Simon says with classroom instructions."
+            - "Child is the teacher and gives instructions."
+          success_criteria:
+            - "Follows eight instructions and gives four."
+
+      - key: EN.S6.SPORTS
+        title: Sports and hobbies
+        description: Name sports and hobbies and say which you play or like doing.
+        difficulty: 2
+        estimated_sessions: 1
+        skills: [vocabulary, grammar, speaking]
+        prerequisites: [EN.S5.LIKE_FOOD]
+        error_tags: [L1_TRANSFER, THIRD_PERSON_S, VOCAB_UNKNOWN]
+        teaching_notes:
+          vocabulary: [football, basketball, tennis, swimming, dancing, drawing, singing, riding a bike, playing the piano]
+          structures: ["I play football.", "I like swimming.", "She likes dancing."]
+          example_prompts:
+            - "What do you do at the weekend?"
+          activity_ideas:
+            - "Mime a sport."
+            - "Hobby survey."
+          success_criteria:
+            - "Uses play with ball sports and like + verb-ing for hobbies."
+
+      - key: EN.S6.PRES_SIMPLE
+        title: "I go to school. She plays tennis."
+        description: Talk about routines and habits in the present simple, including he and she.
+        difficulty: 3
+        estimated_sessions: 3
+        skills: [grammar, speaking]
+        prerequisites: [EN.S6.SPORTS]
+        error_tags: [THIRD_PERSON_S, NEG_AUX_MISSING, QUESTION_FORM]
+        teaching_notes:
+          vocabulary: [every day, at the weekend, in the morning, get up, go to school, have lunch, go to bed]
+          structures: ["I go to school every day.", "She plays tennis at the weekend.", "He doesn't eat fish.", "Do you get up early?"]
+          example_prompts:
+            - "Tell me about your morning."
+            - "What does your dad do at the weekend?"
+          activity_ideas:
+            - "Daily routine picture sequence."
+            - "Family routines interview."
+          success_criteria:
+            - "Adds -s for he and she and uses doesn't in negatives."
+
+      - key: EN.S6.QUESTIONS
+        title: Question words
+        description: Ask and answer with What, Where, Who, How many and How old.
+        difficulty: 3
+        estimated_sessions: 2
+        skills: [grammar, speaking, listening]
+        prerequisites: [EN.S4.WHERE, EN.S3.HAVE_GOT_DESC]
+        error_tags: [QUESTION_FORM, BE_WRONG_FORM, COMPREHENSION]
+        teaching_notes:
+          vocabulary: [what, where, who, how many, how old]
+          structures: ["Who is she?", "Where are the books?", "How many eggs are there?", "How old is your brother?"]
+          example_prompts:
+            - "Ask me five questions about the picture."
+          activity_ideas:
+            - "Question dice."
+            - "Interview a toy."
+          success_criteria:
+            - "Forms five different question types with correct word order."
+
+      - key: EN.S6.STORY
+        title: Listen to a story and retell it
+        description: Follow a short picture story in English and retell what happens in simple sentences.
+        difficulty: 3
+        estimated_sessions: 3
+        skills: [listening, speaking, reading]
+        prerequisites: [EN.S5.PRES_CONT, EN.S4.PREP_PLACE]
+        error_tags: [COMPREHENSION, BE_MISSING, L1_TRANSFER]
+        teaching_notes:
+          vocabulary: [first, then, and]
+          structures: ["The cat is under the bed.", "Then the dog is running.", "The girl is happy."]
+          example_prompts:
+            - "Listen to the story. Put the pictures in order. Tell me what happens."
+          activity_ideas:
+            - "Four-picture story with cards to sequence."
+            - "Puppet theatre retelling."
+          success_criteria:
+            - "Retells a four-picture story with at least four sentences in English."

@@ -12,11 +12,11 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx scripts/migrate.ts",
-    "db:seed": "tsx scripts/seed-demo.ts",
-    "db:verify": "tsx scripts/verify-schema.ts",
-    "db:rebuild-state": "tsx scripts/rebuild-state.ts",
-    "curriculum:import": "tsx scripts/import-curriculum.ts",
+    "db:migrate": "tsx --conditions=react-server scripts/migrate.ts",
+    "db:seed": "tsx --conditions=react-server scripts/seed-demo.ts",
+    "db:verify": "tsx --conditions=react-server scripts/verify-schema.ts",
+    "db:rebuild-state": "tsx --conditions=react-server scripts/rebuild-state.ts",
+    "curriculum:import": "tsx --conditions=react-server scripts/import-curriculum.ts",
     "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm db:verify"
   },
   "dependencies": {

@@ -1,0 +1,102 @@
+# DEMO curriculum. Exists so the demo parent's dashboard has something to show
+# and so tests have a stable fixture. Never present as a real syllabus.
+schema_version: curriculum-file.v1
+subject: english
+subject_name: English
+slug: demo-english-basics
+name: English basics (DEMO)
+description: A small demonstration syllabus. Marked DEMO everywhere it appears.
+version: 1.0.0
+source: FAMILY
+visibility: PUBLIC
+instruction_language: pt-BR
+target_language: en
+is_demo: true
+skills:
+  - key: speaking
+    name: Speaking
+  - key: listening
+    name: Listening
+  - key: vocabulary
+    name: Vocabulary
+  - key: grammar
+    name: Grammar
+error_tags:
+  OMIT_ARTICLE: Omits the article
+  NEG_AUX_MISSING: Negative without the auxiliary
+  BE_MISSING: Verb to be omitted
+  VOCAB_UNKNOWN: Does not know the target word
+units:
+  - key: D1
+    name: Hello and me
+    objectives:
+      - key: DEMO.EN.GREET
+        title: Greetings
+        difficulty: 1
+        skills: [speaking, listening]
+        error_tags: [VOCAB_UNKNOWN]
+      - key: DEMO.EN.NAME
+        title: "My name is..."
+        difficulty: 1
+        skills: [speaking, grammar]
+        prerequisites: [DEMO.EN.GREET]
+        error_tags: [BE_MISSING]
+      - key: DEMO.EN.NUMBERS
+        title: Numbers 1 to 10
+        difficulty: 1
+        skills: [vocabulary]
+      - key: DEMO.EN.AGE
+        title: "I'm seven"
+        difficulty: 1
+        skills: [speaking, grammar]
+        prerequisites: [DEMO.EN.NAME, DEMO.EN.NUMBERS]
+        error_tags: [BE_MISSING]
+  - key: D2
+    name: Things and colours
+    objectives:
+      - key: DEMO.EN.COLOURS
+        title: Colours
+        difficulty: 1
+        skills: [vocabulary]
+      - key: DEMO.EN.THIS
+        title: "This is a..."
+        difficulty: 1
+        skills: [grammar, speaking]
+        prerequisites: [DEMO.EN.COLOURS]
+        error_tags: [OMIT_ARTICLE]
+      - key: DEMO.EN.TOYS
+        title: "Toys: I have a..."
+        difficulty: 1
+        skills: [vocabulary, speaking]
+        prerequisites: [DEMO.EN.THIS]
+        error_tags: [OMIT_ARTICLE]
+      - key: DEMO.EN.HAVE_NEG
+        title: "I don't have a..."
+        difficulty: 2
+        skills: [grammar, speaking]
+        prerequisites: [DEMO.EN.TOYS]
+        error_tags: [NEG_AUX_MISSING]
+  - key: D3
+    name: Animals
+    objectives:
+      - key: DEMO.EN.ANIMALS
+        title: Animals
+        difficulty: 1
+        skills: [vocabulary]
+      - key: DEMO.EN.CAN
+        title: "A bird can fly"
+        difficulty: 2
+        skills: [grammar, speaking]
+        prerequisites: [DEMO.EN.ANIMALS]
+        error_tags: [NEG_AUX_MISSING]
+      - key: DEMO.EN.LIKE
+        title: "I like cats"
+        difficulty: 2
+        skills: [grammar, speaking]
+        prerequisites: [DEMO.EN.ANIMALS]
+        error_tags: [NEG_AUX_MISSING]
+      - key: DEMO.EN.THERE_IS
+        title: "There is / there are"
+        difficulty: 2
+        skills: [grammar, speaking]
+        prerequisites: [DEMO.EN.TOYS]
