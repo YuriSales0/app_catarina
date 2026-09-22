@@ -1,0 +1,22 @@
+CREATE INDEX "consents_user_idx" ON "consents" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "student_guardians_invited_by_idx" ON "student_guardians" USING btree ("invited_by_user_id");--> statement-breakpoint
+CREATE INDEX "curriculum_versions_published_by_idx" ON "curriculum_versions" USING btree ("published_by_user_id");--> statement-breakpoint
+CREATE INDEX "student_objective_review_objective_idx" ON "student_objective_review" USING btree ("objective_id");--> statement-breakpoint
+CREATE INDEX "student_objective_review_subject_idx" ON "student_objective_review" USING btree ("subject_id");--> statement-breakpoint
+CREATE INDEX "student_objective_state_subject_idx" ON "student_objective_state" USING btree ("subject_id");--> statement-breakpoint
+CREATE INDEX "sost_objective_idx" ON "student_objective_state_transition" USING btree ("objective_id");--> statement-breakpoint
+CREATE INDEX "lesson_activities_skill_idx" ON "lesson_activities" USING btree ("skill_id");--> statement-breakpoint
+CREATE INDEX "lessons_subject_idx" ON "lessons" USING btree ("subject_id");--> statement-breakpoint
+CREATE INDEX "lessons_created_by_idx" ON "lessons" USING btree ("created_by_user_id");--> statement-breakpoint
+CREATE INDEX "learning_evidence_subject_idx" ON "learning_evidence" USING btree ("subject_id");--> statement-breakpoint
+CREATE INDEX "learning_evidence_activity_idx" ON "learning_evidence" USING btree ("activity_id");--> statement-breakpoint
+CREATE INDEX "learning_evidence_objective_idx" ON "learning_evidence" USING btree ("objective_id");--> statement-breakpoint
+CREATE INDEX "learning_evidence_skill_idx" ON "learning_evidence" USING btree ("skill_id");--> statement-breakpoint
+CREATE INDEX "lesson_events_activity_idx" ON "lesson_events" USING btree ("activity_id");--> statement-breakpoint
+CREATE INDEX "learning_inference_subject_idx" ON "learning_inference" USING btree ("subject_id");--> statement-breakpoint
+CREATE INDEX "learning_inference_objective_idx" ON "learning_inference" USING btree ("objective_id");--> statement-breakpoint
+CREATE INDEX "learning_inference_skill_idx" ON "learning_inference" USING btree ("skill_id");--> statement-breakpoint
+CREATE INDEX "learning_recommendation_subject_idx" ON "learning_recommendation" USING btree ("subject_id");--> statement-breakpoint
+CREATE INDEX "learning_recommendation_objective_idx" ON "learning_recommendation" USING btree ("objective_id");--> statement-breakpoint
+CREATE INDEX "learning_recommendation_decided_by_idx" ON "learning_recommendation" USING btree ("decided_by_user_id");--> statement-breakpoint
+CREATE INDEX "learning_snapshots_subject_idx" ON "learning_snapshots" USING btree ("subject_id");

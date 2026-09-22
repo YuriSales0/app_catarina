@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports: ["5433:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgres://learning_os_app:app@127.0.0.1:5433/learning_os_test
+      DATABASE_MIGRATOR_URL: postgres://learning_os_migrator:migrator@127.0.0.1:5433/learning_os_test
+      AUTH_SECRET: ci-secret-not-for-production-0123456789
+      AUTH_DEV_LOGIN: "true"
+      AI_PROVIDER: "null"
+      LOG_LEVEL: warn
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Create database roles
+        run: |
+          export PGPASSWORD=postgres
+          psql -h 127.0.0.1 -p 5433 -U postgres -c "create role learning_os_migrator login password 'migrator' createrole"
+          psql -h 127.0.0.1 -p 5433 -U postgres -c "create role learning_os_app login password 'app'"
+          psql -h 127.0.0.1 -p 5433 -U postgres -c "create database learning_os_test owner learning_os_migrator"
+          psql -h 127.0.0.1 -p 5433 -U postgres -d learning_os_test -c "grant usage on schema public to learning_os_app"
+      - run: pnpm db:migrate
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test
+      - run: pnpm db:verify
+      - run: pnpm build

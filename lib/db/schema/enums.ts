@@ -1,0 +1,27 @@
+import { pgEnum } from "drizzle-orm/pg-core";
+import * as E from "@/lib/db/enums";
+
+export const platformRoleEnum = pgEnum("platform_role", E.PLATFORM_ROLES);
+export const guardianRoleEnum = pgEnum("guardian_role", E.GUARDIAN_ROLES);
+export const curriculumSourceEnum = pgEnum("curriculum_source", E.CURRICULUM_SOURCES);
+export const curriculumStatusEnum = pgEnum("curriculum_status", E.CURRICULUM_STATUSES);
+export const visibilityEnum = pgEnum("visibility", E.VISIBILITIES);
+export const objectiveStatusEnum = pgEnum("objective_status", E.OBJECTIVE_STATUSES);
+export const confidenceLevelEnum = pgEnum("confidence_level", E.CONFIDENCE_LEVELS);
+export const prerequisiteStrengthEnum = pgEnum("prerequisite_strength", E.PREREQUISITE_STRENGTHS);
+export const evidenceResultEnum = pgEnum("evidence_result", E.EVIDENCE_RESULTS);
+export const evidenceTypeEnum = pgEnum("evidence_type", E.EVIDENCE_TYPES);
+export const gradedByEnum = pgEnum("graded_by", E.GRADED_BY);
+export const lessonStatusEnum = pgEnum("lesson_status", E.LESSON_STATUSES);
+export const activityTypeEnum = pgEnum("activity_type", E.ACTIVITY_TYPES);
+export const lessonEventTypeEnum = pgEnum("lesson_event_type", E.LESSON_EVENT_TYPES);
+export const inferenceSourceEnum = pgEnum("inference_source", E.INFERENCE_SOURCES);
+export const recommendationKindEnum = pgEnum("recommendation_kind", E.RECOMMENDATION_KINDS);
+export const recommendationSourceEnum = pgEnum("recommendation_source", E.RECOMMENDATION_SOURCES);
+export const recommendationStatusEnum = pgEnum("recommendation_status", E.RECOMMENDATION_STATUSES);
+export const actorTypeEnum = pgEnum("actor_type", E.ACTOR_TYPES);
+export const auditResultEnum = pgEnum("audit_result", E.AUDIT_RESULTS);
+export const reportGeneratorEnum = pgEnum("report_generator", E.REPORT_GENERATORS);
+export const snapshotScopeEnum = pgEnum("snapshot_scope", E.SNAPSHOT_SCOPES);
+export const snapshotTriggerEnum = pgEnum("snapshot_trigger", E.SNAPSHOT_TRIGGERS);
+export const consentKindEnum = pgEnum("consent_kind", E.CONSENT_KINDS);
