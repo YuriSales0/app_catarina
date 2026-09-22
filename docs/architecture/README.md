@@ -20,6 +20,7 @@ brief before any implementation begins. Nothing here has been built yet.
 | 09 | [Hallucination sources and controls](09-hallucination-controls.md) | 41.13, 41.14 |
 | 10 | [Missing product requirements](10-missing-requirements.md) | 41.12 |
 | 11 | [Phase plan, project structure, testing](11-phase-plan.md) | 40, 33, 36 |
+| 12 | [Scope review](12-scope-review.md) | Milestones, in/out of scope, corrections to 01 to 11 |
 
 ## The one-paragraph version
 

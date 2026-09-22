@@ -14,7 +14,13 @@ rather you settle it than have me assume.
 name one, and the choice determines whether `users.id` is really ours.
 
 **Decision.** Auth.js v5 (NextAuth) with the Drizzle adapter, running in our own
-database, with email magic-link sign-in for the MVP.
+database, with Google OAuth as the MVP sign-in method.
+
+*Revised in [12 §6](12-scope-review.md): the first draft chose email magic
+links. Magic links need an email-sending service, which is a third-party
+dependency with no other use in the MVP. Google OAuth needs one OAuth client and
+nothing else, and adding magic links or Apple later is an insert into
+`accounts` against the same `users.id`.*
 
 **Reasoning.** The brief's hard requirement is that `user.id` is an immutable
 internal UUID that survives an email change, the addition of Google or Apple
@@ -401,8 +407,9 @@ not blocked. Each is cheap to change now and progressively less cheap later.
 | 1 | Mastery thresholds and the 14-day retention window (D6) | As tabulated in D6, versioned and changeable |
 | 2 | Lesson length for a 7-year-old | 20 minutes planned, 3 to 5 activities |
 | 3 | New material versus review in one lesson | One primary objective, up to 2 review objectives |
-| 4 | Sign-in method for the MVP | Email magic link, no password |
+| 4 | Sign-in method for the MVP | Google OAuth; magic link and Apple later (revised, see 12) |
 | 5 | Which curriculum standard the demo English follows | A small, clearly-marked DEMO curriculum I author, not a real standard |
 | 6 | Whether a child ever logs in | No, not in the MVP; the parent opens the lesson |
 | 7 | Data residency | Neon in the EU region, given children in Europe |
 | 8 | Do you want Portuguese UI for parents | English first, with copy kept in one module so translation is not a rewrite |
+| 9 | Who authors the real English curriculum, and from what source | I draft it as a JSON file for your review; you edit it (see 12 §5) |

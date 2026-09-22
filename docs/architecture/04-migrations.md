@@ -94,7 +94,8 @@ convenient.
 ## Seed data
 
 `scripts/seed-demo.ts` is idempotent, marks every row `is_demo = true`, and
-creates: one demo parent, the students Catarina and Aurora, the subjects English
+runs the same JSON curriculum importer that real family curricula use (see
+[12 §5](12-scope-review.md)). It creates: one demo parent, the students Catarina and Aurora, the subjects English
 and Mathematics, one small DEMO curriculum each with units, objectives and a
 prerequisite chain, plus a handful of lessons with evidence so the dashboard has
 something real to show. It never runs automatically against production.

@@ -117,7 +117,6 @@ resolves through it, and nothing else is consulted (see [03](03-authorization-an
 | `school_year` | text null | |
 | `education_system` | text null | e.g. `PT-BASICO`, `UK-KS1` |
 | `timezone` | text | IANA, default `Europe/Lisbon` |
-| `avatar_key` | text null | An illustration choice, not an uploaded photo (see [03](03-authorization-and-security.md)) |
 | `metadata` | jsonb | |
 | `is_demo` | boolean | |
 | `created_at` / `updated_at` / `deleted_at` | timestamptz | |

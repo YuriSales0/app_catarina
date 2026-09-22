@@ -14,21 +14,21 @@ Programming or any other structured learning domain without changes to the core.
 
 ## Status
 
-| Phase | Scope | State |
-| --- | --- | --- |
-| 0 | Architecture analysis | Proposal complete, awaiting approval |
-| 1 | Project initialization | Not started |
-| 2 | Database schema + migrations | Not started |
-| 3 | Authentication + authorization | Not started |
-| 4 | Students, subjects, curricula | Not started |
-| 5 | Objective graph + knowledge state | Not started |
-| 6 | Evidence, lessons, lesson events | Not started |
-| 7 | Learning Snapshot | Not started |
-| 8 | Deterministic Next Lesson Engine | Not started |
-| 9 | Context Pack | Not started |
-| 10 | Parent dashboard | Not started |
-| 11 | Lesson experience | Not started |
-| 12 | AI integration | Not started |
+| Milestone | Phase | Scope | State |
+| --- | --- | --- | --- |
+| — | 0 | Architecture analysis | Proposal complete, awaiting approval |
+| M1 Foundation | 1 | Project initialization | Not started |
+| M1 Foundation | 2 | Database schema + migrations | Not started |
+| M1 Foundation | 3 | Authentication + authorization | Not started |
+| M2 First real lesson | 4 | Students, subjects, curricula | Not started |
+| M2 First real lesson | 5 | Objective graph + knowledge state | Not started |
+| M2 First real lesson | 6 | Evidence, lessons, lesson events | Not started |
+| M3 Intelligence | 8 | Deterministic Next Lesson Engine | Not started |
+| M3 Intelligence | 7 | Learning Snapshot (after 8) | Not started |
+| M3 Intelligence | 9 | Context Pack | Not started |
+| M4 Experience | 10 | Parent dashboard | Not started |
+| M4 Experience | 11 | Lesson experience | Not started |
+| M5 AI | 12 | AI integration | Not started |
 
 No implementation code exists yet. Per the development rule in the product
 brief, Phase 1 does not begin until the architecture proposal is reviewed and

@@ -48,6 +48,25 @@ database imports `server-only`.
 
 ---
 
+## Milestones
+
+The brief's twelve phases are kept with their numbering. They are grouped into
+milestones so that something usable exists well before the end, and the order of
+execution is stated explicitly where it differs from the numbering. The
+reasoning is in [12-scope-review.md](12-scope-review.md).
+
+| Milestone | Phases, in execution order | What becomes possible |
+| --- | --- | --- |
+| **M1 Foundation** | 1, 2, 3 | Deployed, secured, empty |
+| **M2 First real lesson** | 4, 5, 6 | Import a curriculum, pick an unlocked objective by hand, run a lesson on paper or out loud, record evidence, see state change |
+| **M3 Intelligence** | 8, 7, 9 | The engine picks and explains; snapshots accumulate; Context Packs are verified |
+| **M4 Experience** | 10, 11 | Full parent dashboard and the child-facing runner |
+| **M5 AI** | 12 | A text AI provider behind the seam |
+
+Phase 8 runs before Phase 7 because the snapshot embeds the engine's review
+priorities and recommendations, and a snapshot built without them would need
+rebuilding.
+
 ## Phases
 
 Each phase ends with the same gate: typecheck, lint, tests, migration
@@ -56,21 +75,29 @@ skipped and what is unresolved. Nothing is skipped silently.
 
 **Phase 1 — Initialization.** Next.js with the App Router, TypeScript strict,
 Tailwind, ESLint with the boundary rules, Vitest, Playwright, Drizzle, the env
-validator, CI. Gate: a deployed empty app on Vercel with a green pipeline.
+validator, CI, the `NullAIProvider`, and the observability minimum: a structured
+JSON logger with a redaction allowlist, a request ID on every server action, and
+a server-side error boundary. Gate: a deployed empty app on Vercel with a green
+pipeline and a redacted log line per request.
 
 **Phase 2 — Schema and migrations.** Every table from [02](02-data-model.md),
 generated migrations plus the manual trigger and grant files, `verify-schema`,
 and the demo seed. Gate: migrations apply to a clean database, the schema
 verifier passes, and append-only tables reject updates in a test.
 
-**Phase 3 — Authentication and authorization.** Auth.js with magic links,
-`requireStudentAccess`, the permission matrix, the audit writer. Gate: the
-isolation test suite — parent A cannot reach parent B's student through any
-route, and unauthorized access to an existing ID returns 404.
+**Phase 3 — Authentication and authorization.** Auth.js with Google OAuth (magic
+links and Apple are later providers against the same `users.id`),
+`requireStudentAccess`, the permission matrix, the audit writer, and the
+`authz_denied` and `auth_failure` log events. Gate: the isolation test suite —
+parent A cannot reach parent B's student through any route, and unauthorized
+access to an existing ID returns 404.
 
-**Phase 4 — Students, subjects, curricula.** CRUD with authorization, curriculum
-publishing and freeze, data export. Gate: publishing freezes a version;
-export produces a complete document.
+**Phase 4 — Students, subjects, curricula.** CRUD with authorization, the JSON
+curriculum importer (used by both the demo seed and real family curricula, see
+[12 §5](12-scope-review.md)), curriculum publishing and freeze, the per-subject
+error-tag vocabulary, and "add a guardian by email of an existing user". Gate:
+publishing freezes a version; a second parent can see the same student; the
+demo and a real curriculum import through the same path.
 
 **Phase 5 — Objective graph and knowledge state.** Prerequisite graph with cycle
 detection, `evaluateObjectiveState`, the state policy, transitions, the review
@@ -78,18 +105,26 @@ scheduler. Gate: `rebuild-state` reproduces state byte-identically from the
 ledger.
 
 **Phase 6 — Evidence, lessons, lesson events.** `recordEvidence`,
-`createLesson`, `startLesson`, `recordLessonEvent`, `completeLesson`, and the
-manual lesson runner (D10). Gate: a parent can run a lesson end to end with no AI
-configured, and the resulting state change is traceable to evidence.
+`createLesson`, `startLesson`, `recordLessonEvent`, `completeLesson`,
+`createLessonReport` with `generated_by = 'SYSTEM'`, `getLearningHistory`, the
+manual objective picker (the parent chooses from *unlocked* objectives only;
+the engine replaces this in Phase 8 and keeps it as an override), the manual
+lesson runner (D10), and the minimal student subject page: objective list with
+status, evidence log, and the runner. This is the end of M2. Gate: a parent can
+run a lesson end to end with no AI configured, and the resulting state change is
+traceable to evidence.
 
-**Phase 7 — Learning Snapshot.** Generation, hashing, the epistemic key, the
-timeline view. Gate: regeneration is hash-stable.
+**Phase 7 — Learning Snapshot.** Executed after Phase 8. Generation, hashing,
+the epistemic key, the timeline view, and the data export (moved here from
+Phase 4 because it exports every table that now exists). Gate: regeneration is
+hash-stable; export produces a complete document.
 
 **Phase 8 — Next Lesson Engine.** The pure selector, scoring policy, rationale,
 plan validation. Gate: determinism and prerequisite property tests pass.
 
-**Phase 9 — Context Pack.** Builder, handles, strict schema, leak tests. Gate: no
-UUID and no foreign student data in any generated pack.
+**Phase 9 — Context Pack.** Builder, handles, strict schema, leak tests, and the
+teacher contract document `teacher_contract.v1`, which needs no model to write.
+Gate: no UUID and no foreign student data in any generated pack.
 
 **Phase 10 — Parent dashboard.** Students, subjects, progress, current
 objectives, recurring difficulties, recommended actions, and the "why is she

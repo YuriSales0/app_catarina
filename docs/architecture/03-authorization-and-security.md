@@ -125,7 +125,7 @@ Decisions taken specifically because the subjects are children:
 | --- | --- |
 | No surname field on `students` | Given name is enough to address a child; a full name is identifying data with no product use |
 | Date of birth nullable, and only an age band leaves the system | Age drives age-appropriateness; the exact date is never needed downstream |
-| `avatar_key` selects an illustration; no photo upload | A photo of a child is the highest-risk datum we could hold, and it buys nothing |
+| No photo or avatar upload of any kind | A photo of a child is the highest-risk datum we could hold, and it buys nothing |
 | No audio retained by default | Section 27. Voice, when added, streams and is discarded; retention requires explicit per-student opt-in with a recorded consent row and a retention period |
 | No free-text about the child from the AI stored as fact | AI observations land in `learning_inference`, clearly labelled |
 | Context Packs carry a given name, an age band and learning data only | See [06](06-context-pack.md) |
@@ -140,8 +140,9 @@ Decisions taken specifically because the subjects are children:
   student, enrolments, evidence, lessons, events, reports and snapshots. Building
   it in Phase 4 rather than later is deliberate: it is trivial while the schema
   is small and becomes a project once it is not.
-- **Deletion.** Soft delete hides the student immediately; a purge job after a
-  grace period (proposed 30 days) hard-deletes the child's rows. Curriculum and
+- **Deletion.** Soft delete hides the student immediately; a purge script, run
+  by hand after a grace period (proposed 30 days) until there is more than one
+  family, hard-deletes the child's rows. Curriculum and
   subject rows are untouched. Audit log entries retain the student ID as an
   opaque reference with the personal fields removed, so a deletion is provable
   without keeping what was deleted.
