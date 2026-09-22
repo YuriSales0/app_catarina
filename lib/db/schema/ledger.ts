@@ -128,3 +128,6 @@ export const auditLog = pgTable(
     index("audit_log_denied_idx").on(t.result).where(sql`${t.result} = 'DENIED'`),
   ],
 );
+
+export type LearningEvidenceRow = typeof learningEvidence.$inferSelect;
+export type LessonEventRow = typeof lessonEvents.$inferSelect;

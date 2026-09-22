@@ -198,3 +198,8 @@ export const objectiveSkills = pgTable(
     index("objective_skills_skill_idx").on(t.skillId),
   ],
 );
+
+export type CurriculumRow = typeof curricula.$inferSelect;
+export type CurriculumVersionRow = typeof curriculumVersions.$inferSelect;
+export type CurriculumUnitRow = typeof curriculumUnits.$inferSelect;
+export type LearningObjectiveRow = typeof learningObjectives.$inferSelect;

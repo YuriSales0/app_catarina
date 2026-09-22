@@ -100,3 +100,7 @@ export const lessonReports = pgTable(
     index("lesson_reports_student_idx").on(t.studentId),
   ],
 );
+
+export type LessonRow = typeof lessons.$inferSelect;
+export type LessonActivityRow = typeof lessonActivities.$inferSelect;
+export type LessonReportRow = typeof lessonReports.$inferSelect;

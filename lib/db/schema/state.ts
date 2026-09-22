@@ -106,3 +106,8 @@ export const studentObjectiveReview = pgTable(
     index("student_objective_review_subject_idx").on(t.subjectId),
   ],
 );
+
+export type StudentObjectiveStateRow = typeof studentObjectiveState.$inferSelect;
+export type StudentObjectiveReviewRow = typeof studentObjectiveReview.$inferSelect;
+
+export type StudentObjectiveStateTransitionRow = typeof studentObjectiveStateTransition.$inferSelect;

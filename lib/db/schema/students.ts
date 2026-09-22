@@ -147,3 +147,8 @@ export const studentSubjects = pgTable(
     index("student_subjects_curriculum_version_idx").on(t.curriculumVersionId),
   ],
 );
+
+export type StudentRow = typeof students.$inferSelect;
+export type SubjectRow = typeof subjects.$inferSelect;
+export type SkillRow = typeof skills.$inferSelect;
+export type StudentSubjectRow = typeof studentSubjects.$inferSelect;
