@@ -73,3 +73,6 @@ export const learningRecommendation = pgTable(
     index("learning_recommendation_decided_by_idx").on(t.decidedByUserId),
   ],
 );
+
+export type LearningRecommendationRow = typeof learningRecommendation.$inferSelect;
+export type LearningInferenceRow = typeof learningInference.$inferSelect;

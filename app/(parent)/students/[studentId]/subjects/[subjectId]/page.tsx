@@ -11,6 +11,8 @@ import { ObjectiveList } from "@/components/parent/objective-list";
 import { EvidenceForm } from "@/components/parent/evidence-form";
 import { createManualLessonAction } from "@/app/(parent)/lessons/actions";
 import { roleAllows } from "@/lib/authorization/permissions";
+import { listRecommendations } from "@/lib/recommendations/service";
+import { Recommendations } from "@/components/parent/recommendations";
 
 export default async function StudentSubjectPage(props: { params: Promise<{ studentId: string; subjectId: string }> }) {
   const { studentId, subjectId } = await props.params;
@@ -19,10 +21,10 @@ export default async function StudentSubjectPage(props: { params: Promise<{ stud
     const access = await requireStudentAccess(actor, studentId, "VIEW");
     const [student, enrolment] = await Promise.all([getStudent(access), getEnrolment(access, subjectId)]);
     const progress = enrolment.curriculumVersionId ? await getStudentProgress(access, subjectId) : null;
-    const lessons = await listLessons(access, subjectId, 10);
-    return { access, student, enrolment, progress, lessons };
+    const [lessons, recommendations] = await Promise.all([listLessons(access, subjectId, 10), listRecommendations(access, { subjectId, status: "PROPOSED", limit: 6 })]);
+    return { access, student, enrolment, progress, lessons, recommendations };
   });
-  const { access, student, enrolment, progress, lessons } = data;
+  const { access, student, enrolment, progress, lessons, recommendations } = data;
   const canRun = roleAllows(access.role, "RUN_LESSON");
   const unlocked = progress?.objectives.filter((o) => o.unlock.unlocked && o.status !== "MASTERED") ?? [];
   const reviewable = progress?.objectives.filter((o) => o.status === "PROFICIENT" || o.status === "MASTERED") ?? [];
@@ -43,9 +45,14 @@ export default async function StudentSubjectPage(props: { params: Promise<{ stud
         }
         actions={
           progress ? (
-            <Link href={`/students/${student.id}/subjects/${subjectId}/next-lesson`} className="btn btn-primary">
-              Next lesson
-            </Link>
+            <>
+              <Link href={`/students/${student.id}/subjects/${subjectId}/progress`} className="btn btn-secondary">
+                Progress
+              </Link>
+              <Link href={`/students/${student.id}/subjects/${subjectId}/next-lesson`} className="btn btn-primary">
+                Next lesson
+              </Link>
+            </>
           ) : null
         }
       />
@@ -119,6 +126,11 @@ export default async function StudentSubjectPage(props: { params: Promise<{ stud
                   vocabulary={progress.version.errorTagVocabulary}
                   compact
                 />
+              </Section>
+            ) : null}
+            {recommendations.length ? (
+              <Section title="Recommended actions">
+                <Recommendations studentId={student.id} items={recommendations} canDecide={canRun} />
               </Section>
             ) : null}
             <Section title="Recent lessons">
