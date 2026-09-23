@@ -25,8 +25,9 @@ for gates, proofs, decisions taken and unresolved issues.
 | M4 Experience | 10, 11 | Done |
 | M5 AI | 12 | Done, not yet exercised against a live provider |
 
-Not deployed: no Neon or Vercel credentials were available. See the unresolved
-issues list.
+Deployed on Vercel (`fra1`) with Neon Postgres in Frankfurt; migrations and the
+Cambridge YLE catalogue load on every production build. Sign-in needs a Google
+OAuth client first. See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
 ## Quick start
 

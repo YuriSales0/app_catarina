@@ -87,15 +87,15 @@ Import your own curriculum: `pnpm curriculum:import curricula/english-starters.y
 
 ## Unresolved issues and open decisions
 
-1. **No cloud deployment was performed.** No Neon or Vercel credentials were
-   available in this session. The app is Vercel-ready (`next build` passes,
-   secrets are env-only); deploying needs a Neon project (EU region proposed),
-   `DATABASE_URL` and `DATABASE_MIGRATOR_URL`, `AUTH_SECRET`, the Google OAuth
-   client, and `pnpm db:migrate` run as a deploy step. CI already applies
-   migrations against a service container.
+1. **Deployed; sign-in still blocked on Google.** Vercel project `learning-os`
+   (functions in `fra1`) against Neon `learning_os` in `aws-eu-central-1`.
+   The production build applies migrations and loads the Starters and Movers
+   catalogue (47 objectives); the runtime role cannot UPDATE the ledger
+   (verified). Runbook, roles and trade-offs in `docs/DEPLOYMENT.md`.
 2. **Google OAuth is not configured** (no client id/secret). The code path is
    wired; the login page shows the Google button once `AUTH_GOOGLE_ID` and
-   `AUTH_GOOGLE_SECRET` are set.
+   `AUTH_GOOGLE_SECRET` are set. Until then production has no way to sign in
+   (the dev login is refused in production). Steps in `docs/DEPLOYMENT.md`.
 3. **The OpenAI adapter was not exercised against a live API** (no key). It is
    tested with a fake fetch for the contract, schema enforcement and every
    error path, and the proposal pipeline is tested with a scripted provider.
