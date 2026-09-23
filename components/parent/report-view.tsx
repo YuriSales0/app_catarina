@@ -1,10 +1,9 @@
 import Link from "next/link";
 import type { LessonReport } from "@/schemas/lesson-report";
-import type { LearningObjectiveRow } from "@/lib/db/schema";
 import { StatusBadge } from "@/components/ui";
 
 /** Three sections, three epistemic statuses, never collapsed into one note. */
-export function ReportView({ report, objectives, studentId, subjectId }: { report: LessonReport; objectives: LearningObjectiveRow[]; studentId: string; subjectId: string }) {
+export function ReportView({ report, objectives, studentId, subjectId }: { report: LessonReport; objectives: Array<{ id: string; title: string }>; studentId: string; subjectId: string }) {
   const title = (id: string) => objectives.find((o) => o.id === id)?.title ?? id;
   const o = report.observed;
   const i = report.inferred;
