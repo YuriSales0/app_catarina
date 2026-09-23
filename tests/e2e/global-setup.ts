@@ -4,5 +4,6 @@ import { execSync } from "node:child_process";
 export default function globalSetup() {
   const env: NodeJS.ProcessEnv = { ...process.env, NODE_ENV: "test" };
   execSync("pnpm db:migrate", { stdio: "inherit", env });
+  execSync("pnpm db:reset-test", { stdio: "inherit", env });
   execSync("pnpm db:seed", { stdio: "inherit", env });
 }

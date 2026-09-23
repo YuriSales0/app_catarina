@@ -17,7 +17,8 @@
     "db:verify": "tsx --conditions=react-server scripts/verify-schema.ts",
     "db:rebuild-state": "tsx --conditions=react-server scripts/rebuild-state.ts",
     "curriculum:import": "tsx --conditions=react-server scripts/import-curriculum.ts",
-    "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm db:verify"
+    "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm db:verify",
+    "db:reset-test": "tsx --conditions=react-server scripts/reset-test-db.ts"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.3",
