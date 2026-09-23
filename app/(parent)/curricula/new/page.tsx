@@ -1,5 +1,6 @@
 import { PageHeader } from "@/components/ui";
 import { StudioForm } from "@/components/forms/studio-form";
+import { getAIProvider } from "@/lib/ai";
 
 const TEMPLATE = `schema_version: curriculum-file.v1
 subject: english
@@ -32,7 +33,8 @@ units:
         error_tags: [NEG_AUX_MISSING]
 `;
 
-export default function NewCurriculumPage() {
+export default async function NewCurriculumPage() {
+  const provider = await getAIProvider();
   return (
     <>
       <PageHeader
@@ -40,7 +42,7 @@ export default function NewCurriculumPage() {
         crumbs={[{ href: "/curricula", label: "Curricula" }]}
         subtitle="Paste a curriculum in YAML, validate it, review the objectives, then save it as a draft or publish it. Whatever wrote the YAML, it enters through the same checks."
       />
-      <StudioForm template={TEMPLATE} />
+      <StudioForm template={TEMPLATE} aiEnabled={provider.id !== "null"} />
     </>
   );
 }

@@ -182,7 +182,7 @@ export async function recordLessonEvent(access: StudentAccess, input: RecordEven
   requireCapability(access, "RUN_LESSON");
   return dbh.transaction(async (tx) => {
     const lesson = await loadOwnedLesson(tx, access, input.lessonId, true);
-    const alwaysAllowed = input.eventType === "TEACHER_NOTE";
+    const alwaysAllowed = input.eventType === "TEACHER_NOTE" || input.eventType === "AI_PROPOSAL_RECEIVED" || input.eventType === "AI_PROPOSAL_REJECTED";
     if (!alwaysAllowed && lesson.status !== "IN_PROGRESS") throw new ConflictError("Lesson is not in progress.");
     if (input.activityId) {
       const act = await tx.query.lessonActivities.findFirst({ where: and(eq(s.lessonActivities.id, input.activityId), eq(s.lessonActivities.lessonId, lesson.id)) });

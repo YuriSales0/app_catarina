@@ -2,22 +2,23 @@ import Link from "next/link";
 import { requireActor } from "@/lib/auth/session";
 import { requireStudentAccess } from "@/lib/authorization/access";
 import { or404 } from "@/lib/actions/page";
-import { getStudent, listGuardians, listEnrolments } from "@/lib/students/service";
+import { getStudent, listGuardians, listEnrolments, getAiProcessingConsent } from "@/lib/students/service";
 import { listSubjects, listPublishedVersionsForSubject } from "@/lib/curriculum/service";
 import { PageHeader, DemoBadge, DemoNotice, Field, Section, ageYears, formatDate } from "@/components/ui";
 import { ActionForm } from "@/components/forms/action-form";
-import { updateStudentAction, addGuardianAction, revokeGuardianAction, enrolAction, deleteStudentAction } from "../actions";
+import { updateStudentAction, addGuardianAction, revokeGuardianAction, enrolAction, deleteStudentAction, setAiConsentAction } from "../actions";
 import { GUARDIAN_ROLES } from "@/lib/db/enums";
 
 export default async function StudentPage(props: { params: Promise<{ studentId: string }> }) {
   const { studentId } = await props.params;
   const actor = await requireActor();
   const access = await or404(() => requireStudentAccess(actor, studentId, "VIEW"));
-  const [student, guardians, enrolments, subjects] = await Promise.all([
+  const [student, guardians, enrolments, subjects, aiConsent] = await Promise.all([
     getStudent(access),
     listGuardians(access),
     listEnrolments(access),
     listSubjects(),
+    getAiProcessingConsent(access),
   ]);
   const versionsBySubject = new Map<string, Awaited<ReturnType<typeof listPublishedVersionsForSubject>>>();
   for (const sub of subjects) versionsBySubject.set(sub.id, await listPublishedVersionsForSubject(actor, sub.id));
@@ -210,6 +211,23 @@ export default async function StudentPage(props: { params: Promise<{ studentId: 
           ) : null}
         </Section>
 
+        {isOwner ? (
+          <Section title="AI teaching">
+            <p className="text-sm text-muted">
+              When enabled, an AI provider may receive a context pack for this child (given name, age, the current objective and recent attempts) to suggest activity content and grade open answers. It never decides what is learned or changes a status. Off by default.
+            </p>
+            <p className="text-sm">
+              Currently: <strong>{aiConsent ? "enabled" : "disabled"}</strong>
+            </p>
+            <form action={setAiConsentAction}>
+              <input type="hidden" name="studentId" value={student.id} />
+              <input type="hidden" name="enabled" value={aiConsent ? "false" : "true"} />
+              <button type="submit" className={`btn ${aiConsent ? "btn-danger" : "btn-secondary"}`}>
+                {aiConsent ? "Disable AI processing" : "Enable AI processing"}
+              </button>
+            </form>
+          </Section>
+        ) : null}
         {isOwner ? (
           <Section title="Data">
             <p className="text-sm text-muted">Export every record about this child, or remove the profile. Removal hides the child immediately; records are purged after a grace period.</p>

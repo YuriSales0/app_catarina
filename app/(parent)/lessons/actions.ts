@@ -114,3 +114,38 @@ export async function correctEvidenceAction(_prev: ActionState, formData: FormDa
     return toActionError(err);
   }
 }
+
+export async function requestAiContentAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const actor = await requireActor();
+  try {
+    const studentId = uuid.parse(formData.get("studentId"));
+    const lessonId = uuid.parse(formData.get("lessonId"));
+    const activityId = uuid.parse(formData.get("activityId"));
+    const access = await requireStudentAccess(actor, studentId, "RUN_LESSON");
+    const { getAIProvider } = await import("@/lib/ai");
+    const { requestActivityContent } = await import("@/lib/lessons/ai-proposals");
+    const result = await requestActivityContent(access, await getAIProvider(), lessonId, activityId);
+    revalidatePath(`/lessons/${lessonId}`);
+    if (!result.ok) return { ok: false, error: `The AI provider did not return usable content (${result.error.kind.toLowerCase().replace("_", " ")}).`, issues: result.error.issues };
+    return { ok: true, message: "Content proposed. It is a suggestion for how to teach, recorded in the event log." };
+  } catch (err) {
+    return toActionError(err);
+  }
+}
+
+export async function attachNarrativeAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const actor = await requireActor();
+  try {
+    const studentId = uuid.parse(formData.get("studentId"));
+    const lessonId = uuid.parse(formData.get("lessonId"));
+    const access = await requireStudentAccess(actor, studentId, "RUN_LESSON");
+    const { getAIProvider } = await import("@/lib/ai");
+    const { attachReportNarrative } = await import("@/lib/lessons/ai-proposals");
+    const result = await attachReportNarrative(access, await getAIProvider(), lessonId);
+    revalidatePath(`/lessons/${lessonId}/report`);
+    if (!result.ok) return { ok: false, error: `The AI provider did not return a usable narrative (${result.error.kind.toLowerCase().replace("_", " ")}).`, issues: result.error.issues };
+    return { ok: true, message: "Narrative added as a new report version. The observed section is unchanged." };
+  } catch (err) {
+    return toActionError(err);
+  }
+}

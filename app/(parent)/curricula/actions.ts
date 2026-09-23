@@ -5,13 +5,46 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireActor } from "@/lib/auth/session";
 import { importCurriculumForActor, previewCurriculumYaml, publishCurriculumVersion } from "@/lib/curriculum/service";
+import { generateCurriculumDraft } from "@/lib/curriculum/ai-draft";
+import { getAIProvider } from "@/lib/ai";
 import { toActionError } from "@/lib/actions/result";
 
 export type StudioPreview = { units: number; objectives: number; warnings: string[]; name: string; version: string; subject: string };
 export type StudioState =
   | null
-  | { ok: false; error: string; issues?: string[]; preview?: undefined }
-  | { ok: true; message?: string; preview?: StudioPreview };
+  | { ok: false; error: string; issues?: string[]; preview?: undefined; yaml?: undefined }
+  | { ok: true; message?: string; preview?: StudioPreview; yaml?: string; notes?: string | null };
+
+const draftRequest = z.object({
+  subject: z.string().trim().min(1).max(60),
+  goal: z.string().trim().min(1).max(2000),
+  age_years: z.coerce.number().int().min(2).max(120).nullable().default(null),
+  instruction_language: z.string().trim().min(2).max(12).default("pt-BR"),
+  target_language: z.string().trim().min(2).max(12).nullable().default(null),
+  units_wanted: z.coerce.number().int().min(1).max(12).default(4),
+});
+
+export async function generateDraftAction(_prev: StudioState, formData: FormData): Promise<StudioState> {
+  const actor = await requireActor();
+  try {
+    const raw = Object.fromEntries([...formData.entries()].filter(([k]) => !k.startsWith("$")).map(([k, v]) => [k, v === "" ? null : v]));
+    const request = draftRequest.parse({ ...raw, age_years: raw.age_years ?? null, target_language: raw.target_language ?? null });
+    const provider = await getAIProvider();
+    const outcome = await generateCurriculumDraft(actor, provider, { ...request, source_material: null });
+    if (!outcome.ok) return { ok: false, error: outcome.error, issues: outcome.issues };
+    const v = outcome.validation;
+    return {
+      ok: true,
+      yaml: outcome.yaml,
+      notes: outcome.notes,
+      message: v.ok ? "Draft generated and valid. Review every objective before publishing." : "Draft generated but not yet valid; fix the issues below.",
+      preview: v.ok ? { units: v.value.units.length, objectives: v.value.objectives.length, warnings: v.value.warnings, name: v.value.file.name, version: v.value.file.version, subject: v.value.file.subject } : undefined,
+      ...(v.ok ? {} : { issues: v.errors }),
+    } as StudioState;
+  } catch (err) {
+    return toActionError(err) as StudioState;
+  }
+}
 
 const yamlField = z.string().min(1, "Paste a curriculum in YAML.").max(400_000);
 

@@ -237,3 +237,33 @@ export async function setEnrolmentActive(access: StudentAccess, subjectId: strin
 }
 
 export { requireStudentAccess };
+
+/** AI processing is opt-in per student (section 27). Owner only; every change is audited. */
+export async function setAiProcessingConsent(access: StudentAccess, enabled: boolean, dbh: DbOrTx = db()) {
+  if (access.role !== "OWNER") throw new NotFoundError();
+  return dbh.transaction(async (tx) => {
+    const existing = await tx.query.consents.findFirst({ where: and(eq(s.consents.studentId, access.studentId), eq(s.consents.kind, "AI_PROCESSING")) });
+    if (enabled) {
+      if (existing && !existing.revokedAt) return;
+      if (existing) await tx.update(s.consents).set({ revokedAt: null, grantedAt: new Date(), policyVersion: CONSENT_POLICY_VERSION, userId: access.userId }).where(eq(s.consents.id, existing.id));
+      else await tx.insert(s.consents).values({ userId: access.userId, studentId: access.studentId, kind: "AI_PROCESSING", policyVersion: CONSENT_POLICY_VERSION });
+    } else if (existing && !existing.revokedAt) {
+      await tx.update(s.consents).set({ revokedAt: new Date() }).where(eq(s.consents.id, existing.id));
+    }
+    await writeAudit(tx, {
+      actorUserId: access.userId,
+      actorType: "USER",
+      action: enabled ? "consent.ai_processing_grant" : "consent.ai_processing_revoke",
+      resourceType: "student",
+      resourceId: access.studentId,
+      studentId: access.studentId,
+      result: "ALLOWED",
+      requestId: access.requestId,
+    });
+  });
+}
+
+export async function getAiProcessingConsent(access: StudentAccess, dbh: DbOrTx = db()): Promise<boolean> {
+  const row = await dbh.query.consents.findFirst({ where: and(eq(s.consents.studentId, access.studentId), eq(s.consents.kind, "AI_PROCESSING")) });
+  return Boolean(row && !row.revokedAt);
+}

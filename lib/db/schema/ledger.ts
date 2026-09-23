@@ -22,6 +22,7 @@ export type GraderRef = {
   promptVersion?: string;
   userId?: string;
   method?: string;
+  reason?: string;
 };
 
 /**

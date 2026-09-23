@@ -1,13 +1,20 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { previewCurriculumAction, importCurriculumAction, type StudioState } from "@/app/(parent)/curricula/actions";
+import { previewCurriculumAction, importCurriculumAction, generateDraftAction, type StudioState } from "@/app/(parent)/curricula/actions";
 
-export function StudioForm({ template }: { template: string }) {
+export function StudioForm({ template, aiEnabled }: { template: string; aiEnabled: boolean }) {
   const [yaml, setYaml] = useState(template);
   const [previewState, previewAction, previewing] = useActionState<StudioState, FormData>(previewCurriculumAction, null);
   const [importState, importAction, importing] = useActionState<StudioState, FormData>(importCurriculumAction, null);
-  const state = importState ?? previewState;
+  const [draftState, draftAction, drafting] = useActionState<StudioState, FormData>(generateDraftAction, null);
+  const state = importState ?? draftState ?? previewState;
+  // When a new draft arrives, load it into the editor once (state derived from props pattern).
+  const [appliedDraft, setAppliedDraft] = useState<string | null>(null);
+  if (draftState && draftState.ok && draftState.yaml && draftState.yaml !== appliedDraft) {
+    setAppliedDraft(draftState.yaml);
+    setYaml(draftState.yaml);
+  }
 
   return (
     <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
@@ -40,6 +47,22 @@ export function StudioForm({ template }: { template: string }) {
         </div>
       </form>
       <aside className="space-y-3">
+        <form action={draftAction} className="card space-y-2">
+          <p className="text-sm font-medium">Generate a draft with AI</p>
+          <p className="text-xs text-muted">{aiEnabled ? "The draft lands in the editor and goes through the same checks as a pasted file. You review it before publishing." : "No AI provider is configured (AI_PROVIDER=null). Paste or write YAML instead."}</p>
+          <input name="subject" className="input" placeholder="Subject slug, e.g. science" required maxLength={60} />
+          <textarea name="goal" className="input" rows={3} placeholder="What should the child learn? e.g. the solar system for a 9-year-old, in Portuguese" required maxLength={2000} />
+          <div className="grid grid-cols-3 gap-2">
+            <input name="age_years" type="number" min={2} max={120} className="input" placeholder="Age" />
+            <input name="instruction_language" className="input" defaultValue="pt-BR" placeholder="Instruction language" />
+            <input name="target_language" className="input" placeholder="Target (e.g. en)" />
+          </div>
+          <input name="units_wanted" type="number" min={1} max={12} defaultValue={4} className="input" aria-label="Units wanted" />
+          <button type="submit" disabled={!aiEnabled || drafting} className="btn btn-secondary">
+            {drafting ? "Generating…" : "Generate draft"}
+          </button>
+          {draftState && draftState.ok && draftState.notes ? <p className="text-xs text-muted">Assumptions: {draftState.notes}</p> : null}
+        </form>
         {state && !state.ok ? (
           <div role="alert" className="rounded-md border border-danger/40 bg-danger/10 p-3 text-sm">
             <p className="font-medium">{state.error}</p>

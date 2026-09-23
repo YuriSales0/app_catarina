@@ -9,6 +9,11 @@ import { resolveLessonStudent } from "@/lib/lessons/resolve";
 import { PageHeader, Section, formatDateTime } from "@/components/ui";
 import { lessonReportSchema } from "@/schemas/lesson-report";
 import { ReportView } from "@/components/parent/report-view";
+import { ActionForm } from "@/components/forms/action-form";
+import { attachNarrativeAction } from "../../actions";
+import { getAIProvider } from "@/lib/ai";
+import { hasAiConsent } from "@/lib/lessons/ai-proposals";
+import { roleAllows } from "@/lib/authorization/permissions";
 
 export default async function LessonReportPage(props: { params: Promise<{ lessonId: string }> }) {
   const { lessonId } = await props.params;
@@ -18,9 +23,11 @@ export default async function LessonReportPage(props: { params: Promise<{ lesson
     const studentId = await resolveLessonStudent(lessonId);
     const access = await requireStudentAccess(actor, studentId, "VIEW");
     const [detail, student] = await Promise.all([getLesson(access, lessonId), getStudent(access)]);
-    return { detail, student };
+    return { access, detail, student };
   });
-  const { detail, student } = data;
+  const { access, detail, student } = data;
+  const [provider, aiConsent] = await Promise.all([getAIProvider(), hasAiConsent(student.id)]);
+  const canNarrate = provider.id !== "null" && aiConsent && roleAllows(access.role, "RUN_LESSON") && detail.report?.generatedBy === "SYSTEM";
   const { lesson, subject, report, objectives } = detail;
   const parsed = report ? lessonReportSchema.safeParse(report.payload) : null;
 
@@ -45,7 +52,18 @@ export default async function LessonReportPage(props: { params: Promise<{ lesson
           </p>
         </Section>
       ) : (
-        <ReportView report={parsed.data} objectives={objectives} studentId={student.id} subjectId={subject.id} />
+        <>
+          <ReportView report={parsed.data} objectives={objectives} studentId={student.id} subjectId={subject.id} />
+          {canNarrate ? (
+            <div className="mt-6 max-w-md">
+              <ActionForm action={attachNarrativeAction} submitLabel="Add an AI narrative to the inferred and recommended sections" variant="secondary">
+                <input type="hidden" name="studentId" value={student.id} />
+                <input type="hidden" name="lessonId" value={lesson.id} />
+                <p className="text-xs text-muted">The observed section stays exactly as computed. Anything the model cannot ground in this lesson&apos;s evidence is dropped and listed.</p>
+              </ActionForm>
+            </div>
+          ) : null}
+        </>
       )}
     </>
   );

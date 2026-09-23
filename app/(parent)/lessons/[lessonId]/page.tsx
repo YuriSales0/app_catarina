@@ -8,7 +8,10 @@ import { resolveLessonStudent } from "@/lib/lessons/resolve";
 import { PageHeader, Section, Field, formatDateTime, StatusBadge } from "@/components/ui";
 import { ActionForm } from "@/components/forms/action-form";
 import { EvidenceForm } from "@/components/parent/evidence-form";
-import { startLessonAction, cancelLessonAction, completeLessonAction, teacherNoteAction } from "../actions";
+import { startLessonAction, cancelLessonAction, completeLessonAction, teacherNoteAction, requestAiContentAction } from "../actions";
+import { getAIProvider } from "@/lib/ai";
+import { hasAiConsent } from "@/lib/lessons/ai-proposals";
+import type { ActivityProposal } from "@/schemas/ai-proposals";
 import { roleAllows } from "@/lib/authorization/permissions";
 import { z } from "zod";
 import type { NextLessonPlan } from "@/schemas/lesson-plan";
@@ -25,6 +28,12 @@ export default async function LessonPage(props: { params: Promise<{ lessonId: st
   });
   const { access, detail, student } = data;
   const { lesson, activities, events, evidence, report, subject, version, primaryObjective, objectives } = detail;
+  const [provider, aiConsent] = await Promise.all([getAIProvider(), hasAiConsent(student.id)]);
+  const aiAvailable = provider.id !== "null" && aiConsent;
+  const proposalsFor = (activityId: string) =>
+    events
+      .filter((e) => e.activityId === activityId && e.eventType === "AI_PROPOSAL_RECEIVED" && (e.payload as { kind?: string }).kind === "activity")
+      .map((e) => (e.payload as { proposal: ActivityProposal }).proposal);
   const canRun = roleAllows(access.role, "RUN_LESSON");
   const plan = lesson.planPayload as unknown as NextLessonPlan;
   const objectiveById = new Map(objectives.map((o) => [o.id, o]));
@@ -73,6 +82,11 @@ export default async function LessonPage(props: { params: Promise<{ lessonId: st
             <Link href={`/lessons/${lesson.id}/context`} className="btn btn-secondary">
               Context pack
             </Link>
+            {lesson.status !== "COMPLETED" && lesson.status !== "CANCELLED" && canRun ? (
+              <Link href={`/play/${lesson.id}`} className="btn btn-secondary">
+                Child mode
+              </Link>
+            ) : null}
           </>
         }
       />
@@ -120,6 +134,28 @@ export default async function LessonPage(props: { params: Promise<{ lessonId: st
                         </li>
                       ))}
                     </ul>
+                  ) : null}
+                  {proposalsFor(a.id).map((p, i) => (
+                    <div key={i} className="mt-2 rounded-md border border-primary/40 bg-accent p-3 text-sm">
+                      <p className="text-xs uppercase text-muted">AI suggestion (how to teach, not what was learned)</p>
+                      <p className="font-medium">{p.title}</p>
+                      <p>{p.child_facing_intro}</p>
+                      <ol className="mt-1 list-decimal pl-5">
+                        {p.items.map((it, j) => (
+                          <li key={j}>
+                            {it.prompt}
+                            {it.expected_response ? <span className="text-muted"> → {it.expected_response}</span> : null}
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  ))}
+                  {lesson.status === "IN_PROGRESS" && canRun && obj && aiAvailable && a.activityType !== "REVIEW" ? (
+                    <ActionForm action={requestAiContentAction} submitLabel="Ask the AI for content" variant="secondary" className="mt-2 space-y-2">
+                      <input type="hidden" name="studentId" value={student.id} />
+                      <input type="hidden" name="lessonId" value={lesson.id} />
+                      <input type="hidden" name="activityId" value={a.id} />
+                    </ActionForm>
                   ) : null}
                   {lesson.status === "IN_PROGRESS" && canRun && obj && a.activityType !== "EXPLANATION" ? (
                     <details className="mt-3" open={rows.length < (a.expectedEvidenceCount ?? 1)}>

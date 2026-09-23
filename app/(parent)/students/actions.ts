@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { requireActor } from "@/lib/auth/session";
 import { requireStudentAccess } from "@/lib/authorization/access";
 import { createStudentSchema, updateStudentSchema, addGuardianSchema, enrolStudentSchema, studentIdParam } from "@/schemas/students";
-import { createStudent, updateStudent, addGuardianByEmail, revokeGuardian, enrolStudentInSubject, deleteStudent } from "@/lib/students/service";
+import { createStudent, updateStudent, addGuardianByEmail, revokeGuardian, enrolStudentInSubject, deleteStudent, setAiProcessingConsent } from "@/lib/students/service";
 import { toActionError, formToObject, type ActionState } from "@/lib/actions/result";
 
 export async function createStudentAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -81,4 +81,13 @@ export async function deleteStudentAction(formData: FormData): Promise<void> {
   await deleteStudent(access);
   revalidatePath("/students");
   redirect("/students");
+}
+
+export async function setAiConsentAction(formData: FormData): Promise<void> {
+  const actor = await requireActor();
+  const studentId = studentIdParam.parse(formData.get("studentId"));
+  const enabled = formData.get("enabled") === "true";
+  const access = await requireStudentAccess(actor, studentId, "MANAGE_GUARDIANS");
+  await setAiProcessingConsent(access, enabled);
+  revalidatePath(`/students/${studentId}`);
 }

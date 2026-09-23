@@ -25,10 +25,13 @@ describe("module boundaries", () => {
       }
     }
   });
-  it("the learning engine imports nothing from lib/ai", () => {
+  it("the learning engine imports nothing from lib/ai; the only consumer of proposals is lib/lessons/ai-proposals.ts", () => {
+    const seam = "lib/lessons/ai-proposals.ts";
     for (const f of walk("lib/learning").concat(walk("lib/lessons"), walk("lib/context"))) {
+      if (f === seam) continue;
       for (const i of imports(f)) expect(i, `${f} imports ${i}`).not.toMatch(/^@\/lib\/ai/);
     }
+    for (const i of imports(seam)) expect(i, `${seam} imports ${i}`).not.toMatch(/^@\/lib\/ai\/(openai|index)/);
   });
   it("components never import the database or env", () => {
     for (const f of walk("components")) {
