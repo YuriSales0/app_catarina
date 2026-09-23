@@ -1,9 +1,11 @@
 # Learning OS — Architecture Proposal
 
-**Version 0.1 · Phase 0 deliverable · Status: awaiting review and approval**
+**Version 0.1 · Phase 0 deliverable · Status: approved and implemented; see [`../IMPLEMENTATION-STATUS.md`](../IMPLEMENTATION-STATUS.md)**
 
 This proposal answers the fourteen items required by section 41 of the product
-brief before any implementation begins. Nothing here has been built yet.
+brief. It was approved and then implemented phase by phase; where the code
+diverges from a document, the code and its tests are current and the divergence
+is listed in the implementation status.
 
 ## Documents
 

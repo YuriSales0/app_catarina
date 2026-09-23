@@ -14,26 +14,27 @@ Programming or any other structured learning domain without changes to the core.
 
 ## Status
 
-| Milestone | Phase | Scope | State |
-| --- | --- | --- | --- |
-| — | 0 | Architecture analysis | Proposal complete, awaiting approval |
-| M1 Foundation | 1 | Project initialization | Not started |
-| M1 Foundation | 2 | Database schema + migrations | Not started |
-| M1 Foundation | 3 | Authentication + authorization | Not started |
-| M2 First real lesson | 4 | Students, subjects, curricula | Not started |
-| M2 First real lesson | 5 | Objective graph + knowledge state | Not started |
-| M2 First real lesson | 6 | Evidence, lessons, lesson events | Not started |
-| M3 Intelligence | 8 | Deterministic Next Lesson Engine | Not started |
-| M3 Intelligence | 7 | Learning Snapshot (after 8) | Not started |
-| M3 Intelligence | 9 | Context Pack | Not started |
-| M4 Experience | 10 | Parent dashboard | Not started |
-| M4 Experience | 11 | Lesson experience | Not started |
-| M5 AI | 12 | AI integration | Not started |
+All twelve phases are implemented. See [`docs/IMPLEMENTATION-STATUS.md`](docs/IMPLEMENTATION-STATUS.md)
+for gates, proofs, decisions taken and unresolved issues.
 
-No implementation code exists yet. Per the development rule in the product
-brief, Phase 1 does not begin until the architecture proposal is reviewed and
-approved.
+| Milestone | Phases | State |
+| --- | --- | --- |
+| M1 Foundation | 1, 2, 3 | Done |
+| M2 First real lesson | 4, 5, 6 | Done |
+| M3 Intelligence | 8, 7, 9 | Done |
+| M4 Experience | 10, 11 | Done |
+| M5 AI | 12 | Done, not yet exercised against a live provider |
 
-## Read the proposal
+Not deployed: no Neon or Vercel credentials were available. See the unresolved
+issues list.
+
+## Quick start
+
+```bash
+cp .env.example .env.local
+pnpm install && pnpm db:migrate && pnpm db:seed && pnpm dev
+```
+
+## Architecture
 
 Start at [`docs/architecture/README.md`](docs/architecture/README.md).
