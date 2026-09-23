@@ -13,6 +13,7 @@ import { buildLessonStructure } from "./structure";
 import { nextLessonPlanSchema, PLAN_VERSION, type NextLessonPlan } from "@/schemas/lesson-plan";
 import type { CreateManualLessonInput, RecordEvidenceInput, RecordEventInput, CompleteLessonInput, CorrectEvidenceInput } from "@/schemas/lessons";
 import { generateSystemReport } from "./report";
+import { generateSnapshot } from "@/lib/snapshots/generate";
 
 export const MANUAL_ENGINE_VERSION = "manual.v1";
 
@@ -353,6 +354,7 @@ export async function completeLesson(access: StudentAccess, input: CompleteLesso
       .returning();
     await appendEvent(tx, access, lesson.id, "LESSON_COMPLETED", { by_user_id: access.userId, actual_duration_minutes: actual });
     const report = await generateSystemReport(tx, access, updated);
+    await generateSnapshot(access, { scope: "STUDENT", trigger: "LESSON_COMPLETED", now: completedAt }, tx);
     metric("lesson_completed", { studentId: access.studentId, lessonId: lesson.id });
     return { lesson: updated, report };
   });

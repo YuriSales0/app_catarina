@@ -7,6 +7,7 @@ import { NotFoundError, ValidationError, ConflictError } from "@/lib/authorizati
 import type { Actor } from "@/lib/auth/session";
 import { writeAudit } from "@/lib/audit/write";
 import type { CreateStudentInput, UpdateStudentInput, AddGuardianInput, EnrolStudentInput } from "@/schemas/students";
+import { generateSnapshot } from "@/lib/snapshots/generate";
 
 export const CONSENT_POLICY_VERSION = "privacy.v1";
 
@@ -197,6 +198,10 @@ export async function enrolStudentInSubject(access: StudentAccess, input: EnrolS
     const existing = await tx.query.studentSubjects.findFirst({
       where: and(eq(s.studentSubjects.studentId, access.studentId), eq(s.studentSubjects.subjectId, input.subjectId)),
     });
+    if (existing?.curriculumVersionId && existing.curriculumVersionId !== input.curriculumVersionId) {
+      // Moving to another version is reversible in evidence terms only if the state before is frozen.
+      await generateSnapshot(access, { scope: "STUDENT", trigger: "PRE_MIGRATION" }, tx);
+    }
     const values = {
       curriculumVersionId: input.curriculumVersionId,
       active: true,

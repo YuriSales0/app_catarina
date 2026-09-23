@@ -102,11 +102,4 @@ export function formatDateTime(d: Date | string | null | undefined, tz?: string)
   return new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: tz }).format(date);
 }
 
-export function ageYears(dob: string | null | undefined, now = new Date()): number | null {
-  if (!dob) return null;
-  const d = new Date(dob);
-  let age = now.getUTCFullYear() - d.getUTCFullYear();
-  const m = now.getUTCMonth() - d.getUTCMonth();
-  if (m < 0 || (m === 0 && now.getUTCDate() < d.getUTCDate())) age--;
-  return age;
-}
+export { ageYears } from "@/lib/students/age";

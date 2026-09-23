@@ -39,7 +39,14 @@ export default async function StudentPage(props: { params: Promise<{ studentId: 
       <DemoNotice show={student.isDemo} />
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Section title="Subjects">
+        <Section
+          title="Subjects"
+          aside={
+            <Link href={`/students/${student.id}/snapshots`} className="text-sm underline">
+              Snapshots
+            </Link>
+          }
+        >
           {enrolments.length === 0 ? <p className="text-sm text-muted">Not enrolled in any subject yet.</p> : null}
           <ul className="space-y-2">
             {enrolments.map((e) => (
