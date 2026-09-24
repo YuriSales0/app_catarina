@@ -38,9 +38,10 @@ export default async function NewCurriculumPage() {
   return (
     <>
       <PageHeader
-        title="Curriculum Studio"
-        crumbs={[{ href: "/curricula", label: "Curricula" }]}
-        subtitle="Paste a curriculum in YAML, validate it, review the objectives, then save it as a draft or publish it. Whatever wrote the YAML, it enters through the same checks."
+        eyebrow="Currículos"
+        title="Estúdio de currículo"
+        crumbs={[{ href: "/curricula", label: "Currículos" }]}
+        subtitle="Cole um currículo em YAML, valide, revise os objetivos e salve como rascunho ou publique. Quem quer que tenha escrito o YAML, ele passa pelas mesmas verificações."
       />
       <StudioForm template={TEMPLATE} aiEnabled={provider.id !== "null"} />
     </>

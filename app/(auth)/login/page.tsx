@@ -3,14 +3,16 @@ import { AuthError } from "next-auth";
 import { signIn } from "@/lib/auth/config";
 import { getActor } from "@/lib/auth/session";
 import { getSignInOptions } from "@/lib/auth/options";
-import { copy } from "@/lib/copy/en";
+import Link from "next/link";
+import { copy } from "@/lib/copy/pt";
+import { Logo, Lumi } from "@/components/brand/lumi";
 
 export default async function LoginPage(props: { searchParams: Promise<{ callbackUrl?: string; error?: string }> }) {
   const actor = await getActor();
   if (actor) redirect("/dashboard");
   const { callbackUrl, error } = await props.searchParams;
   const options = getSignInOptions();
-  const target = callbackUrl && callbackUrl.startsWith("/") ? callbackUrl : "/dashboard";
+  const target = callbackUrl && callbackUrl.startsWith("/") && !callbackUrl.startsWith("//") ? callbackUrl : "/dashboard";
 
   async function googleSignIn() {
     "use server";
@@ -41,70 +43,90 @@ export default async function LoginPage(props: { searchParams: Promise<{ callbac
     }
   }
 
+  const anyMethod = options.google || options.devLogin || options.accessCode;
+
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center gap-8 px-4 py-12">
-      <header className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">{copy.appName}</h1>
-        <p className="text-muted">{copy.tagline}</p>
-      </header>
+    <main className="grid min-h-screen lg:grid-cols-2">
+      <aside className="relative hidden flex-col justify-between overflow-hidden bg-lavender p-12 lg:flex">
+        <Link href="/" className="w-fit rounded-full">
+          <Logo />
+        </Link>
+        <div aria-hidden className="absolute -right-20 -bottom-24 h-96 w-96 rounded-full bg-peach/70 blur-3xl" />
+        <div className="relative">
+          <Lumi size={150} mood="cheer" className="animate-float" />
+          <p className="mt-8 max-w-sm font-display text-3xl leading-tight font-semibold">&ldquo;Hello! Vamos aprender inglês juntos?&rdquo;</p>
+          <p className="mt-3 max-w-sm text-lavender-ink">O Lumi guia a criança. Você acompanha cada passo.</p>
+        </div>
+        <p className="relative text-xs text-lavender-ink">{copy.tagline}</p>
+      </aside>
 
-      {error ? (
-        <p role="alert" className="rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-sm">
-          Sign-in failed ({error}). Please try again.
-        </p>
-      ) : null}
+      <div className="flex flex-col items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md">
+          <Link href="/" className="mb-10 inline-flex rounded-full lg:hidden">
+            <Logo />
+          </Link>
+          <h1 className="font-display text-3xl font-semibold tracking-tight">{copy.login.title}</h1>
+          <p className="mt-2 text-muted">{copy.login.subtitle}</p>
 
-      <section aria-labelledby="login-title" className="space-y-6 rounded-lg border border-border bg-surface p-6">
-        <h2 id="login-title" className="text-lg font-medium">
-          {copy.login.title}
-        </h2>
+          {error ? (
+            <p role="alert" className="mt-6 rounded-2xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm">
+              {copy.login.failed}
+            </p>
+          ) : null}
 
-        {options.google ? (
-          <form action={googleSignIn}>
-            <button type="submit" className="btn btn-primary w-full">
-              {copy.login.google}
-            </button>
-          </form>
-        ) : null}
+          <section aria-label="Formas de entrar" className="card mt-8 space-y-6">
+            {options.google ? (
+              <form action={googleSignIn}>
+                <button type="submit" className="btn btn-primary btn-lg w-full">
+                  {copy.login.google}
+                </button>
+              </form>
+            ) : null}
 
-        {options.devLogin ? (
-          <form action={devSignIn} className="space-y-3 border-t border-border pt-6">
-            <h3 className="text-sm font-medium">{copy.login.devTitle}</h3>
-            <p className="text-xs text-muted">{copy.login.devHint}</p>
-            <label className="block text-sm">
-              <span className="mb-1 block">{copy.login.email}</span>
-              <input name="email" type="email" required autoComplete="email" className="input" placeholder="parent@example.com" />
-            </label>
-            <label className="block text-sm">
-              <span className="mb-1 block">{copy.login.name}</span>
-              <input name="name" type="text" autoComplete="name" className="input" placeholder="Your name" />
-            </label>
-            <button type="submit" className="btn btn-secondary w-full">
-              {copy.login.submit}
-            </button>
-          </form>
-        ) : null}
+            {options.accessCode ? (
+              <form action={accessCodeSignIn} className="space-y-4">
+                <div>
+                  <h2 className="font-bold">{copy.login.accessTitle}</h2>
+                  <p className="text-xs text-muted">{copy.login.accessHint}</p>
+                </div>
+                <label className="block text-sm">
+                  <span className="mb-1.5 block font-bold">{copy.login.email}</span>
+                  <input name="email" type="email" required autoComplete="email" className="input" />
+                </label>
+                <label className="block text-sm">
+                  <span className="mb-1.5 block font-bold">{copy.login.accessCode}</span>
+                  <input name="code" type="password" required autoComplete="current-password" className="input" />
+                </label>
+                <button type="submit" className="btn btn-primary w-full">
+                  {copy.login.submit}
+                </button>
+              </form>
+            ) : null}
 
-        {options.accessCode ? (
-          <form action={accessCodeSignIn} className="space-y-3">
-            <h3 className="text-sm font-medium">{copy.login.accessTitle}</h3>
-            <p className="text-xs text-muted">{copy.login.accessHint}</p>
-            <label className="block text-sm">
-              <span className="mb-1 block">{copy.login.email}</span>
-              <input name="email" type="email" required autoComplete="email" className="input" />
-            </label>
-            <label className="block text-sm">
-              <span className="mb-1 block">{copy.login.accessCode}</span>
-              <input name="code" type="password" required autoComplete="current-password" className="input" />
-            </label>
-            <button type="submit" className="btn btn-secondary w-full">
-              {copy.login.submit}
-            </button>
-          </form>
-        ) : null}
+            {options.devLogin ? (
+              <form action={devSignIn} className="space-y-4">
+                <div>
+                  <h2 className="font-bold">{copy.login.devTitle}</h2>
+                  <p className="text-xs text-muted">{copy.login.devHint}</p>
+                </div>
+                <label className="block text-sm">
+                  <span className="mb-1.5 block font-bold">{copy.login.email}</span>
+                  <input name="email" type="email" required autoComplete="email" className="input" placeholder="familia@exemplo.com" />
+                </label>
+                <label className="block text-sm">
+                  <span className="mb-1.5 block font-bold">{copy.login.name}</span>
+                  <input name="name" type="text" autoComplete="name" className="input" placeholder="Seu nome" />
+                </label>
+                <button type="submit" className="btn btn-secondary w-full">
+                  {copy.login.submit}
+                </button>
+              </form>
+            ) : null}
 
-        {!options.google && !options.devLogin && !options.accessCode ?<p className="text-sm text-danger">{copy.login.noProviders}</p> : null}
-      </section>
+            {!anyMethod ? <p className="text-sm text-danger">{copy.login.noProviders}</p> : null}
+          </section>
+        </div>
+      </div>
     </main>
   );
 }

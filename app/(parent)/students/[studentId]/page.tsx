@@ -4,8 +4,12 @@ import { requireStudentAccess } from "@/lib/authorization/access";
 import { or404 } from "@/lib/actions/page";
 import { getStudent, listGuardians, listEnrolments, getAiProcessingConsent } from "@/lib/students/service";
 import { listSubjects, listPublishedVersionsForSubject } from "@/lib/curriculum/service";
-import { PageHeader, DemoBadge, DemoNotice, Field, Section, ageYears, formatDate } from "@/components/ui";
+import { PageHeader, DemoBadge, DemoNotice, Field, Section, Details, ageYears, formatDate } from "@/components/ui";
 import { ActionForm } from "@/components/forms/action-form";
+import { AvatarPicker, LevelPicker, MinutesPicker } from "@/components/forms/pickers";
+import { Avatar, avatarOf } from "@/components/brand/avatar";
+import { describeLevel, suggestedLevelKey } from "@/lib/curriculum/levels";
+import { TONE, ROLE } from "@/lib/copy/pt";
 import { updateStudentAction, addGuardianAction, revokeGuardianAction, enrolAction, deleteStudentAction, setAiConsentAction } from "../actions";
 import { GUARDIAN_ROLES } from "@/lib/db/enums";
 
@@ -20,167 +24,135 @@ export default async function StudentPage(props: { params: Promise<{ studentId: 
     listSubjects(),
     getAiProcessingConsent(access),
   ]);
-  const versionsBySubject = new Map<string, Awaited<ReturnType<typeof listPublishedVersionsForSubject>>>();
-  for (const sub of subjects) versionsBySubject.set(sub.id, await listPublishedVersionsForSubject(actor, sub.id));
+  const versions = (await Promise.all(subjects.map(async (sub) => (await listPublishedVersionsForSubject(actor, sub.id)).map((v) => ({ ...v, subjectName: sub.name }))))).flat();
   const canEdit = access.role === "OWNER" || access.role === "GUARDIAN";
   const isOwner = access.role === "OWNER";
   const age = ageYears(student.dateOfBirth);
+  const avatar = avatarOf(student);
 
   return (
     <>
       <PageHeader
+        leading={<Avatar choice={avatar} size="lg" />}
         title={student.name}
-        crumbs={[{ href: "/students", label: "Students" }]}
+        crumbs={[{ href: "/students", label: "Crianças" }]}
         subtitle={
-          <>
-            {age !== null ? `Age ${age}` : "Age not set"} · timezone {student.timezone} <DemoBadge show={student.isDemo} />
-          </>
+          <span className="flex flex-wrap items-center gap-2">
+            {age !== null ? `${age} anos` : "Idade não informada"} · fuso {student.timezone} <DemoBadge show={student.isDemo} />
+          </span>
         }
       />
       <DemoNotice show={student.isDemo} />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Section
-          title="Subjects"
+          title="Trilhas"
           aside={
-            <Link href={`/students/${student.id}/snapshots`} className="text-sm underline">
-              Snapshots
+            <Link href={`/students/${student.id}/snapshots`} className="btn btn-ghost btn-sm">
+              📸 Retratos
             </Link>
           }
         >
-          {enrolments.length === 0 ? <p className="text-sm text-muted">Not enrolled in any subject yet.</p> : null}
-          <ul className="space-y-2">
-            {enrolments.map((e) => (
-              <li key={e.id} className="rounded-md border border-border p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <Link href={`/students/${student.id}/subjects/${e.subjectId}`} className="font-medium hover:underline">
-                    {e.subjectName}
+          {enrolments.length === 0 ? <p className="text-sm text-muted">Nenhuma trilha ainda. Escolha um nível abaixo.</p> : null}
+          <ul className="space-y-3">
+            {enrolments.map((e) => {
+              const level = e.curriculumName ? describeLevel(e.curriculumName) : null;
+              return (
+                <li key={e.id}>
+                  <Link href={`/students/${student.id}/subjects/${e.subjectId}`} className="flex items-center gap-4 rounded-2xl bg-surface-2 p-4 transition hover:bg-primary-soft">
+                    <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-2xl ${level ? TONE[level.tone].bg : "bg-surface"}`} aria-hidden>
+                      {level?.emoji ?? "📘"}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="flex flex-wrap items-center gap-2 font-bold">
+                        {e.subjectName}
+                        {level ? <span className="text-muted">· {level.title}</span> : null}
+                        {level?.cefr ? <span className={`badge border-transparent ${TONE[level.tone].bg} ${TONE[level.tone].ink}`}>{level.cefr}</span> : null}
+                        <DemoBadge show={Boolean(e.curriculumIsDemo)} />
+                      </span>
+                      <span className="block text-xs text-muted">
+                        {e.curriculumName ?? "Nível não escolhido"} · aulas de {e.plannedLessonMinutes} min{e.active ? "" : " · pausada"}
+                      </span>
+                    </span>
+                    <span aria-hidden className="text-muted">
+                      ›
+                    </span>
                   </Link>
-                  <span className="text-xs text-muted">{e.active ? "active" : "paused"}</span>
-                </div>
-                <p className="text-sm text-muted">
-                  {e.curriculumName ? (
-                    <>
-                      {e.curriculumName} v{e.curriculumVersion} <DemoBadge show={Boolean(e.curriculumIsDemo)} />
-                    </>
-                  ) : (
-                    "No curriculum chosen"
-                  )}
-                  {" · "}taught in {e.instructionLanguage}
-                  {e.targetLanguage ? `, target ${e.targetLanguage}` : ""} · {e.plannedLessonMinutes} min lessons
-                </p>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
           {canEdit ? (
-            <details className="mt-2">
-              <summary className="cursor-pointer text-sm font-medium">Enrol in a subject or change curriculum</summary>
-              <div className="mt-3">
-                <ActionForm action={enrolAction} submitLabel="Save enrolment" variant="secondary">
-                  <input type="hidden" name="studentId" value={student.id} />
-                  <Field label="Subject">
-                    <select name="subjectId" className="input" required defaultValue="">
-                      <option value="" disabled>
-                        Choose a subject
-                      </option>
-                      {subjects.map((sub) => (
-                        <option key={sub.id} value={sub.id}>
-                          {sub.name}
-                        </option>
-                      ))}
-                    </select>
-                  </Field>
-                  <Field label="Published curriculum" hint="The list shows every published curriculum; pick one for the subject chosen above.">
-                    <select name="curriculumVersionId" className="input" required defaultValue="">
-                      <option value="" disabled>
-                        Choose a curriculum
-                      </option>
-                      {subjects.flatMap((sub) =>
-                        (versionsBySubject.get(sub.id) ?? []).map((v) => (
-                          <option key={v.versionId} value={v.versionId}>
-                            {sub.name}: {v.curriculumName} v{v.version}
-                            {v.isDemo ? " (DEMO)" : ""}
-                          </option>
-                        )),
-                      )}
-                    </select>
-                  </Field>
-                  <div className="grid grid-cols-2 gap-3">
-                    <Field label="Instruction language">
-                      <input name="instructionLanguage" className="input" defaultValue="pt-BR" />
-                    </Field>
-                    <Field label="Target language" hint="Language subjects only, e.g. en.">
-                      <input name="targetLanguage" className="input" placeholder="en" />
-                    </Field>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <Field label="Lesson length (minutes)">
-                      <input name="plannedLessonMinutes" type="number" min={5} max={90} defaultValue={20} className="input" />
-                    </Field>
-                    <Field label="Target level" hint="Optional, e.g. Pre A1.">
-                      <input name="targetLevel" className="input" />
-                    </Field>
-                  </div>
-                  <Field label="Goal" hint="Optional, in your own words.">
-                    <input name="goal" className="input" maxLength={500} />
-                  </Field>
-                </ActionForm>
-              </div>
-            </details>
+            <Details summary={enrolments.length ? "Mudar de nível ou começar outra trilha" : "Escolher nível"}>
+              <ActionForm action={enrolAction} submitLabel="Salvar trilha" variant="primary" className="space-y-5">
+                <input type="hidden" name="studentId" value={student.id} />
+                <LevelPicker
+                  options={versions.map((v) => ({ versionId: v.versionId, curriculumName: v.curriculumName, version: v.version, isDemo: v.isDemo }))}
+                  suggested={suggestedLevelKey(age)}
+                  current={enrolments[0]?.curriculumVersionId ?? null}
+                />
+                <MinutesPicker value={enrolments[0]?.plannedLessonMinutes ?? 20} />
+                <Field label="Objetivo da família" hint="Opcional, com suas palavras.">
+                  <input name="goal" className="input" maxLength={500} defaultValue={enrolments[0]?.goal ?? ""} />
+                </Field>
+                <p className="text-xs text-muted">Ao mudar de nível, guardamos um retrato do progresso antes da troca.</p>
+              </ActionForm>
+            </Details>
           ) : null}
         </Section>
 
-        <Section title="Profile">
-          <dl className="grid grid-cols-2 gap-2 text-sm">
-            <dt className="text-muted">Date of birth</dt>
+        <Section title="Perfil">
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+            <dt className="text-muted">Nascimento</dt>
             <dd>{formatDate(student.dateOfBirth)}</dd>
-            <dt className="text-muted">School year</dt>
+            <dt className="text-muted">Ano escolar</dt>
             <dd>{student.schoolYear ?? "—"}</dd>
-            <dt className="text-muted">Education system</dt>
+            <dt className="text-muted">Sistema de ensino</dt>
             <dd>{student.educationSystem ?? "—"}</dd>
-            <dt className="text-muted">Record created</dt>
+            <dt className="text-muted">Cadastro</dt>
             <dd>{formatDate(student.createdAt)}</dd>
           </dl>
           {canEdit ? (
-            <details className="mt-2">
-              <summary className="cursor-pointer text-sm font-medium">Edit profile</summary>
-              <div className="mt-3">
-                <ActionForm action={updateStudentAction} submitLabel="Save" variant="secondary">
-                  <input type="hidden" name="studentId" value={student.id} />
-                  <Field label="Given name">
-                    <input name="name" defaultValue={student.name} className="input" required maxLength={60} />
-                  </Field>
-                  <Field label="Date of birth">
+            <Details summary="Editar perfil e avatar">
+              <ActionForm action={updateStudentAction} submitLabel="Salvar" variant="primary" className="space-y-4">
+                <input type="hidden" name="studentId" value={student.id} />
+                <Field label="Primeiro nome">
+                  <input name="name" defaultValue={student.name} className="input" required maxLength={60} />
+                </Field>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field label="Data de nascimento">
                     <input name="dateOfBirth" type="date" defaultValue={student.dateOfBirth ?? ""} className="input" />
                   </Field>
-                  <Field label="School year">
-                    <input name="schoolYear" defaultValue={student.schoolYear ?? ""} className="input" />
+                  <Field label="Ano escolar">
+                    <input name="schoolYear" defaultValue={student.schoolYear ?? ""} className="input" placeholder="Ex.: 2º ano" />
                   </Field>
-                  <Field label="Education system">
+                  <Field label="Sistema de ensino">
                     <input name="educationSystem" defaultValue={student.educationSystem ?? ""} className="input" />
                   </Field>
-                  <Field label="Timezone">
+                  <Field label="Fuso horário">
                     <input name="timezone" defaultValue={student.timezone} className="input" />
                   </Field>
-                </ActionForm>
-              </div>
-            </details>
+                </div>
+                <AvatarPicker value={avatar} />
+              </ActionForm>
+            </Details>
           ) : null}
         </Section>
 
-        <Section title="Guardians">
+        <Section title="Adultos com acesso">
           <ul className="space-y-2 text-sm">
             {guardians.map((g) => (
-              <li key={g.id} className="flex items-center justify-between gap-2 rounded-md border border-border px-3 py-2">
-                <span>
-                  {g.name ?? g.email} <span className="text-muted">({g.email})</span> · {g.role.toLowerCase()}
+              <li key={g.id} className="flex items-center justify-between gap-2 rounded-2xl bg-surface-2 px-4 py-2.5">
+                <span className="min-w-0">
+                  <span className="font-bold">{g.name ?? g.email}</span> <span className="text-muted">({g.email})</span>
+                  <span className="block text-xs text-muted">{ROLE[g.role]}</span>
                 </span>
                 {isOwner && g.role !== "OWNER" ? (
                   <form action={revokeGuardianAction}>
                     <input type="hidden" name="studentId" value={student.id} />
                     <input type="hidden" name="guardianRowId" value={g.id} />
-                    <button type="submit" className="btn btn-danger px-2 py-1 text-xs">
-                      Revoke
+                    <button type="submit" className="btn btn-danger btn-sm">
+                      Remover acesso
                     </button>
                   </form>
                 ) : null}
@@ -188,60 +160,57 @@ export default async function StudentPage(props: { params: Promise<{ studentId: 
             ))}
           </ul>
           {isOwner ? (
-            <details className="mt-2">
-              <summary className="cursor-pointer text-sm font-medium">Give another adult access</summary>
-              <div className="mt-3">
-                <ActionForm action={addGuardianAction} submitLabel="Grant access" variant="secondary">
-                  <input type="hidden" name="studentId" value={student.id} />
-                  <Field label="Their email" hint="They must have signed in to Learning OS at least once.">
-                    <input name="email" type="email" required className="input" />
-                  </Field>
-                  <Field label="Role">
-                    <select name="role" className="input" defaultValue="GUARDIAN">
-                      {GUARDIAN_ROLES.filter((r) => r !== "OWNER").map((r) => (
-                        <option key={r} value={r}>
-                          {r.toLowerCase()}
-                        </option>
-                      ))}
-                    </select>
-                  </Field>
-                </ActionForm>
-              </div>
-            </details>
+            <Details summary="Dar acesso a outro adulto">
+              <ActionForm action={addGuardianAction} submitLabel="Dar acesso" variant="primary">
+                <input type="hidden" name="studentId" value={student.id} />
+                <Field label="E-mail da pessoa" hint="Ela precisa ter entrado no Learning OS pelo menos uma vez.">
+                  <input name="email" type="email" required className="input" />
+                </Field>
+                <Field label="Papel">
+                  <select name="role" className="input" defaultValue="GUARDIAN">
+                    {GUARDIAN_ROLES.filter((r) => r !== "OWNER").map((r) => (
+                      <option key={r} value={r}>
+                        {ROLE[r]}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+              </ActionForm>
+            </Details>
           ) : null}
         </Section>
 
         {isOwner ? (
-          <Section title="AI teaching">
+          <Section title="IA nas aulas" aside={<span className={`badge border-transparent ${aiConsent ? "bg-mint text-mint-ink" : "bg-surface-2 text-muted"}`}>{aiConsent ? "ligada" : "desligada"}</span>}>
             <p className="text-sm text-muted">
-              When enabled, an AI provider may receive a context pack for this child (given name, age, the current objective and recent attempts) to suggest activity content and grade open answers. It never decides what is learned or changes a status. Off by default.
-            </p>
-            <p className="text-sm">
-              Currently: <strong>{aiConsent ? "enabled" : "disabled"}</strong>
+              Com a IA ligada, um provedor de IA pode receber o primeiro nome, a idade, o objetivo da aula e as tentativas recentes de {student.name} para preparar atividades e corrigir respostas abertas. Ela nunca decide o que foi aprendido nem muda o progresso.
             </p>
             <form action={setAiConsentAction}>
               <input type="hidden" name="studentId" value={student.id} />
               <input type="hidden" name="enabled" value={aiConsent ? "false" : "true"} />
-              <button type="submit" className={`btn ${aiConsent ? "btn-danger" : "btn-secondary"}`}>
-                {aiConsent ? "Disable AI processing" : "Enable AI processing"}
+              <button type="submit" className={`btn ${aiConsent ? "btn-secondary" : "btn-primary"}`}>
+                {aiConsent ? "Desligar a IA" : "Ligar a IA"}
               </button>
             </form>
           </Section>
         ) : null}
         {isOwner ? (
-          <Section title="Data">
-            <p className="text-sm text-muted">Export every record about this child, or remove the profile. Removal hides the child immediately; records are purged after a grace period.</p>
+          <Section title="Dados">
+            <p className="text-sm text-muted">Exporte tudo o que existe sobre {student.name}, ou remova o perfil. A remoção esconde a criança na hora; os registros são apagados depois de um período de carência.</p>
             <div className="flex flex-wrap gap-2">
               <Link href={`/students/${student.id}/export`} className="btn btn-secondary">
-                Export data (JSON)
+                Exportar dados (JSON)
               </Link>
+            </div>
+            <Details summary="Remover criança">
+              <p className="mb-3 text-sm">Tem certeza? {student.name} deixa de aparecer para todos os adultos.</p>
               <form action={deleteStudentAction}>
                 <input type="hidden" name="studentId" value={student.id} />
                 <button type="submit" className="btn btn-danger">
-                  Remove student
+                  Sim, remover {student.name}
                 </button>
               </form>
-            </div>
+            </Details>
           </Section>
         ) : null}
       </div>

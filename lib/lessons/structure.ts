@@ -13,24 +13,24 @@ export type StructureObjective = { id: string; title: string; status: ObjectiveS
 type Template = Array<{ type: ActivityType; weight: number; target: "PRIMARY" | "REVIEW"; evidence: number | null; instructions: (o: StructureObjective) => string }>;
 
 const NEW_MATERIAL: Template = [
-  { type: "REVIEW", weight: 2, target: "REVIEW", evidence: 3, instructions: (o) => `Warm up with "${o.title}": three quick prompts the child has seen before.` },
-  { type: "EXPLANATION", weight: 3, target: "PRIMARY", evidence: 0, instructions: (o) => `Introduce "${o.title}". Show it, say it, let the child repeat. No testing yet.` },
-  { type: "PRACTICE", weight: 6, target: "PRIMARY", evidence: 5, instructions: (o) => `Guided practice of "${o.title}": five prompts, correct gently, record each attempt.` },
-  { type: "GAME", weight: 5, target: "PRIMARY", evidence: 3, instructions: (o) => `A game that uses "${o.title}" naturally. Record what the child produced unprompted.` },
-  { type: "ASSESSMENT", weight: 4, target: "PRIMARY", evidence: 3, instructions: (o) => `Short check of "${o.title}": three prompts without help. Record honestly.` },
+  { type: "REVIEW", weight: 2, target: "REVIEW", evidence: 3, instructions: (o) => `Aquecimento com "${o.title}": três perguntas rápidas que a criança já conhece.` },
+  { type: "EXPLANATION", weight: 3, target: "PRIMARY", evidence: 0, instructions: (o) => `Apresente "${o.title}": mostre, fale e deixe a criança repetir. Ainda sem avaliar.` },
+  { type: "PRACTICE", weight: 6, target: "PRIMARY", evidence: 5, instructions: (o) => `Prática guiada de "${o.title}": cinco perguntas, corrija com gentileza e registre cada tentativa.` },
+  { type: "GAME", weight: 5, target: "PRIMARY", evidence: 3, instructions: (o) => `Um jogo que use "${o.title}" de forma natural. Registre o que a criança produziu sozinha.` },
+  { type: "ASSESSMENT", weight: 4, target: "PRIMARY", evidence: 3, instructions: (o) => `Desafio rápido de "${o.title}": três perguntas sem ajuda. Registre com honestidade.` },
 ];
 
 const CONSOLIDATION: Template = [
-  { type: "REVIEW", weight: 2, target: "REVIEW", evidence: 3, instructions: (o) => `Quick review of "${o.title}": three prompts.` },
-  { type: "PRACTICE", weight: 6, target: "PRIMARY", evidence: 6, instructions: (o) => `Practice "${o.title}" with variety: change the objects, people or setting each time. Six attempts.` },
-  { type: "CONVERSATION", weight: 6, target: "PRIMARY", evidence: 4, instructions: (o) => `A short conversation where "${o.title}" comes up naturally. Record the attempts you notice.` },
-  { type: "ASSESSMENT", weight: 6, target: "PRIMARY", evidence: 5, instructions: (o) => `Check of "${o.title}": five prompts without help.` },
+  { type: "REVIEW", weight: 2, target: "REVIEW", evidence: 3, instructions: (o) => `Revisão rápida de "${o.title}": três perguntas.` },
+  { type: "PRACTICE", weight: 6, target: "PRIMARY", evidence: 6, instructions: (o) => `Pratique "${o.title}" variando: troque os objetos, as pessoas ou o lugar a cada vez. Seis tentativas.` },
+  { type: "CONVERSATION", weight: 6, target: "PRIMARY", evidence: 4, instructions: (o) => `Uma conversa curta em que "${o.title}" apareça naturalmente. Registre as tentativas que perceber.` },
+  { type: "ASSESSMENT", weight: 6, target: "PRIMARY", evidence: 5, instructions: (o) => `Desafio de "${o.title}": cinco perguntas sem ajuda.` },
 ];
 
 const RETENTION: Template = [
-  { type: "REVIEW", weight: 3, target: "REVIEW", evidence: 3, instructions: (o) => `Review "${o.title}": three prompts.` },
-  { type: "ASSESSMENT", weight: 9, target: "PRIMARY", evidence: 6, instructions: (o) => `Retention check of "${o.title}", which the child has not practised for a while. Six prompts, no help, record honestly.` },
-  { type: "GAME", weight: 8, target: "PRIMARY", evidence: 3, instructions: (o) => `Finish with a game using "${o.title}" so the check ends on a good note.` },
+  { type: "REVIEW", weight: 3, target: "REVIEW", evidence: 3, instructions: (o) => `Revise "${o.title}": três perguntas.` },
+  { type: "ASSESSMENT", weight: 9, target: "PRIMARY", evidence: 6, instructions: (o) => `Confira se "${o.title}" ficou na memória: faz tempo que não é praticado. Seis perguntas, sem ajuda, registre com honestidade.` },
+  { type: "GAME", weight: 8, target: "PRIMARY", evidence: 3, instructions: (o) => `Termine com um jogo usando "${o.title}", para o desafio acabar num clima bom.` },
 ];
 
 export function templateFor(status: ObjectiveStatus): Template {

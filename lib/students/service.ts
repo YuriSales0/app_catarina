@@ -23,6 +23,7 @@ export async function createStudent(actor: Actor, input: CreateStudentInput, dbh
         schoolYear: input.schoolYear ?? null,
         educationSystem: input.educationSystem ?? null,
         timezone: input.timezone,
+        metadata: input.avatarAnimal || input.avatarColor ? { avatar: { animal: input.avatarAnimal, color: input.avatarColor } } : {},
       })
       .returning();
     await tx.insert(s.studentGuardians).values({ studentId: student.id, userId: actor.userId, role: "OWNER", acceptedAt: new Date() });
@@ -56,6 +57,9 @@ export async function updateStudent(access: StudentAccess, input: UpdateStudentI
       ...(input.schoolYear !== undefined ? { schoolYear: input.schoolYear } : {}),
       ...(input.educationSystem !== undefined ? { educationSystem: input.educationSystem } : {}),
       ...(input.timezone !== undefined ? { timezone: input.timezone } : {}),
+      ...(input.avatarAnimal || input.avatarColor
+        ? { metadata: sql`${s.students.metadata} || ${JSON.stringify({ avatar: { animal: input.avatarAnimal, color: input.avatarColor } })}::jsonb` }
+        : {}),
     })
     .where(and(eq(s.students.id, access.studentId), isNull(s.students.deletedAt)))
     .returning();

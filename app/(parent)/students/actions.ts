@@ -7,6 +7,8 @@ import { requireStudentAccess } from "@/lib/authorization/access";
 import { createStudentSchema, updateStudentSchema, addGuardianSchema, enrolStudentSchema, studentIdParam } from "@/schemas/students";
 import { createStudent, updateStudent, addGuardianByEmail, revokeGuardian, enrolStudentInSubject, deleteStudent, setAiProcessingConsent } from "@/lib/students/service";
 import { toActionError, formToObject, type ActionState } from "@/lib/actions/result";
+import { listSubjects, listPublishedVersionsForSubject } from "@/lib/curriculum/service";
+import { describeLevel } from "@/lib/curriculum/levels";
 
 export async function createStudentAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const actor = await requireActor();
@@ -31,7 +33,7 @@ export async function updateStudentAction(_prev: ActionState, formData: FormData
     void _omit;
     await updateStudent(access, updateStudentSchema.parse(rest));
     revalidatePath(`/students/${studentId}`);
-    return { ok: true, message: "Saved." };
+    return { ok: true, message: "Perfil salvo." };
   } catch (err) {
     return toActionError(err);
   }
@@ -44,7 +46,7 @@ export async function addGuardianAction(_prev: ActionState, formData: FormData):
     const access = await requireStudentAccess(actor, studentId, "MANAGE_GUARDIANS");
     await addGuardianByEmail(access, addGuardianSchema.parse({ email: formData.get("email"), role: formData.get("role") }));
     revalidatePath(`/students/${studentId}`);
-    return { ok: true, message: "Access granted." };
+    return { ok: true, message: "Acesso concedido." };
   } catch (err) {
     return toActionError(err);
   }
@@ -66,9 +68,20 @@ export async function enrolAction(_prev: ActionState, formData: FormData): Promi
     const access = await requireStudentAccess(actor, studentId, "MANAGE_ENROLMENT");
     const { studentId: _omit, ...rest } = formToObject(formData);
     void _omit;
+    // The level card carries only the version; the subject and defaults follow from it.
+    if (!rest.subjectId && rest.curriculumVersionId) {
+      for (const sub of await listSubjects()) {
+        const v = (await listPublishedVersionsForSubject(actor, sub.id)).find((x) => x.versionId === rest.curriculumVersionId);
+        if (!v) continue;
+        rest.subjectId = sub.id;
+        rest.targetLanguage ??= v.targetLanguage ?? undefined;
+        rest.targetLevel ??= describeLevel(v.curriculumName).cefr ?? undefined;
+        break;
+      }
+    }
     await enrolStudentInSubject(access, enrolStudentSchema.parse(rest));
     revalidatePath(`/students/${studentId}`);
-    return { ok: true, message: "Enrolment saved." };
+    return { ok: true, message: "Trilha salva." };
   } catch (err) {
     return toActionError(err);
   }

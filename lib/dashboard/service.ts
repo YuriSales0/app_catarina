@@ -28,9 +28,15 @@ export type SubjectCard = {
   lastLesson: { id: string; number: number; completedAt: Date | null; primaryTitle: string } | null;
 };
 
+export type WeekDay = { date: string; weekday: string; done: boolean; today: boolean };
+
 export type StudentCard = {
   id: string;
   name: string;
+  metadata: unknown;
+  timezone: string;
+  /** The last seven days in the student's timezone, oldest first, marking days with a completed lesson. */
+  week: WeekDay[];
   isDemo: boolean;
   role: string;
   age: number | null;
@@ -103,9 +109,26 @@ export async function getDashboard(actor: Actor, dbh: DbOrTx = db(), now = new D
         lastLesson: lastLesson ? { id: lastLesson.id, number: lastLesson.lessonNumber, completedAt: lastLesson.completedAt, primaryTitle: progress?.objectives.find((o) => o.objective.id === lastLesson.primaryObjectiveId)?.objective.title ?? "" } : null,
       });
     }
-    cards.push({ id: st.id, name: st.name, isDemo: st.isDemo, role: st.role, age: ageFrom(st.dateOfBirth, now), subjects, recommendations });
+    const recentLessons = await dbh.query.lessons.findMany({
+      where: and(eq(s.lessons.studentId, st.id), eq(s.lessons.status, "COMPLETED"), gte(s.lessons.completedAt, new Date(now.getTime() - 7 * DAY_MS))),
+      columns: { completedAt: true },
+    });
+    const week = lastSevenDays(now, st.timezone, recentLessons.map((l) => l.completedAt).filter((d): d is Date => Boolean(d)));
+    cards.push({ id: st.id, name: st.name, metadata: st.metadata, timezone: st.timezone, week, isDemo: st.isDemo, role: st.role, age: ageFrom(st.dateOfBirth, now), subjects, recommendations });
   }
   return cards;
+}
+
+export function lastSevenDays(now: Date, timeZone: string, completed: Date[]): WeekDay[] {
+  const day = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" });
+  const weekday = new Intl.DateTimeFormat("pt-BR", { timeZone, weekday: "narrow" });
+  const doneDays = new Set(completed.map((d) => day.format(d)));
+  const today = day.format(now);
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(now.getTime() - (6 - i) * DAY_MS);
+    const key = day.format(d);
+    return { date: key, weekday: weekday.format(d).toUpperCase(), done: doneDays.has(key), today: key === today };
+  });
 }
 
 function ageFrom(dob: string | null, now: Date): number | null {

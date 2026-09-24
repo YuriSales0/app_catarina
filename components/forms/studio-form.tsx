@@ -20,7 +20,7 @@ export function StudioForm({ template, aiEnabled }: { template: string; aiEnable
     <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
       <form className="space-y-3">
         <label className="block text-sm">
-          <span className="mb-1 block font-medium">Curriculum YAML</span>
+          <span className="mb-1 block font-bold">YAML do currículo</span>
           <textarea
             name="yaml"
             value={yaml}
@@ -36,30 +36,30 @@ export function StudioForm({ template, aiEnabled }: { template: string; aiEnable
         </p>
         <div className="flex flex-wrap items-center gap-3">
           <button type="submit" formAction={previewAction} disabled={previewing} className="btn btn-secondary">
-            {previewing ? "Validating…" : "Validate"}
+            {previewing ? "Validando…" : "Validar"}
           </button>
           <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" name="publish" /> Publish immediately
+            <input type="checkbox" name="publish" /> Publicar agora
           </label>
           <button type="submit" formAction={importAction} disabled={importing} className="btn btn-primary">
-            {importing ? "Saving…" : "Save curriculum"}
+            {importing ? "Salvando…" : "Salvar currículo"}
           </button>
         </div>
       </form>
       <aside className="space-y-3">
         <form action={draftAction} className="card space-y-2">
-          <p className="text-sm font-medium">Generate a draft with AI</p>
-          <p className="text-xs text-muted">{aiEnabled ? "The draft lands in the editor and goes through the same checks as a pasted file. You review it before publishing." : "No AI provider is configured (AI_PROVIDER=null). Paste or write YAML instead."}</p>
-          <input name="subject" className="input" placeholder="Subject slug, e.g. science" required maxLength={60} />
-          <textarea name="goal" className="input" rows={3} placeholder="What should the child learn? e.g. the solar system for a 9-year-old, in Portuguese" required maxLength={2000} />
+          <p className="text-sm font-bold">Gerar um rascunho com IA</p>
+          <p className="text-xs text-muted">{aiEnabled ? "O rascunho aparece no editor e passa pelas mesmas verificações de um arquivo colado. Você revisa antes de publicar." : "Nenhum provedor de IA configurado (AI_PROVIDER=null). Cole ou escreva o YAML."}</p>
+          <input name="subject" className="input" placeholder="Matéria (slug), ex.: science" required maxLength={60} />
+          <textarea name="goal" className="input" rows={3} placeholder="O que a criança deve aprender? Ex.: o sistema solar para 9 anos, em português" required maxLength={2000} />
           <div className="grid grid-cols-3 gap-2">
             <input name="age_years" type="number" min={2} max={120} className="input" placeholder="Age" />
-            <input name="instruction_language" className="input" defaultValue="pt-BR" placeholder="Instruction language" />
-            <input name="target_language" className="input" placeholder="Target (e.g. en)" />
+            <input name="instruction_language" className="input" defaultValue="pt-BR" placeholder="Idioma das instruções" />
+            <input name="target_language" className="input" placeholder="Idioma-alvo (ex.: en)" />
           </div>
-          <input name="units_wanted" type="number" min={1} max={12} defaultValue={4} className="input" aria-label="Units wanted" />
+          <input name="units_wanted" type="number" min={1} max={12} defaultValue={4} className="input" aria-label="Quantidade de unidades" />
           <button type="submit" disabled={!aiEnabled || drafting} className="btn btn-secondary">
-            {drafting ? "Generating…" : "Generate draft"}
+            {drafting ? "Gerando…" : "Gerar rascunho"}
           </button>
           {draftState && draftState.ok && draftState.notes ? <p className="text-xs text-muted">Assumptions: {draftState.notes}</p> : null}
         </form>
@@ -77,7 +77,7 @@ export function StudioForm({ template, aiEnabled }: { template: string; aiEnable
         ) : null}
         {state && state.ok && "preview" in state && state.preview ? (
           <div role="status" className="rounded-md border border-success/40 bg-success/10 p-3 text-sm">
-            <p className="font-medium">Valid.</p>
+            <p className="font-bold">Válido.</p>
             <p>
               {state.preview.name} v{state.preview.version} for {state.preview.subject}: {state.preview.units} units, {state.preview.objectives} objectives.
             </p>
@@ -91,13 +91,13 @@ export function StudioForm({ template, aiEnabled }: { template: string; aiEnable
           </div>
         ) : null}
         <div className="card text-sm text-muted">
-          <p className="font-medium text-foreground">What the checks enforce</p>
+          <p className="font-bold text-foreground">O que as verificações garantem</p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
-            <li>Every skill and error tag an objective uses is declared.</li>
-            <li>Prerequisites point only to the same or an earlier unit.</li>
-            <li>No prerequisite cycles.</li>
-            <li>At most 12 objectives per unit.</li>
-            <li>Published versions are frozen. Edits become a new version and the child&apos;s history follows each key.</li>
+            <li>Toda habilidade e todo tipo de erro usados por um objetivo estão declarados.</li>
+            <li>Pré-requisitos apontam só para a mesma unidade ou uma anterior.</li>
+            <li>Não há ciclos de pré-requisitos.</li>
+            <li>No máximo 12 objetivos por unidade.</li>
+            <li>Versões publicadas não mudam. Edições viram uma nova versão, e o histórico da criança acompanha cada chave.</li>
           </ul>
         </div>
       </aside>

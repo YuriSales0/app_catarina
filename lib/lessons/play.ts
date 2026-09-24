@@ -6,6 +6,10 @@ import type { StudentAccess } from "@/lib/authorization/access";
 import { getLesson, recordLessonEvent, startLesson, recordEvidence, completeLesson } from "./service";
 import type { RecordEvidenceInput } from "@/schemas/lessons";
 
+import { proposalFromPayload, type PlayProposal } from "./proposal-payload";
+
+export { proposalFromPayload, type PlayProposal };
+
 /**
  * The child-facing lesson flow, built on the same services as the parent
  * runner. Progress through activities is the event log; nothing here is a
@@ -17,8 +21,14 @@ export async function getPlayState(access: StudentAccess, lessonId: string, dbh:
   const current = detail.activities.find((a) => !completedActivityIds.has(a.id)) ?? null;
   const objective = current?.objectiveId ? detail.objectives.find((o) => o.id === current.objectiveId) ?? null : null;
   const student = await dbh.query.students.findFirst({ where: and(eq(s.students.id, access.studentId)) });
-  const attemptsInCurrent = current ? detail.evidence.filter((e) => e.activityId === current.id).length : 0;
-  return { ...detail, student: student!, current, objective, completedCount: completedActivityIds.size, attemptsInCurrent };
+  const currentEvidence = current ? detail.evidence.filter((e) => e.activityId === current.id) : [];
+  const attemptsInCurrent = currentEvidence.length;
+  // AI content for the current activity, if any: the latest accepted proposal, and whether one was rejected.
+  const proposalEvents = current ? detail.events.filter((e) => e.activityId === current.id && (e.payload as { kind?: string }).kind === "activity") : [];
+  const accepted = proposalEvents.filter((e) => e.eventType === "AI_PROPOSAL_RECEIVED").at(-1);
+  const proposal = accepted ? proposalFromPayload(accepted.payload) : null;
+  const proposalFailed = !proposal && proposalEvents.some((e) => e.eventType === "AI_PROPOSAL_REJECTED");
+  return { ...detail, student: student!, current, objective, completedCount: completedActivityIds.size, attemptsInCurrent, currentEvidence, proposal, proposalFailed };
 }
 
 export async function playStart(access: StudentAccess, lessonId: string, dbh: DbOrTx = db()) {

@@ -22,3 +22,10 @@ export async function requireActor(): Promise<Actor> {
   if (!actor) redirect("/login");
   return actor;
 }
+
+/** First name for greetings, from the session. Never used for identity. */
+export async function getDisplayName(): Promise<string | null> {
+  const session = await auth();
+  const name = session?.user?.name?.trim() || session?.user?.email?.split("@")[0] || null;
+  return name ? name.split(/\s+/)[0] : null;
+}

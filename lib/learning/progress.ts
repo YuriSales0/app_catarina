@@ -14,6 +14,8 @@ export type ObjectiveProgress = {
   confidence: ConfidenceLevel;
   state: s.StudentObjectiveStateRow | null;
   review: s.StudentObjectiveReviewRow | null;
+  /** A secure objective whose spaced review date has passed. */
+  reviewDue: boolean;
   unlock: UnlockResult;
   skills: string[];
 };
@@ -96,13 +98,16 @@ export async function getStudentProgress(access: StudentAccess, subjectId: strin
     .map((o) => {
       const st = stateByObjective.get(o.id) ?? null;
       const unit = unitById.get(o.curriculumUnitId)!;
+      const status = st?.status ?? statusByLineage.get(o.lineageId) ?? "NOT_STARTED";
+      const review = reviewByObjective.get(o.id) ?? null;
       return {
         objective: o,
         unit: { id: unit.id, name: unit.name, unitKey: unit.unitKey, sequence: unit.sequence, parentUnitId: unit.parentUnitId },
-        status: st?.status ?? statusByLineage.get(o.lineageId) ?? "NOT_STARTED",
+        status,
         confidence: st?.confidence ?? "LOW",
         state: st,
-        review: reviewByObjective.get(o.id) ?? null,
+        review,
+        reviewDue: Boolean(review?.nextReviewAt && review.nextReviewAt.getTime() <= now.getTime() && rank(status) >= rank("PROFICIENT")),
         unlock: evaluateUnlock(o.id, edges, lineageOf, statusByLineage),
         skills: skillRows.filter((k) => k.objectiveId === o.id).map((k) => k.name),
       };
@@ -113,7 +118,7 @@ export async function getStudentProgress(access: StudentAccess, subjectId: strin
   for (const r of rows) {
     summary[r.status]++;
     if (r.unlock.unlocked) summary.unlocked++;
-    if (r.review?.nextReviewAt && r.review.nextReviewAt.getTime() <= now.getTime() && rank(r.status) >= rank("PROFICIENT")) summary.dueForReview++;
+    if (r.reviewDue) summary.dueForReview++;
   }
 
   return { enrolment, version, curriculum, subject, units, objectives: rows, edges, statusByLineage, summary, recentTransitions: transitions };

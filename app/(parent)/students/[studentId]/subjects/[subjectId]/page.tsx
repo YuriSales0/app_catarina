@@ -5,14 +5,18 @@ import { or404 } from "@/lib/actions/page";
 import { getStudent, getEnrolment } from "@/lib/students/service";
 import { getStudentProgress } from "@/lib/learning/progress";
 import { listLessons } from "@/lib/lessons/service";
-import { PageHeader, DemoBadge, DemoNotice, Section, Field, formatDateTime, EmptyState } from "@/components/ui";
+import { PageHeader, DemoBadge, DemoNotice, Section, Field, Details, formatDateTime, EmptyState, ProgressRing } from "@/components/ui";
 import { ActionForm } from "@/components/forms/action-form";
 import { ObjectiveList } from "@/components/parent/objective-list";
 import { EvidenceForm } from "@/components/parent/evidence-form";
 import { createManualLessonAction } from "@/app/(parent)/lessons/actions";
+import { startTodayAction } from "@/app/(parent)/lessons/today-actions";
 import { roleAllows } from "@/lib/authorization/permissions";
 import { listRecommendations } from "@/lib/recommendations/service";
 import { Recommendations } from "@/components/parent/recommendations";
+import { Avatar, avatarOf } from "@/components/brand/avatar";
+import { describeLevel } from "@/lib/curriculum/levels";
+import { LESSON_STATUS, STATUS } from "@/lib/copy/pt";
 
 export default async function StudentSubjectPage(props: { params: Promise<{ studentId: string; subjectId: string }> }) {
   const { studentId, subjectId } = await props.params;
@@ -29,28 +33,30 @@ export default async function StudentSubjectPage(props: { params: Promise<{ stud
   const unlocked = progress?.objectives.filter((o) => o.unlock.unlocked && o.status !== "MASTERED") ?? [];
   const reviewable = progress?.objectives.filter((o) => o.status === "PROFICIENT" || o.status === "MASTERED") ?? [];
   const inProgress = lessons.find((l) => l.status === "IN_PROGRESS" || l.status === "PLANNED");
+  const level = enrolment.curriculumName ? describeLevel(enrolment.curriculumName) : null;
 
   return (
     <>
       <PageHeader
+        leading={<Avatar choice={avatarOf(student)} size="lg" />}
         title={`${student.name} · ${enrolment.subjectName}`}
         crumbs={[
-          { href: "/students", label: "Students" },
+          { href: "/students", label: "Crianças" },
           { href: `/students/${student.id}`, label: student.name },
         ]}
         subtitle={
-          <>
-            {enrolment.curriculumName ? `${enrolment.curriculumName} v${enrolment.curriculumVersion}` : "No curriculum chosen"} <DemoBadge show={student.isDemo || Boolean(enrolment.curriculumIsDemo)} />
-          </>
+          <span className="flex flex-wrap items-center gap-2">
+            {level ? `Trilha ${level.title}${level.cefr ? ` (${level.cefr})` : ""}` : "Nível não escolhido"} <DemoBadge show={student.isDemo || Boolean(enrolment.curriculumIsDemo)} />
+          </span>
         }
         actions={
           progress ? (
             <>
               <Link href={`/students/${student.id}/subjects/${subjectId}/progress`} className="btn btn-secondary">
-                Progress
+                📈 Desenvolvimento
               </Link>
               <Link href={`/students/${student.id}/subjects/${subjectId}/next-lesson`} className="btn btn-primary">
-                Next lesson
+                Próxima aula
               </Link>
             </>
           ) : null
@@ -58,50 +64,100 @@ export default async function StudentSubjectPage(props: { params: Promise<{ stud
       />
       <DemoNotice show={student.isDemo} />
       {!progress ? (
-        <EmptyState title="Choose a curriculum first">
-          <Link href={`/students/${student.id}`} className="underline">
-            Go to the student profile to enrol in a published curriculum.
+        <EmptyState title="Falta escolher o nível">
+          <Link href={`/students/${student.id}`} className="btn btn-primary mt-2">
+            Ir para o perfil
           </Link>
         </EmptyState>
       ) : (
         <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
+          <Section
+            title="Trilha"
+            aside={
+              <span className="text-xs text-muted">
+                {progress.summary.MASTERED} {STATUS.MASTERED.label.toLowerCase()} · {progress.summary.PROFICIENT} {STATUS.PROFICIENT.label.toLowerCase()} · {progress.summary.unlocked} liberados
+              </span>
+            }
+          >
+            <ObjectiveList progress={progress} studentId={student.id} />
+          </Section>
           <div className="space-y-6">
-            <Section title={`Objectives · ${progress.summary.total}`}>
-              <p className="text-sm text-muted">
-                {progress.summary.MASTERED} mastered · {progress.summary.PROFICIENT} proficient · {progress.summary.DEVELOPING} developing · {progress.summary.PRACTISING} practising · {progress.summary.INTRODUCED} introduced ·{" "}
-                {progress.summary.NOT_STARTED} not started · {progress.summary.unlocked} available · {progress.summary.dueForReview} due for review
-              </p>
-              <ObjectiveList progress={progress} studentId={student.id} />
-            </Section>
-          </div>
-          <div className="space-y-6">
-            {inProgress ? (
-              <Section title={inProgress.status === "IN_PROGRESS" ? "Lesson in progress" : "Planned lesson"}>
-                <p className="text-sm">
-                  Lesson {inProgress.lessonNumber}: {inProgress.primaryObjectiveTitle}
-                </p>
-                <Link href={`/lessons/${inProgress.id}`} className="btn btn-primary">
-                  Open lesson
-                </Link>
+            <section className="card flex items-center gap-5 bg-primary-soft">
+              <ProgressRing value={progress.summary.MASTERED + progress.summary.PROFICIENT} total={progress.summary.total} label="da trilha" />
+              <div className="min-w-0">
+                {inProgress ? (
+                  <>
+                    <p className="eyebrow text-primary-strong">{inProgress.status === "IN_PROGRESS" ? "Aula em andamento" : "Aula planejada"}</p>
+                    <p className="font-display text-lg font-semibold">
+                      Aula {inProgress.lessonNumber}: {inProgress.primaryObjectiveTitle}
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Link href={`/play/${inProgress.id}`} className="btn btn-primary btn-sm">
+                        Com a criança
+                      </Link>
+                      <Link href={`/lessons/${inProgress.id}`} className="btn btn-secondary btn-sm">
+                        Visão do adulto
+                      </Link>
+                    </div>
+                  </>
+                ) : canRun ? (
+                  <>
+                    <p className="eyebrow text-primary-strong">Aula de hoje</p>
+                    <p className="text-sm text-muted">O planejador escolhe o próximo passo.</p>
+                    <form action={startTodayAction} className="mt-3">
+                      <input type="hidden" name="studentId" value={student.id} />
+                      <input type="hidden" name="subjectId" value={subjectId} />
+                      <input type="hidden" name="surface" value="play" />
+                      <button type="submit" className="btn btn-primary btn-sm">
+                        Começar aula →
+                      </button>
+                    </form>
+                  </>
+                ) : null}
+              </div>
+            </section>
+
+            {recommendations.length ? (
+              <Section title="Sugestões do planejador">
+                <Recommendations studentId={student.id} items={recommendations} canDecide={canRun} />
               </Section>
             ) : null}
+
+            <Section title="Aulas recentes">
+              {lessons.length === 0 ? <p className="text-sm text-muted">Nenhuma aula ainda.</p> : null}
+              <ul className="space-y-1.5 text-sm">
+                {lessons.map((l) => (
+                  <li key={l.id}>
+                    <Link href={l.status === "COMPLETED" ? `/lessons/${l.id}/report` : `/lessons/${l.id}`} className="flex items-center justify-between gap-2 rounded-2xl px-3 py-2 hover:bg-surface-2">
+                      <span className="font-bold">
+                        Aula {l.lessonNumber}: <span className="font-normal">{l.primaryObjectiveTitle}</span>
+                      </span>
+                      <span className="shrink-0 text-xs text-muted">
+                        {LESSON_STATUS[l.status]} · {formatDateTime(l.completedAt ?? l.startedAt ?? l.createdAt, student.timezone)}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </Section>
+
             {canRun ? (
-              <Section title="Start a lesson by hand">
-                <p className="text-sm text-muted">Pick an available objective. Locked objectives are not offered; the prerequisite rule applies to people as well as to the engine.</p>
-                <ActionForm action={createManualLessonAction} submitLabel="Create lesson" variant="secondary">
+              <Details summary="Montar uma aula escolhendo o objetivo">
+                <p className="mb-3 text-xs text-muted">Só aparecem objetivos liberados: a regra do que vem antes vale para adultos também.</p>
+                <ActionForm action={createManualLessonAction} submitLabel="Criar aula" variant="primary">
                   <input type="hidden" name="studentId" value={student.id} />
                   <input type="hidden" name="subjectId" value={subjectId} />
-                  <Field label="Main objective">
+                  <Field label="Objetivo principal">
                     <select name="primaryObjectiveId" className="input" required defaultValue={unlocked[0]?.objective.id ?? ""}>
                       {unlocked.map((o) => (
                         <option key={o.objective.id} value={o.objective.id}>
-                          {o.objective.code} · {o.objective.title} ({o.status.toLowerCase().replace("_", " ")})
+                          {o.objective.code} · {o.objective.title} ({STATUS[o.status].label.toLowerCase()})
                         </option>
                       ))}
                     </select>
                   </Field>
                   {reviewable.length ? (
-                    <Field label="Also review (optional, up to two)">
+                    <Field label="Revisar também (opcional, até dois)">
                       <select name="reviewObjectiveIds" className="input" multiple size={Math.min(4, reviewable.length)}>
                         {reviewable.map((o) => (
                           <option key={o.objective.id} value={o.objective.id}>
@@ -111,43 +167,23 @@ export default async function StudentSubjectPage(props: { params: Promise<{ stud
                       </select>
                     </Field>
                   ) : null}
-                  <Field label="Minutes">
+                  <Field label="Minutos">
                     <input name="plannedDurationMinutes" type="number" min={5} max={90} defaultValue={enrolment.plannedLessonMinutes} className="input" />
                   </Field>
                 </ActionForm>
-              </Section>
+              </Details>
             ) : null}
             {canRun ? (
-              <Section title="Record practice done outside a lesson">
-                <p className="text-sm text-muted">Paper exercises, a conversation in the car. Counts as evidence, marked as a parent report.</p>
+              <Details summary="Registrar prática feita fora da aula">
+                <p className="mb-3 text-xs text-muted">Exercício no papel, conversa no carro. Conta como evidência, marcada como relato do responsável.</p>
                 <EvidenceForm
                   studentId={student.id}
                   objectives={progress.objectives.filter((o) => o.unlock.unlocked).map((o) => ({ id: o.objective.id, title: `${o.objective.code} · ${o.objective.title}`, errorTags: o.objective.errorTags }))}
                   vocabulary={progress.version.errorTagVocabulary}
                   compact
                 />
-              </Section>
+              </Details>
             ) : null}
-            {recommendations.length ? (
-              <Section title="Recommended actions">
-                <Recommendations studentId={student.id} items={recommendations} canDecide={canRun} />
-              </Section>
-            ) : null}
-            <Section title="Recent lessons">
-              {lessons.length === 0 ? <p className="text-sm text-muted">No lessons yet.</p> : null}
-              <ul className="space-y-1 text-sm">
-                {lessons.map((l) => (
-                  <li key={l.id} className="flex items-center justify-between gap-2">
-                    <Link href={`/lessons/${l.id}`} className="hover:underline">
-                      Lesson {l.lessonNumber}: {l.primaryObjectiveTitle}
-                    </Link>
-                    <span className="text-xs text-muted">
-                      {l.status.toLowerCase().replace("_", " ")} · {formatDateTime(l.completedAt ?? l.startedAt ?? l.createdAt, student.timezone)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </Section>
           </div>
         </div>
       )}

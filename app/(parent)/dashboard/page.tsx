@@ -1,130 +1,225 @@
 import Link from "next/link";
-import { requireActor } from "@/lib/auth/session";
-import { getDashboard } from "@/lib/dashboard/service";
-import { PageHeader, DemoBadge, EmptyState, StatusBadge, formatDateTime } from "@/components/ui";
+import { redirect } from "next/navigation";
+import { requireActor, getDisplayName } from "@/lib/auth/session";
+import { getDashboard, type StudentCard, type SubjectCard } from "@/lib/dashboard/service";
+import { PageHeader, DemoBadge, StatusBadge, ProgressRing, Details, formatRelativeDay } from "@/components/ui";
 import { Recommendations } from "@/components/parent/recommendations";
+import { Avatar, avatarOf } from "@/components/brand/avatar";
 import { roleAllows } from "@/lib/authorization/permissions";
 import type { GuardianRole } from "@/lib/db/enums";
+import { greeting, PLAN_OUTCOME, REASON } from "@/lib/copy/pt";
+import { describeLevel } from "@/lib/curriculum/levels";
+import { startTodayAction } from "@/app/(parent)/lessons/today-actions";
+
+export const metadata = { title: "Início" };
 
 export default async function DashboardPage() {
   const actor = await requireActor();
-  const cards = await getDashboard(actor);
+  const [cards, name] = await Promise.all([getDashboard(actor), getDisplayName()]);
+  if (cards.length === 0) redirect("/boas-vindas");
+  const tz = cards[0]?.timezone;
+
   return (
     <>
-      <PageHeader title="Dashboard" subtitle="Evidence first. Every status links to the attempts behind it, and every next lesson says why it was chosen." />
-      {cards.length === 0 ? (
-        <EmptyState title="Welcome">
-          <Link href="/students/new" className="btn btn-primary mt-2">
-            Add your first student
-          </Link>
-        </EmptyState>
-      ) : (
-        <div className="space-y-8">
-          {cards.map((st) => (
-            <section key={st.id} aria-labelledby={`student-${st.id}`} className="space-y-4">
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <h2 id={`student-${st.id}`} className="text-xl font-semibold">
-                  <Link href={`/students/${st.id}`} className="hover:underline">
-                    {st.name}
-                  </Link>{" "}
-                  <span className="text-sm font-normal text-muted">{st.age !== null ? `age ${st.age}` : ""}</span> <DemoBadge show={st.isDemo} />
-                </h2>
-                <Link href={`/students/${st.id}/snapshots`} className="text-sm underline">
-                  Snapshots
-                </Link>
-              </div>
-              {st.subjects.length === 0 ? (
-                <p className="text-sm text-muted">
-                  Not enrolled in any subject.{" "}
-                  <Link href={`/students/${st.id}`} className="underline">
-                    Enrol.
-                  </Link>
-                </p>
-              ) : null}
-              <div className="grid gap-4 md:grid-cols-2">
-                {st.subjects.map((sub) => (
-                  <article key={sub.subjectId} className="card space-y-3">
-                    <div className="flex items-baseline justify-between gap-2">
-                      <h3 className="font-semibold">
-                        <Link href={`/students/${st.id}/subjects/${sub.subjectId}`} className="hover:underline">
-                          {sub.subjectName}
-                        </Link>
-                      </h3>
-                      <span className="text-xs text-muted">
-                        {sub.curriculumName ? `${sub.curriculumName} v${sub.curriculumVersion}` : "no curriculum"} <DemoBadge show={sub.curriculumIsDemo} />
-                      </span>
-                    </div>
-                    {sub.summary ? (
-                      <p className="text-xs text-muted">
-                        {sub.summary.MASTERED} mastered · {sub.summary.PROFICIENT} proficient · {sub.summary.DEVELOPING} developing · {sub.summary.PRACTISING + sub.summary.INTRODUCED} in progress · {sub.summary.NOT_STARTED} to come
-                        {sub.summary.dueForReview ? ` · ${sub.summary.dueForReview} due for review` : ""}
-                      </p>
-                    ) : null}
-                    {sub.currentObjectives.length ? (
-                      <div>
-                        <h4 className="text-xs font-medium uppercase text-muted">Current objectives</h4>
-                        <ul className="mt-1 space-y-1 text-sm">
-                          {sub.currentObjectives.map((o) => (
-                            <li key={o.id} className="flex flex-wrap items-center justify-between gap-2">
-                              <Link href={`/students/${st.id}/subjects/${sub.subjectId}/objectives/${o.id}`} className="hover:underline">
-                                {o.title}
-                              </Link>
-                              <span className="flex items-center gap-2 text-xs text-muted">
-                                {o.recentTotal ? `${o.recentCorrect}/${o.recentTotal} recent` : `${o.attempts} attempts`} <StatusBadge status={o.status} />
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ) : (
-                      <p className="text-sm text-muted">Nothing in progress yet.</p>
-                    )}
-                    {sub.recurringDifficulties.length ? (
-                      <p className="text-sm">
-                        <span className="text-xs font-medium uppercase text-muted">Recurring difficulty</span>{" "}
-                        {sub.recurringDifficulties.map((d) => `${d.label} (${d.occurrences}×)`).join(", ")}
-                      </p>
-                    ) : null}
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3 text-sm">
-                      <span>
-                        {sub.inProgressLessonId ? (
-                          <Link href={`/lessons/${sub.inProgressLessonId}`} className="btn btn-primary px-3 py-1">
-                            Continue lesson
-                          </Link>
-                        ) : sub.next?.outcome === "PLANNED" ? (
-                          <>
-                            Next: <strong>{sub.next.primaryTitle}</strong>{" "}
-                            <Link href={`/students/${st.id}/subjects/${sub.subjectId}/next-lesson`} className="underline">
-                              why
-                            </Link>
-                          </>
-                        ) : sub.next ? (
-                          <span className="text-muted">{sub.next.outcome.toLowerCase().replace(/_/g, " ")}</span>
-                        ) : null}
-                      </span>
-                      <span className="text-xs text-muted">
-                        {sub.lastLesson ? (
-                          <Link href={`/lessons/${sub.lastLesson.id}/report`} className="hover:underline">
-                            Last: lesson {sub.lastLesson.number}, {formatDateTime(sub.lastLesson.completedAt)}
-                          </Link>
-                        ) : (
-                          "No lessons yet"
-                        )}
-                      </span>
-                    </div>
-                  </article>
-                ))}
-              </div>
-              {st.recommendations.length ? (
-                <div className="card">
-                  <h3 className="mb-2 text-sm font-semibold">Recommended actions</h3>
-                  <Recommendations studentId={st.id} items={st.recommendations} canDecide={roleAllows(st.role as GuardianRole, "RUN_LESSON")} />
-                </div>
-              ) : null}
-            </section>
-          ))}
-        </div>
-      )}
+      <PageHeader
+        eyebrow="Início"
+        title={`${greeting(new Date(), tz)}${name ? `, ${name}` : ""}!`}
+        subtitle="O dia de aprendizado das crianças, com um clique para começar."
+        actions={
+          <>
+            <Link href="/criancas" className="btn btn-soft sm:hidden">
+              <span aria-hidden>🦉</span> Modo criança
+            </Link>
+            <Link href="/boas-vindas" className="btn btn-secondary">
+              Adicionar criança
+            </Link>
+          </>
+        }
+      />
+      <div className="grid gap-6 xl:grid-cols-2">
+        {cards.map((st) => (
+          <ChildCard key={st.id} st={st} />
+        ))}
+      </div>
     </>
+  );
+}
+
+function ChildCard({ st }: { st: StudentCard }) {
+  const canRun = roleAllows(st.role as GuardianRole, "RUN_LESSON");
+  const lessonsThisWeek = st.week.filter((d) => d.done).length;
+  const main = st.subjects.find((s) => s.summary) ?? st.subjects[0] ?? null;
+  const learned = main?.summary ? main.summary.MASTERED + main.summary.PROFICIENT : 0;
+
+  return (
+    <section aria-labelledby={`student-${st.id}`} className="card flex flex-col gap-6">
+      <div className="flex items-start gap-4">
+        <Avatar choice={avatarOf(st)} size="lg" />
+        <div className="min-w-0 flex-1">
+          <h2 id={`student-${st.id}`} className="flex flex-wrap items-center gap-2 font-display text-2xl font-semibold">
+            <Link href={`/students/${st.id}`} className="hover:text-primary">
+              {st.name}
+            </Link>
+            <DemoBadge show={st.isDemo} />
+          </h2>
+          <p className="text-sm text-muted">
+            {st.age !== null ? `${st.age} anos` : "Idade não informada"}
+            {main?.curriculumName ? ` · trilha ${describeLevel(main.curriculumName).title}` : ""}
+          </p>
+          <WeekStrip st={st} />
+          <p className="mt-1 text-xs text-muted">{lessonsThisWeek === 0 ? "Nenhuma aula nos últimos 7 dias" : `${lessonsThisWeek} ${lessonsThisWeek === 1 ? "dia com aula" : "dias com aula"} nos últimos 7 dias`}</p>
+        </div>
+        {main?.summary ? <ProgressRing value={learned} total={main.summary.total} label="da trilha" /> : null}
+      </div>
+
+      {st.subjects.length === 0 ? (
+        <div className="rounded-2xl bg-sun p-5">
+          <p className="font-bold text-sun-ink">Falta escolher o nível de {st.name}.</p>
+          <Link href={`/boas-vindas?passo=2&crianca=${st.id}`} className="btn btn-primary mt-3">
+            Escolher nível
+          </Link>
+        </div>
+      ) : null}
+
+      {st.subjects.map((sub) => (
+        <TodayPanel key={sub.subjectId} st={st} sub={sub} canRun={canRun} showSubject={st.subjects.length > 1} />
+      ))}
+
+      {main?.currentObjectives.length ? (
+        <div>
+          <p className="eyebrow mb-2">Em foco</p>
+          <ul className="space-y-2">
+            {main.currentObjectives.map((o) => (
+              <li key={o.id} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-surface-2 px-4 py-2.5 text-sm">
+                <Link href={`/students/${st.id}/subjects/${main.subjectId}/objectives/${o.id}`} className="font-bold hover:text-primary">
+                  {o.title}
+                </Link>
+                <span className="flex items-center gap-2 text-xs text-muted">
+                  {o.recentTotal ? `${o.recentCorrect} de ${o.recentTotal} recentes` : `${o.attempts} tentativas`}
+                  <StatusBadge status={o.status} short />
+                </span>
+              </li>
+            ))}
+          </ul>
+          {main.recurringDifficulties.length ? (
+            <p className="mt-3 text-sm">
+              <span className="font-bold text-peach-ink">Ponto de atenção: </span>
+              {main.recurringDifficulties.map((d) => `${d.label} (${d.occurrences}×)`).join(", ")}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
+      {st.recommendations.length ? (
+        <Details summary={`Sugestões do planejador (${st.recommendations.length})`}>
+          <Recommendations studentId={st.id} items={st.recommendations} canDecide={canRun} />
+        </Details>
+      ) : null}
+
+      <div className="mt-auto flex flex-wrap gap-2 border-t border-border/70 pt-4 text-sm">
+        {main ? (
+          <Link href={`/students/${st.id}/subjects/${main.subjectId}/progress`} className="btn btn-ghost btn-sm">
+            📈 Desenvolvimento
+          </Link>
+        ) : null}
+        {main?.lastLesson ? (
+          <Link href={`/lessons/${main.lastLesson.id}/report`} className="btn btn-ghost btn-sm">
+            📝 Última aula ({formatRelativeDay(main.lastLesson.completedAt)})
+          </Link>
+        ) : null}
+        <Link href={`/students/${st.id}/snapshots`} className="btn btn-ghost btn-sm">
+          📸 Retratos
+        </Link>
+        <Link href={`/students/${st.id}`} className="btn btn-ghost btn-sm">
+          ⚙️ Perfil
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+function WeekStrip({ st }: { st: StudentCard }) {
+  return (
+    <ol className="mt-3 flex gap-1.5" aria-label="Últimos 7 dias">
+      {st.week.map((d) => (
+        <li key={d.date} className="flex flex-col items-center gap-1">
+          <span
+            className={`flex h-7 w-7 items-center justify-center rounded-full text-xs ${d.done ? "bg-primary text-primary-foreground" : "bg-surface-2 text-muted"} ${d.today ? "ring-2 ring-primary/40 ring-offset-2 ring-offset-surface" : ""}`}
+            title={d.done ? "Teve aula" : "Sem aula"}
+          >
+            {d.done ? "★" : ""}
+          </span>
+          <span className="text-[10px] font-bold text-muted">{d.weekday}</span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function TodayPanel({ st, sub, canRun, showSubject }: { st: StudentCard; sub: SubjectCard; canRun: boolean; showSubject: boolean }) {
+  const hidden = (surface: "play" | "lesson") => (
+    <>
+      <input type="hidden" name="studentId" value={st.id} />
+      <input type="hidden" name="subjectId" value={sub.subjectId} />
+      <input type="hidden" name="surface" value={surface} />
+    </>
+  );
+  const planned = sub.next?.outcome === "PLANNED";
+  const outcome = sub.next && !planned ? PLAN_OUTCOME[sub.next.outcome] : null;
+
+  return (
+    <div className="rounded-3xl bg-primary-soft p-5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="eyebrow text-primary-strong">
+          {sub.inProgressLessonId ? "Aula em andamento" : "Aula de hoje"}
+          {showSubject ? ` · ${sub.subjectName}` : ""}
+        </p>
+        <DemoBadge show={sub.curriculumIsDemo} />
+      </div>
+      {!sub.curriculumName ? (
+        <p className="mt-2 text-sm">
+          Falta escolher o nível.{" "}
+          <Link href={`/boas-vindas?passo=2&crianca=${st.id}`} className="font-bold text-primary underline-offset-2 hover:underline">
+            Escolher agora
+          </Link>
+        </p>
+      ) : sub.inProgressLessonId || planned ? (
+        <>
+          <p className="mt-1 font-display text-xl font-semibold">{sub.next?.primaryTitle ?? "Continuar de onde parou"}</p>
+          {sub.next?.reasons[0] && !sub.inProgressLessonId ? (
+            <p className="text-sm text-muted">
+              {REASON[sub.next.reasons[0]] ?? "Escolhido pelo planejador"} ·{" "}
+              <Link href={`/students/${st.id}/subjects/${sub.subjectId}/next-lesson`} className="font-bold text-primary underline-offset-2 hover:underline">
+                por quê?
+              </Link>
+            </p>
+          ) : null}
+          {canRun ? (
+            <div className="mt-4 flex flex-wrap gap-2">
+              <form action={startTodayAction}>
+                {hidden("play")}
+                <button type="submit" className="btn btn-primary">
+                  {sub.inProgressLessonId ? "Continuar com a criança" : "Começar aula"} →
+                </button>
+              </form>
+              <form action={startTodayAction}>
+                {hidden("lesson")}
+                <button type="submit" className="btn btn-secondary">
+                  Visão do adulto
+                </button>
+              </form>
+            </div>
+          ) : null}
+        </>
+      ) : outcome ? (
+        <>
+          <p className="mt-1 font-display text-xl font-semibold">{outcome.title}</p>
+          <p className="text-sm text-muted">{outcome.text}</p>
+          <Link href={`/students/${st.id}/subjects/${sub.subjectId}/next-lesson`} className="btn btn-secondary btn-sm mt-3">
+            Ver detalhes
+          </Link>
+        </>
+      ) : null}
+    </div>
   );
 }

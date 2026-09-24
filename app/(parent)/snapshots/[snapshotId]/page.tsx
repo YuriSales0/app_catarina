@@ -8,6 +8,12 @@ import { getSnapshot, listSnapshots } from "@/lib/snapshots/generate";
 import { getStudent } from "@/lib/students/service";
 import { PageHeader, Section, StatusBadge, formatDateTime, DemoBadge } from "@/components/ui";
 import { NotFoundError } from "@/lib/authorization/errors";
+import { SKILL, REASON } from "@/lib/copy/pt";
+
+export const metadata = { title: "Retrato" };
+
+const TRIGGER: Record<string, string> = { LESSON_COMPLETED: "fim de aula", MANUAL: "tirado por um adulto", SCHEDULED: "agendado", PRE_MIGRATION: "antes de mudar de nível" };
+const TREND: Record<string, string> = { IMPROVING: "melhorando", STABLE: "estável", DECLINING: "caindo", INSUFFICIENT_DATA: "poucos dados", PERSISTENT: "persistente", WORSENING: "piorando" };
 
 async function resolveSnapshotStudent(snapshotId: string) {
   const { db } = await import("@/lib/db/client");
@@ -31,44 +37,45 @@ export default async function SnapshotPage(props: { params: Promise<{ snapshotId
   return (
     <>
       <PageHeader
-        title={`Snapshot #${payload.snapshot_version}`}
+        eyebrow="Retrato do progresso"
+        title={`${student.name} · retrato #${payload.snapshot_version}`}
         crumbs={[
           { href: `/students/${student.id}`, label: student.name },
-          { href: `/students/${student.id}/snapshots`, label: "Snapshots" },
+          { href: `/students/${student.id}/snapshots`, label: "Retratos" },
         ]}
         subtitle={
           <>
-            {formatDateTime(row.createdAt, student.timezone)} · {generatedFrom.trigger.toLowerCase().replace("_", " ")} · {payload.schema_version} · rules {generatedFrom.rule_version}, engine {generatedFrom.engine_version} · {generatedFrom.evidence_count} evidence rows · hash {row.contentHash.slice(0, 16)}{" "}
+            {formatDateTime(row.createdAt, student.timezone)} · {TRIGGER[generatedFrom.trigger] ?? generatedFrom.trigger} · {generatedFrom.evidence_count} tentativas · regras {generatedFrom.rule_version}, planejador {generatedFrom.engine_version} · hash {row.contentHash.slice(0, 16)}{" "}
             <DemoBadge show={student.isDemo} />
           </>
         }
         actions={
           previous ? (
             <Link href={`/snapshots/${previous.id}`} className="btn btn-secondary">
-              Previous (#{previous.snapshotVersion})
+              ← Retrato anterior (#{previous.snapshotVersion})
             </Link>
           ) : null
         }
       />
-      <p className="mb-4 text-xs text-muted">
-        Observed: {payload.epistemic_key.observed.length} sections · Inferred: {payload.epistemic_key.inferred.length} · Recommended: {payload.epistemic_key.recommended.length}. The key inside the document says which is which, so it stays honest when exported.
+      <p className="mb-6 text-xs text-muted">
+        Observado: {payload.epistemic_key.observed.length} seções · Interpretado: {payload.epistemic_key.inferred.length} · Sugerido: {payload.epistemic_key.recommended.length}. O próprio documento diz o que é o quê, para continuar honesto quando exportado.
       </p>
       <div className="space-y-6">
         {payload.subjects.map((sub) => (
           <Section key={sub.subject.id} title={`${sub.subject.name} · ${sub.curriculum.name} v${sub.curriculum.version}`}>
             <p className="text-sm">
-              <span className="text-xs uppercase text-muted">observed</span> · {sub.progress.objectives_total} objectives: {sub.progress.by_status.MASTERED} mastered, {sub.progress.by_status.PROFICIENT} proficient, {sub.progress.by_status.DEVELOPING} developing, {sub.progress.by_status.PRACTISING} practising, {sub.progress.by_status.INTRODUCED} introduced, {sub.progress.by_status.NOT_STARTED} not started · {sub.progress.units_completed}/{sub.progress.units_total} units complete
+              <span className="eyebrow">observado</span> · {sub.progress.objectives_total} objetivos: {sub.progress.by_status.MASTERED} dominados, {sub.progress.by_status.PROFICIENT} já consegue, {sub.progress.by_status.DEVELOPING} ganhando confiança, {sub.progress.by_status.PRACTISING} praticando, {sub.progress.by_status.INTRODUCED} conheceu, {sub.progress.by_status.NOT_STARTED} a começar · {sub.progress.units_completed}/{sub.progress.units_total} unidades completas
             </p>
             <p className="text-sm">
-              Last 30 days: {sub.recent_evidence_summary.total_attempts} attempts on {sub.recent_evidence_summary.distinct_objectives} objectives ({sub.recent_evidence_summary.by_result.CORRECT} correct) · graded by human {sub.recent_evidence_summary.by_grader.HUMAN}, system {sub.recent_evidence_summary.by_grader.SYSTEM}, AI {sub.recent_evidence_summary.by_grader.AI_PROVIDER}
+              Últimos 30 dias: {sub.recent_evidence_summary.total_attempts} tentativas em {sub.recent_evidence_summary.distinct_objectives} objetivos ({sub.recent_evidence_summary.by_result.CORRECT} certas) · corrigidas por adulto {sub.recent_evidence_summary.by_grader.HUMAN}, sistema {sub.recent_evidence_summary.by_grader.SYSTEM}, IA {sub.recent_evidence_summary.by_grader.AI_PROVIDER}
             </p>
             {sub.current_objectives.length ? (
               <div>
-                <h3 className="text-sm font-medium">Current objectives</h3>
+                <h3 className="eyebrow mb-1">Objetivos em foco</h3>
                 <ul className="text-sm">
                   {sub.current_objectives.map((o) => (
                     <li key={o.objective_id}>
-                      {o.title} <StatusBadge status={o.status} /> <span className="text-xs text-muted">{o.assessed_attempts} attempts{o.success_rate_recent !== null ? `, ${Math.round(o.success_rate_recent * 100)}% recent` : ""}</span>
+                      {o.title} <StatusBadge status={o.status} short /> <span className="text-xs text-muted">{o.assessed_attempts} tentativas{o.success_rate_recent !== null ? `, ${Math.round(o.success_rate_recent * 100)}% recentes` : ""}</span>
                     </li>
                   ))}
                 </ul>
@@ -76,11 +83,11 @@ export default async function SnapshotPage(props: { params: Promise<{ snapshotId
             ) : null}
             {sub.skill_states.length ? (
               <div>
-                <h3 className="text-sm font-medium">Skills (30 days)</h3>
+                <h3 className="eyebrow mb-1">Habilidades (30 dias)</h3>
                 <ul className="text-sm">
                   {sub.skill_states.map((k) => (
                     <li key={k.skill_id}>
-                      {k.name}: {k.attempts_30d} attempts{k.success_rate_30d !== null ? `, ${Math.round(k.success_rate_30d * 100)}%` : ""} · <span className="text-xs text-muted">trend (inferred): {k.trend.toLowerCase().replace("_", " ")}</span>
+                      {SKILL[k.name.toLowerCase()] ?? k.name}: {k.attempts_30d} tentativas{k.success_rate_30d !== null ? `, ${Math.round(k.success_rate_30d * 100)}%` : ""} · <span className="text-xs text-muted">tendência (interpretada): {TREND[k.trend] ?? k.trend}</span>
                     </li>
                   ))}
                 </ul>
@@ -88,13 +95,11 @@ export default async function SnapshotPage(props: { params: Promise<{ snapshotId
             ) : null}
             {sub.recurring_difficulties.length ? (
               <div>
-                <h3 className="text-sm font-medium">
-                  Recurring difficulties <span className="text-xs font-normal uppercase text-muted">inferred</span>
-                </h3>
+                <h3 className="eyebrow mb-1">Dificuldades que se repetem · interpretado</h3>
                 <ul className="text-sm">
                   {sub.recurring_difficulties.map((d) => (
                     <li key={d.error_tag}>
-                      {d.human_label}: {d.occurrences_30d} in 30 days, {d.trend.toLowerCase()}
+                      {d.human_label}: {d.occurrences_30d} em 30 dias, {TREND[d.trend] ?? d.trend}
                     </li>
                   ))}
                 </ul>
@@ -102,11 +107,11 @@ export default async function SnapshotPage(props: { params: Promise<{ snapshotId
             ) : null}
             {sub.review_priorities.length ? (
               <div>
-                <h3 className="text-sm font-medium">Reviews due</h3>
+                <h3 className="eyebrow mb-1">Revisões pendentes</h3>
                 <ul className="text-sm">
                   {sub.review_priorities.map((r) => (
                     <li key={r.objective_id}>
-                      {r.title}: {r.days_overdue} days overdue
+                      {r.title}: {r.days_overdue} dias de atraso
                     </li>
                   ))}
                 </ul>
@@ -114,19 +119,19 @@ export default async function SnapshotPage(props: { params: Promise<{ snapshotId
             ) : null}
             {sub.recommended_next_objectives.length ? (
               <p className="text-sm">
-                <span className="text-xs uppercase text-muted">recommended</span> · next: {sub.recommended_next_objectives.map((r) => `${r.title} (${r.reason.toLowerCase().replace(/_/g, " ")})`).join("; ")}
+                <span className="eyebrow">sugerido</span> · próximos: {sub.recommended_next_objectives.map((r) => `${r.title} (${REASON[r.reason] ?? r.reason.toLowerCase().replace(/_/g, " ")})`).join("; ")}
               </p>
             ) : null}
             {sub.recent_lessons.length ? (
               <div>
-                <h3 className="text-sm font-medium">Recent lessons</h3>
+                <h3 className="eyebrow mb-1">Aulas recentes</h3>
                 <ul className="text-sm">
                   {sub.recent_lessons.map((l) => (
                     <li key={l.lesson_id}>
                       <Link href={`/lessons/${l.lesson_id}`} className="hover:underline">
-                        Lesson {l.lesson_number}
+                        Aula {l.lesson_number}
                       </Link>
-                      : {l.primary_objective.title}, {l.attempts} attempts{l.success_rate !== null ? `, ${Math.round(l.success_rate * 100)}%` : ""}
+                      : {l.primary_objective.title}, {l.attempts} tentativas{l.success_rate !== null ? `, ${Math.round(l.success_rate * 100)}%` : ""}
                     </li>
                   ))}
                 </ul>
@@ -134,7 +139,7 @@ export default async function SnapshotPage(props: { params: Promise<{ snapshotId
             ) : null}
           </Section>
         ))}
-        {payload.subjects.length === 0 ? <p className="text-sm text-muted">No enrolled subjects with a curriculum at the time of this snapshot.</p> : null}
+        {payload.subjects.length === 0 ? <p className="text-sm text-muted">Nenhuma trilha com currículo no momento deste retrato.</p> : null}
       </div>
     </>
   );

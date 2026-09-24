@@ -6,8 +6,11 @@ import { getStudent, getEnrolment } from "@/lib/students/service";
 import { getNextLessonPlan } from "@/lib/learning/next-lesson";
 import { PageHeader, Section, StatusBadge, DemoBadge } from "@/components/ui";
 import { PlanRationale } from "@/components/parent/plan-rationale";
-import { createFromPlanAction } from "./actions";
 import { roleAllows } from "@/lib/authorization/permissions";
+import { ACTIVITY, PLAN_OUTCOME, TONE } from "@/lib/copy/pt";
+import { startTodayAction } from "@/app/(parent)/lessons/today-actions";
+
+export const metadata = { title: "Próxima aula" };
 
 export default async function NextLessonPage(props: { params: Promise<{ studentId: string; subjectId: string }> }) {
   const { studentId, subjectId } = await props.params;
@@ -18,103 +21,107 @@ export default async function NextLessonPage(props: { params: Promise<{ studentI
     return { access, student, enrolment, plan };
   });
   const canRun = roleAllows(access.role, "RUN_LESSON");
+  const totalMinutes = plan.activities.reduce((a, b) => a + b.planned_minutes, 0);
+  const hidden = (surface: "play" | "lesson") => (
+    <>
+      <input type="hidden" name="studentId" value={student.id} />
+      <input type="hidden" name="subjectId" value={subjectId} />
+      <input type="hidden" name="surface" value={surface} />
+    </>
+  );
 
   return (
     <>
       <PageHeader
-        title="Next lesson"
+        eyebrow="Próxima aula"
+        title={plan.outcome === "PLANNED" && plan.primary_objective ? plan.primary_objective.title : (PLAN_OUTCOME[plan.outcome]?.title ?? "Próxima aula")}
         crumbs={[
+          { href: "/students", label: "Crianças" },
           { href: `/students/${student.id}`, label: student.name },
           { href: `/students/${student.id}/subjects/${subjectId}`, label: enrolment.subjectName },
         ]}
         subtitle={
-          <>
-            Chosen by the engine ({plan.engine_version}, {plan.rationale.policy_version}) from the curriculum, the prerequisite graph, the evidence and the review schedule. No AI is involved in this decision. <DemoBadge show={student.isDemo} />
-          </>
+          <span className="flex flex-wrap items-center gap-2">
+            Escolhida pelo planejador a partir do currículo, do que {student.name} já mostrou e das revisões pendentes. Nenhuma IA participa desta escolha. <DemoBadge show={student.isDemo} />
+          </span>
         }
       />
       {plan.outcome === "PLANNED" && plan.primary_objective ? (
         <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
-          <div className="space-y-6">
-            <Section title="Plan">
-              <p className="text-lg">
-                <strong>{plan.primary_objective.title}</strong> <StatusBadge status={plan.primary_objective.status} />
+          <Section title={`Roteiro · ${totalMinutes} min`} aside={<StatusBadge status={plan.primary_objective.status} />}>
+            {plan.review_objectives.length ? (
+              <p className="rounded-2xl bg-sky px-4 py-3 text-sm text-sky-ink">
+                Também revisa: {plan.review_objectives.map((r) => `${r.title}${r.days_overdue !== null ? ` (${r.days_overdue} dias de atraso)` : ""}`).join(", ")}
               </p>
-              {plan.review_objectives.length ? (
-                <p className="text-sm text-muted">
-                  Also review: {plan.review_objectives.map((r) => `${r.title}${r.days_overdue !== null ? ` (${r.days_overdue} days overdue)` : ""}`).join(", ")}
-                </p>
-              ) : null}
-              <ol className="mt-2 space-y-2">
-                {plan.activities.map((a) => (
-                  <li key={a.sequence} className="rounded-md border border-border p-3 text-sm">
-                    <span className="font-medium">
-                      {a.sequence}. {a.activity_type.toLowerCase()} · {a.planned_minutes} min
+            ) : null}
+            <ol className="space-y-3">
+              {plan.activities.map((a) => {
+                const meta = ACTIVITY[a.activity_type];
+                return (
+                  <li key={a.sequence} className="flex gap-4">
+                    <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-xl ${TONE[meta.tone].bg}`} aria-hidden>
+                      {meta.emoji}
                     </span>
-                    <p className="text-muted">{a.instructions}</p>
+                    <div className="min-w-0 border-b border-border/60 pb-3">
+                      <p className="font-bold">
+                        {a.sequence}. {meta.adult} <span className="font-normal text-muted">· {a.planned_minutes} min</span>
+                      </p>
+                      <p className="text-sm text-muted">{a.instructions}</p>
+                    </div>
                   </li>
-                ))}
-              </ol>
-              {canRun ? (
-                <form action={createFromPlanAction} className="mt-3">
-                  <input type="hidden" name="studentId" value={student.id} />
-                  <input type="hidden" name="subjectId" value={subjectId} />
-                  <button type="submit" className="btn btn-primary">
-                    Create this lesson
+                );
+              })}
+            </ol>
+            {canRun ? (
+              <div className="flex flex-wrap gap-2 pt-2">
+                <form action={startTodayAction}>
+                  {hidden("play")}
+                  <button type="submit" className="btn btn-primary btn-lg">
+                    Começar com a criança →
                   </button>
                 </form>
-              ) : null}
-            </Section>
-          </div>
-          <div className="space-y-6">
-            <PlanRationale plan={plan} studentId={student.id} subjectId={subjectId} />
-          </div>
+                <form action={startTodayAction}>
+                  {hidden("lesson")}
+                  <button type="submit" className="btn btn-secondary btn-lg">
+                    Conduzir pela visão do adulto
+                  </button>
+                </form>
+              </div>
+            ) : null}
+          </Section>
+          <PlanRationale plan={plan} studentId={student.id} subjectId={subjectId} />
         </div>
       ) : (
-        <Section title={outcomeTitle(plan.outcome)}>
-          <p className="text-sm text-muted">{outcomeText(plan.outcome)}</p>
+        <Section title={PLAN_OUTCOME[plan.outcome]?.title ?? plan.outcome}>
+          <p className="text-sm text-muted">{PLAN_OUTCOME[plan.outcome]?.text}</p>
           {plan.outcome === "BLOCKED" && plan.blocking_objectives.length ? (
-            <ul className="text-sm">
+            <ul className="space-y-2 text-sm">
               {plan.blocking_objectives.map((b) => (
-                <li key={b.id}>
-                  <Link href={`/students/${student.id}/subjects/${subjectId}/objectives/${b.id}`} className="underline">
+                <li key={b.id} className="flex flex-wrap items-center gap-2">
+                  <Link href={`/students/${student.id}/subjects/${subjectId}/objectives/${b.id}`} className="font-bold text-primary hover:underline">
                     {b.title}
-                  </Link>{" "}
-                  is <StatusBadge status={b.status} /> and must progress first.
+                  </Link>
+                  <StatusBadge status={b.status} /> precisa avançar primeiro.
                 </li>
               ))}
             </ul>
           ) : null}
           {plan.outcome === "REVIEW_ONLY" ? (
-            <ul className="text-sm">
+            <ul className="space-y-1 text-sm">
               {plan.review_objectives.map((r) => (
                 <li key={r.id}>
-                  {r.title}: {r.days_overdue} days overdue
+                  {r.title}: {r.days_overdue} dias de atraso
                 </li>
               ))}
             </ul>
           ) : null}
           {plan.outcome === "NEEDS_CURRICULUM" ? (
-            <Link href={`/students/${student.id}`} className="underline">
-              Choose a curriculum on the student profile.
+            <Link href={`/students/${student.id}`} className="btn btn-primary">
+              Escolher nível
             </Link>
           ) : null}
         </Section>
       )}
     </>
-  );
-}
-
-function outcomeTitle(o: string) {
-  return { CURRICULUM_COMPLETE: "Everything is mastered", BLOCKED: "Nothing is available yet", NEEDS_CURRICULUM: "No curriculum chosen", REVIEW_ONLY: "Only reviews are due" }[o] ?? o;
-}
-function outcomeText(o: string) {
-  return (
-    {
-      CURRICULUM_COMPLETE: "Every objective in this curriculum is mastered. Time for the next curriculum, or a newer version.",
-      BLOCKED: "Every remaining objective is behind a prerequisite that is not yet at the required level. The engine does not invent an alternative; it names the blockers.",
-      NEEDS_CURRICULUM: "The engine will not guess a curriculum.",
-      REVIEW_ONLY: "No new objective is available, but some mastered ones are due for a retention check.",
-    }[o] ?? ""
   );
 }

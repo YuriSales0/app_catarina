@@ -29,6 +29,10 @@ Deployed on Vercel (`fra1`) with Neon Postgres in Frankfurt; migrations and the
 Cambridge YLE catalogue load on every production build. Sign-in needs a Google
 OAuth client first. See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
+The interface is in Brazilian Portuguese, with a soft, child-friendly design
+for the lesson screens. The design decisions are in
+[`docs/ux/UX-PLAN.md`](docs/ux/UX-PLAN.md).
+
 ## Quick start
 
 ```bash

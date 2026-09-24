@@ -4,10 +4,18 @@ import { requireStudentAccess } from "@/lib/authorization/access";
 import { or404 } from "@/lib/actions/page";
 import { getStudent, getEnrolment } from "@/lib/students/service";
 import { getStudentProgress } from "@/lib/learning/progress";
-import { PageHeader, Section, StatusBadge, ConfidenceBadge, formatDateTime, DemoBadge } from "@/components/ui";
-import { OBJECTIVE_STATUSES } from "@/lib/db/enums";
+import { PageHeader, Section, StatusBadge, ProgressRing, StatTile, DemoBadge, formatDate } from "@/components/ui";
+import { StageBar, ShareBars } from "@/components/parent/charts";
+import { Avatar, avatarOf } from "@/components/brand/avatar";
+import { describeLevel } from "@/lib/curriculum/levels";
+import { STATUS, SKILL, TONE } from "@/lib/copy/pt";
+import type { ObjectiveStatus } from "@/lib/db/enums";
 
-/** Screen 7: the knowledge model in full, by unit, with skills and the transition history. */
+export const metadata = { title: "Desenvolvimento" };
+
+const SECURE: ObjectiveStatus[] = ["PROFICIENT", "MASTERED"];
+
+/** The knowledge model for families: where the child is on the trail, by unit and by skill, and what changed recently. */
 export default async function ProgressPage(props: { params: Promise<{ studentId: string; subjectId: string }> }) {
   const { studentId, subjectId } = await props.params;
   const actor = await requireActor();
@@ -16,82 +24,140 @@ export default async function ProgressPage(props: { params: Promise<{ studentId:
     const [student, enrolment, progress] = await Promise.all([getStudent(access), getEnrolment(access, subjectId), getStudentProgress(access, subjectId)]);
     return { student, enrolment, progress };
   });
+  const sum = progress.summary;
+  const secure = sum.MASTERED + sum.PROFICIENT;
+  const level = describeLevel(progress.curriculum.name);
+
   const units = new Map<string, typeof progress.objectives>();
   for (const o of progress.objectives) units.set(o.unit.id, [...(units.get(o.unit.id) ?? []), o]);
-  const skills = new Map<string, { total: number; byStatus: Record<string, number> }>();
-  for (const o of progress.objectives) for (const k of o.skills) {
-    const cur = skills.get(k) ?? { total: 0, byStatus: {} };
-    cur.total++;
-    cur.byStatus[o.status] = (cur.byStatus[o.status] ?? 0) + 1;
-    skills.set(k, cur);
-  }
-  const titleOf = (id: string) => progress.objectives.find((o) => o.objective.id === id)?.objective.title ?? id;
+
+  const skills = new Map<string, { total: number; secure: number }>();
+  for (const o of progress.objectives)
+    for (const k of o.skills) {
+      const cur = skills.get(k) ?? { total: 0, secure: 0 };
+      cur.total++;
+      if (SECURE.includes(o.status)) cur.secure++;
+      skills.set(k, cur);
+    }
+
+  const titleOf = (id: string) => progress.objectives.find((o) => o.objective.id === id)?.objective.title ?? "Objetivo";
+  const wins = progress.recentTransitions.filter((t) => STATUS[t.toStatus].order > STATUS[t.fromStatus].order).slice(0, 8);
+  const reviewsDue = progress.objectives.filter((o) => o.reviewDue);
+  const objectiveHref = (id: string) => `/students/${student.id}/subjects/${subjectId}/objectives/${id}`;
 
   return (
     <>
       <PageHeader
-        title={`${student.name} · ${enrolment.subjectName} · Progress`}
+        leading={<Avatar choice={avatarOf(student)} size="lg" />}
+        eyebrow="Desenvolvimento"
+        title={`${student.name} · ${enrolment.subjectName}`}
         crumbs={[
           { href: `/students/${student.id}`, label: student.name },
           { href: `/students/${student.id}/subjects/${subjectId}`, label: enrolment.subjectName },
         ]}
         subtitle={
-          <>
-            {progress.curriculum.name} v{progress.version.version} · {progress.summary.total} objectives · {progress.summary.MASTERED} mastered, {progress.summary.PROFICIENT} proficient <DemoBadge show={student.isDemo} />
-          </>
+          <span className="flex flex-wrap items-center gap-2">
+            Trilha {level.title}
+            {level.cefr ? ` (${level.cefr})` : ""} · {sum.total} objetivos <DemoBadge show={student.isDemo} />
+          </span>
+        }
+        actions={
+          <Link href={`/students/${student.id}/subjects/${subjectId}/next-lesson`} className="btn btn-primary">
+            Próxima aula
+          </Link>
         }
       />
-      <div className="mb-6 grid grid-cols-3 gap-2 sm:grid-cols-6">
-        {OBJECTIVE_STATUSES.map((st) => (
-          <div key={st} className="card p-3 text-center">
-            <p className="text-2xl font-semibold">{progress.summary[st]}</p>
-            <p className="text-xs text-muted">{st.toLowerCase().replace("_", " ")}</p>
+
+      <section className="card mb-6 grid gap-6 lg:grid-cols-[auto_1fr]">
+        <div className="flex items-center gap-5">
+          <ProgressRing value={secure} total={sum.total} size={110} label="firme" />
+          <div>
+            <p className="font-display text-2xl font-semibold">
+              {secure} de {sum.total}
+            </p>
+            <p className="text-sm text-muted">objetivos já estão firmes</p>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <StatTile value={sum.unlocked} label="liberados" tone="sky" />
+              <StatTile value={sum.dueForReview} label="revisões" tone={sum.dueForReview ? "peach" : "neutral"} />
+            </div>
           </div>
-        ))}
-      </div>
+        </div>
+        <div className="self-center">
+          <p className="eyebrow mb-3">Onde cada objetivo está</p>
+          <StageBar counts={sum} total={sum.total} />
+        </div>
+      </section>
+
       <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
         <div className="space-y-4">
-          {[...units.entries()].map(([unitId, rows]) => (
-            <Section key={unitId} title={rows[0].unit.name}>
-              <ul className="space-y-1 text-sm">
-                {rows.map((o) => (
-                  <li key={o.objective.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border px-3 py-2">
-                    <Link href={`/students/${student.id}/subjects/${subjectId}/objectives/${o.objective.id}`} className="hover:underline">
+          {[...units.entries()].map(([unitId, rows]) => {
+            const unitSecure = rows.filter((o) => SECURE.includes(o.status)).length;
+            return (
+              <section key={unitId} className="card space-y-3">
+                <div className="flex items-baseline justify-between gap-2">
+                  <h2 className="font-display text-lg font-semibold">{rows[0].unit.name}</h2>
+                  <span className="text-xs text-muted tabular-nums">
+                    {unitSecure} de {rows.length} firmes
+                  </span>
+                </div>
+                <ul className="flex flex-wrap gap-2">
+                  {rows.map((o) => {
+                    const s = STATUS[o.status];
+                    return (
+                      <li key={o.objective.id}>
+                        <Link
+                          href={objectiveHref(o.objective.id)}
+                          title={`${s.label}${o.state ? ` · ${o.state.assessedAttempts} tentativas` : ""}${o.unlock.unlocked ? "" : " · bloqueado"}`}
+                          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-bold transition hover:-translate-y-0.5 ${TONE[s.tone].bg} ${TONE[s.tone].ink} ${o.unlock.unlocked ? "" : "opacity-50"}`}
+                        >
+                          <span aria-hidden>{o.unlock.unlocked ? s.emoji : "🔒"}</span>
+                          {o.objective.title}
+                          <span className="sr-only"> ({s.label})</span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            );
+          })}
+        </div>
+
+        <div className="space-y-6">
+          <Section title="Habilidades">
+            <p className="-mt-2 text-xs text-muted">Objetivos firmes em cada habilidade.</p>
+            <ShareBars rows={[...skills.entries()].map(([k, v]) => ({ label: SKILL[k.toLowerCase()] ?? k, value: v.secure, total: v.total }))} />
+          </Section>
+
+          <Section title="Conquistas recentes">
+            {wins.length === 0 ? <p className="text-sm text-muted">As conquistas aparecem aqui conforme {student.name} avança.</p> : null}
+            <ul className="space-y-2">
+              {wins.map((t) => (
+                <li key={t.id} className="flex flex-wrap items-center gap-2 text-sm">
+                  <span className="text-xs text-muted">{formatDate(t.createdAt, student.timezone)}</span>
+                  <Link href={objectiveHref(t.objectiveId)} className="font-bold hover:text-primary">
+                    {titleOf(t.objectiveId)}
+                  </Link>
+                  <StatusBadge status={t.toStatus} short />
+                </li>
+              ))}
+            </ul>
+          </Section>
+
+          {reviewsDue.length ? (
+            <Section title="Pedem revisão">
+              <ul className="space-y-1.5 text-sm">
+                {reviewsDue.map((o) => (
+                  <li key={o.objective.id} className="flex items-center justify-between gap-2">
+                    <Link href={objectiveHref(o.objective.id)} className="font-bold hover:text-primary">
                       {o.objective.title}
                     </Link>
-                    <span className="flex flex-wrap items-center gap-1 text-xs text-muted">
-                      {o.skills.join(", ")}
-                      {o.state ? ` · ${o.state.assessedAttempts} attempts` : ""}
-                      {o.state?.successRateRecent ? ` · ${Math.round(Number(o.state.successRateRecent) * 100)}%` : ""}
-                      <StatusBadge status={o.status} />
-                      {o.state ? <ConfidenceBadge level={o.confidence} /> : null}
-                    </span>
+                    <span className="text-xs text-muted">desde {formatDate(o.review!.nextReviewAt!, student.timezone)}</span>
                   </li>
                 ))}
               </ul>
             </Section>
-          ))}
-        </div>
-        <div className="space-y-6">
-          <Section title="By skill">
-            <ul className="space-y-1 text-sm">
-              {[...skills.entries()].map(([name, v]) => (
-                <li key={name}>
-                  <strong>{name}</strong>: {v.total} objectives · {v.byStatus.MASTERED ?? 0} mastered, {v.byStatus.PROFICIENT ?? 0} proficient, {(v.byStatus.DEVELOPING ?? 0) + (v.byStatus.PRACTISING ?? 0) + (v.byStatus.INTRODUCED ?? 0)} in progress
-                </li>
-              ))}
-            </ul>
-          </Section>
-          <Section title="Recent state changes">
-            <ul className="space-y-1 text-xs">
-              {progress.recentTransitions.slice(0, 12).map((t) => (
-                <li key={t.id} className="flex flex-wrap items-center gap-1">
-                  <span className="text-muted">{formatDateTime(t.createdAt, student.timezone)}</span> {titleOf(t.objectiveId)}: <StatusBadge status={t.fromStatus} /> → <StatusBadge status={t.toStatus} />
-                </li>
-              ))}
-              {progress.recentTransitions.length === 0 ? <li className="text-muted">No changes yet.</li> : null}
-            </ul>
-          </Section>
+          ) : null}
         </div>
       </div>
     </>

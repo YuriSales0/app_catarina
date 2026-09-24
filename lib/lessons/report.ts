@@ -1,3 +1,4 @@
+import { STATUS } from "@/lib/copy/pt";
 import { and, asc, eq, gte, inArray } from "drizzle-orm";
 import type { Tx } from "@/lib/db/create-db";
 import * as s from "@/lib/db/schema";
@@ -150,7 +151,7 @@ export async function generateSystemReport(tx: Tx, access: StudentAccess, lesson
   for (const rec of recurring) {
     if (!errorsObserved.has(rec.errorTag)) continue;
     statements.push({
-      statement: `"${vocabulary[rec.errorTag] ?? rec.errorTag}" has come up ${rec.occurrences} times across ${rec.lessonIds.length || 1} sessions in the last ${RECURRING_ERROR_POLICY.windowDays} days and looks like a pattern rather than a slip.`,
+      statement: `"${vocabulary[rec.errorTag] ?? rec.errorTag}" apareceu ${rec.occurrences} vezes em ${rec.lessonIds.length || 1} ${(rec.lessonIds.length || 1) === 1 ? "sessão" : "sessões"} nos últimos ${RECURRING_ERROR_POLICY.windowDays} dias e parece um padrão, não um deslize.`,
       about: { objective_id: rec.objectiveIds[0] },
       basis_evidence_ids: rec.evidenceIds,
       source: "RULE_ENGINE",
@@ -160,8 +161,8 @@ export async function generateSystemReport(tx: Tx, access: StudentAccess, lesson
   const successful: string[] = [];
   const failed: string[] = [];
   for (const a of attempted) {
-    if (a.attempts >= 3 && (a.success_rate ?? 0) >= 0.8) successful.push(`${a.title}: ${a.correct} of ${a.attempts} correct.`);
-    if (a.attempts >= 3 && (a.success_rate ?? 0) < 0.5) failed.push(`${a.title}: only ${a.correct} of ${a.attempts} correct.`);
+    if (a.attempts >= 3 && (a.success_rate ?? 0) >= 0.8) successful.push(`${a.title}: ${a.correct} de ${a.attempts} certas.`);
+    if (a.attempts >= 3 && (a.success_rate ?? 0) < 0.5) failed.push(`${a.title}: só ${a.correct} de ${a.attempts} certas.`);
   }
 
   // RECOMMENDED (from state, proposals only)
@@ -180,16 +181,16 @@ export async function generateSystemReport(tx: Tx, access: StudentAccess, lesson
     const eff = effectiveEvidence(rows.map(asView)).filter(isAssessed);
     const rate = eff.length ? eff.reduce((a, r) => a + score(r, CURRENT_STATE_POLICY.partialCreditScore), 0) / eff.length : null;
     if (rate !== null && rate < PACING_LOW_RATE) {
-      pacing = { suggestion: "SLOW_DOWN", reason: `Success rate on "${primary?.title}" has been ${(rate * 100).toFixed(0)}% across the last ${PACING_LESSONS} lessons. Break it into smaller steps or revisit its prerequisites.` };
+      pacing = { suggestion: "SLOW_DOWN", reason: `O acerto em "${primary?.title}" ficou em ${(rate * 100).toFixed(0)}% nas últimas ${PACING_LESSONS} aulas. Divida em passos menores ou volte ao que vem antes.` };
     }
   }
   const review: LessonReport["recommended"]["recommended_review"] = [];
   if (primaryState && (primaryState.status === "PRACTISING" || primaryState.status === "DEVELOPING")) {
-    review.push({ objective_id: lesson.primaryObjectiveId, reason: `Still ${primaryState.status.toLowerCase()} after this lesson; keep it in the next one.`, priority: 1 });
+    review.push({ objective_id: lesson.primaryObjectiveId, reason: `Ainda em "${STATUS[primaryState.status].label.toLowerCase()}" depois desta aula; vale manter na próxima.`, priority: 1 });
   }
   const parentActions: LessonReport["recommended"]["parent_actions"] = [];
   if (recurring.some((r) => errorsObserved.has(r.errorTag))) {
-    parentActions.push({ action: "Listen for the recurring error during the week and model the correct form once, without turning it into a drill.", reason: "A recurring error responds better to frequent gentle exposure than to correction pressure." });
+    parentActions.push({ action: "Durante a semana, preste atenção ao erro que se repete e fale a forma certa uma vez, sem transformar em exercício.", reason: "Um erro recorrente melhora mais com exposição frequente e leve do que com pressão de correção." });
   }
 
   const report: LessonReport = {

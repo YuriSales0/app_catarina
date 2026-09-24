@@ -7,15 +7,15 @@ export type ActionState = { ok: true; message?: string } | { ok: false; error: s
 
 export function toActionError(err: unknown): ActionState {
   if (err instanceof ZodError) {
-    return { ok: false, error: "Please check the form.", issues: err.issues.map((i) => `${i.path.join(".")}: ${i.message}`) };
+    return { ok: false, error: "Confira os campos do formulário.", issues: err.issues.map((i) => `${i.path.join(".")}: ${i.message}`) };
   }
   if (err instanceof ValidationError) return { ok: false, error: err.message, issues: err.issues };
   if (err instanceof ConflictError) return { ok: false, error: err.message };
-  if (err instanceof NotFoundError) return { ok: false, error: "Not found." };
+  if (err instanceof NotFoundError) return { ok: false, error: "Não encontrado." };
   // Next.js redirect() and notFound() throw; let them propagate.
   if (err && typeof err === "object" && "digest" in err) throw err;
   log.error("action.unhandled", { error: (err as Error)?.message });
-  return { ok: false, error: "Something went wrong. Please try again." };
+  return { ok: false, error: "Algo deu errado. Tente de novo." };
 }
 
 /** Reads form fields into a plain object, dropping empty strings to undefined. */

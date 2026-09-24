@@ -6,7 +6,7 @@ import { or404 } from "@/lib/actions/page";
 import { getLesson } from "@/lib/lessons/service";
 import { getStudent } from "@/lib/students/service";
 import { resolveLessonStudent } from "@/lib/lessons/resolve";
-import { PageHeader, Section, formatDateTime } from "@/components/ui";
+import { PageHeader, EmptyState, formatDateTime } from "@/components/ui";
 import { lessonReportSchema } from "@/schemas/lesson-report";
 import { ReportView } from "@/components/parent/report-view";
 import { ActionForm } from "@/components/forms/action-form";
@@ -14,6 +14,12 @@ import { attachNarrativeAction } from "../../actions";
 import { getAIProvider } from "@/lib/ai";
 import { hasAiConsent } from "@/lib/lessons/ai-proposals";
 import { roleAllows } from "@/lib/authorization/permissions";
+import { Avatar, avatarOf } from "@/components/brand/avatar";
+import { Lumi } from "@/components/brand/lumi";
+
+export const metadata = { title: "Como foi a aula" };
+
+const BY: Record<string, string> = { SYSTEM: "pelo sistema", AI_PROVIDER: "com comentário da IA", HUMAN: "por um adulto" };
 
 export default async function LessonReportPage(props: { params: Promise<{ lessonId: string }> }) {
   const { lessonId } = await props.params;
@@ -28,38 +34,46 @@ export default async function LessonReportPage(props: { params: Promise<{ lesson
   const { access, detail, student } = data;
   const [provider, aiConsent] = await Promise.all([getAIProvider(), hasAiConsent(student.id)]);
   const canNarrate = provider.id !== "null" && aiConsent && roleAllows(access.role, "RUN_LESSON") && detail.report?.generatedBy === "SYSTEM";
-  const { lesson, subject, report, objectives } = detail;
+  const { lesson, subject, report, objectives, primaryObjective } = detail;
   const parsed = report ? lessonReportSchema.safeParse(report.payload) : null;
 
   return (
     <>
       <PageHeader
-        title={`Report · Lesson ${lesson.lessonNumber}`}
+        leading={<Avatar choice={avatarOf(student)} size="lg" />}
+        eyebrow="Como foi a aula"
+        title={`Aula ${lesson.lessonNumber} · ${primaryObjective.title}`}
         crumbs={[
           { href: `/students/${student.id}`, label: student.name },
           { href: `/students/${student.id}/subjects/${subject.id}`, label: subject.name },
-          { href: `/lessons/${lesson.id}`, label: `Lesson ${lesson.lessonNumber}` },
+          { href: `/lessons/${lesson.id}`, label: `Aula ${lesson.lessonNumber}` },
         ]}
-        subtitle={report ? `Generated ${formatDateTime(report.generatedAt, student.timezone)} by ${report.generatedBy.toLowerCase().replace("_", " ")} · schema ${report.schemaVersion}` : "No report yet"}
+        subtitle={report ? `${formatDateTime(report.generatedAt, student.timezone)} · gerado ${BY[report.generatedBy] ?? report.generatedBy} · ${report.schemaVersion}` : "Ainda sem relatório"}
+        actions={
+          <Link href={`/students/${student.id}/subjects/${subject.id}/next-lesson`} className="btn btn-primary">
+            Próxima aula →
+          </Link>
+        }
       />
       {!report || !parsed?.success ? (
-        <Section title="No report">
-          <p className="text-sm text-muted">
-            The report is generated when the lesson is completed.{" "}
-            <Link href={`/lessons/${lesson.id}`} className="underline">
-              Back to the lesson.
-            </Link>
-          </p>
-        </Section>
+        <EmptyState title="O relatório sai quando a aula termina">
+          <Link href={`/lessons/${lesson.id}`} className="btn btn-secondary mt-2">
+            Voltar para a aula
+          </Link>
+        </EmptyState>
       ) : (
         <>
           <ReportView report={parsed.data} objectives={objectives} studentId={student.id} subjectId={subject.id} />
           {canNarrate ? (
-            <div className="mt-6 max-w-md">
-              <ActionForm action={attachNarrativeAction} submitLabel="Add an AI narrative to the inferred and recommended sections" variant="secondary">
+            <div className="card mt-6 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+              <Lumi size={64} mood="think" />
+              <div className="flex-1">
+                <p className="font-display text-lg font-semibold">Quer um comentário da IA sobre esta aula?</p>
+                <p className="text-xs text-muted">A parte &ldquo;O que aconteceu&rdquo; continua exatamente como foi calculada. O que a IA não conseguir apoiar nas tentativas desta aula é descartado.</p>
+              </div>
+              <ActionForm action={attachNarrativeAction} submitLabel="Pedir comentário da IA" variant="primary">
                 <input type="hidden" name="studentId" value={student.id} />
                 <input type="hidden" name="lessonId" value={lesson.id} />
-                <p className="text-xs text-muted">The observed section stays exactly as computed. Anything the model cannot ground in this lesson&apos;s evidence is dropped and listed.</p>
               </ActionForm>
             </div>
           ) : null}

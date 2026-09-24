@@ -108,6 +108,7 @@ export async function listAccessibleStudents(actor: Actor, dbh: DbOrTx = db()) {
       name: students.name,
       dateOfBirth: students.dateOfBirth,
       timezone: students.timezone,
+      metadata: students.metadata,
       isDemo: students.isDemo,
       role: studentGuardians.role,
     })

@@ -1,6 +1,6 @@
 # Implementation status
 
-**Branch:** `claude/amazing-bardeen-wtlj1e` · **As of:** 2026-09-23
+**Branch:** `claude/amazing-bardeen-wtlj1e` · **As of:** 2026-09-24
 
 All twelve phases of the product brief are implemented and gated. Every gate
 below runs in CI (`.github/workflows/ci.yml`) against Postgres 16.
@@ -9,7 +9,7 @@ below runs in CI (`.github/workflows/ci.yml`) against Postgres 16.
 | --- | --- |
 | `pnpm typecheck` | clean |
 | `pnpm lint` | clean, module boundaries enforced |
-| `pnpm test` | 102 unit and integration tests passing |
+| `pnpm test` | 116 unit and integration tests passing |
 | `pnpm test:e2e` | 7 Playwright flows passing |
 | `pnpm db:verify` | schema matches migrations; every FK indexed; ledger tables append-only |
 | `pnpm build` | production build succeeds |
@@ -67,6 +67,15 @@ below runs in CI (`.github/workflows/ci.yml`) against Postgres 16.
 - **Local development database** is a real Postgres 16 with two roles
   (`learning_os_migrator`, `learning_os_app`) so privilege guarantees are
   exercised in tests, not emulated.
+- **UX redesign (2026-09-24):** public landing page, first-steps wizard,
+  child picker, one-click "today's lesson", a child lesson screen that runs
+  on AI content when enabled (typed answers with an expected response are
+  graded by the system, open items by the adult), "Como foi a aula" report
+  and a development page. Soft palette and self-hosted Nunito/Fredoka fonts;
+  stage charts use a validated one-hue ordinal ramp. Fixed on the way: AI
+  activity proposals were stored as `{ proposal, packId }` but read as a bare
+  proposal, so the adult lesson screen would have crashed on the first AI
+  suggestion; both shapes are now read (`lib/lessons/proposal-payload.ts`).
 - **pnpm hoisted linker** because the isolated layout produced two copies of
   Next.js and broke the production build.
 
@@ -118,8 +127,13 @@ Import your own curriculum: `pnpm curriculum:import curricula/english-starters.y
 9. **TEACHER and VIEWER roles** exist in the enum and permission matrix with no
    dedicated screens. Postgres RLS is deferred; every student-scoped table
    already carries `student_id`.
-10. **UI language** is English. All copy lives in `lib/copy/en.ts` and the
-    pages; a Portuguese UI is a translation, not a rewrite.
+10. **UI language is pt-BR** since the UX redesign (see `docs/ux/UX-PLAN.md`).
+    Shared copy and the family-friendly labels for every enum live in
+    `lib/copy/pt.ts`. The database keeps English enums. Engine and report
+    texts written before the switch stay in English in stored rows; the
+    Context Pack sent to a model stays in English on purpose. The technical
+    screens (Curriculum Studio, Context Pack) have Portuguese titles and
+    English technical content.
 11. **E2E in this sandbox** needs `PW_CHROMIUM_PATH` because the preinstalled
     Chromium differs from the Playwright version's expected build. CI installs
     Playwright's own Chromium and does not need it.

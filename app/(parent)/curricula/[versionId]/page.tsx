@@ -64,11 +64,11 @@ export default async function CurriculumVersionPage(props: { params: Promise<{ v
     <>
       <PageHeader
         title={`${curriculum.name} v${version.version}`}
-        crumbs={[{ href: "/curricula", label: "Curricula" }]}
+        crumbs={[{ href: "/curricula", label: "Currículos" }]}
         subtitle={
           <>
-            {subject.name} · {version.status.toLowerCase()}
-            {version.publishedAt ? ` since ${formatDate(version.publishedAt)}` : ""} · {curriculum.source.toLowerCase().replace("_", " ")} <DemoBadge show={curriculum.isDemo} />
+            {subject.name} · {version.status === "PUBLISHED" ? "publicado" : version.status === "DRAFT" ? "rascunho" : "arquivado"}
+            {version.publishedAt ? ` desde ${formatDate(version.publishedAt)}` : ""} · {curriculum.source.toLowerCase().replace("_", " ")} <DemoBadge show={curriculum.isDemo} />
           </>
         }
         actions={
@@ -76,7 +76,7 @@ export default async function CurriculumVersionPage(props: { params: Promise<{ v
             <form action={publishVersionAction}>
               <input type="hidden" name="versionId" value={version.id} />
               <button type="submit" className="btn btn-primary">
-                Publish this version
+                Publicar esta versão
               </button>
             </form>
           ) : null
@@ -86,13 +86,13 @@ export default async function CurriculumVersionPage(props: { params: Promise<{ v
       {curriculum.description ? <p className="mb-6 text-sm text-muted">{curriculum.description}</p> : null}
       <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
         <div>
-          <h2 className="text-lg font-semibold">
-            {units.length} units, {objectives.length} objectives, {prerequisites.length} prerequisite links
+          <h2 className="font-display text-lg font-semibold">
+            {units.length} unidades, {objectives.length} objetivos, {prerequisites.length} ligações de pré-requisito
           </h2>
           {topUnits.map((u) => renderUnit(u, 0))}
         </div>
         <div className="space-y-6">
-          <Section title="Provenance">
+          <Section title="Origem">
             <dl className="text-sm">
               {Object.entries(version.provenance).map(([k, v]) => (
                 <div key={k} className="grid grid-cols-[auto_1fr] gap-2">
@@ -108,7 +108,7 @@ export default async function CurriculumVersionPage(props: { params: Promise<{ v
               ) : null}
             </dl>
           </Section>
-          <Section title="Error tag vocabulary">
+          <Section title="Vocabulário de erros">
             <ul className="text-sm">
               {Object.entries(version.errorTagVocabulary).map(([k, v]) => (
                 <li key={k}>

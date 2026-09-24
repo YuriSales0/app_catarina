@@ -37,7 +37,7 @@ export async function generateDraftAction(_prev: StudioState, formData: FormData
       ok: true,
       yaml: outcome.yaml,
       notes: outcome.notes,
-      message: v.ok ? "Draft generated and valid. Review every objective before publishing." : "Draft generated but not yet valid; fix the issues below.",
+      message: v.ok ? "Rascunho gerado e válido. Revise cada objetivo antes de publicar." : "Rascunho gerado, mas ainda inválido; corrija os pontos abaixo.",
       preview: v.ok ? { units: v.value.units.length, objectives: v.value.objectives.length, warnings: v.value.warnings, name: v.value.file.name, version: v.value.file.version, subject: v.value.file.subject } : undefined,
       ...(v.ok ? {} : { issues: v.errors }),
     } as StudioState;
@@ -53,7 +53,7 @@ export async function previewCurriculumAction(_prev: StudioState, formData: Form
   try {
     const yaml = yamlField.parse(formData.get("yaml"));
     const outcome = previewCurriculumYaml(yaml);
-    if (!outcome.ok) return { ok: false, error: "The curriculum is not valid yet.", issues: outcome.errors };
+    if (!outcome.ok) return { ok: false, error: "O currículo ainda não é válido.", issues: outcome.errors };
     const { file, units, objectives, warnings } = outcome.value;
     return { ok: true, preview: { units: units.length, objectives: objectives.length, warnings, name: file.name, version: file.version, subject: file.subject } };
   } catch (err) {

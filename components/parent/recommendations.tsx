@@ -1,23 +1,27 @@
 import { decideRecommendationAction } from "@/app/(parent)/dashboard/actions";
 import type { listRecommendations } from "@/lib/recommendations/service";
+import { RECOMMENDATION_KIND } from "@/lib/copy/pt";
 
 type Rec = Awaited<ReturnType<typeof listRecommendations>>[number];
 
+const SOURCE: Record<string, string> = { NEXT_LESSON_ENGINE: "planejador", AI_PROVIDER: "IA", HUMAN: "você" };
+const DECIDED: Record<string, string> = { ACCEPTED: "aceita", REJECTED: "dispensada", EXPIRED: "expirada" };
+
 /** Proposals with an outcome. Accepting one changes nothing in the learning state; it records the parent's decision. */
 export function Recommendations({ studentId, items, canDecide }: { studentId: string; items: Rec[]; canDecide: boolean }) {
-  if (items.length === 0) return <p className="text-sm text-muted">No open recommendations.</p>;
+  if (items.length === 0) return <p className="text-sm text-muted">Nenhuma sugestão aberta.</p>;
   return (
     <ul className="space-y-2">
       {items.map((r) => (
-        <li key={r.id} className="rounded-md border border-border p-3 text-sm">
+        <li key={r.id} className="rounded-2xl bg-surface p-3 text-sm">
           <p>
-            <span className="badge mr-1">{r.kind.toLowerCase().replace("_", " ")}</span>
+            <span className="badge mr-1.5">{RECOMMENDATION_KIND[r.kind] ?? r.kind}</span>
             {r.objectiveTitle ? <strong>{r.objectiveTitle}: </strong> : null}
             {r.statement}
           </p>
           <p className="mt-1 text-xs text-muted">
-            {r.subjectName} · proposed by {r.source.toLowerCase().replace(/_/g, " ")}
-            {r.status !== "PROPOSED" ? ` · ${r.status.toLowerCase()}` : ""}
+            {r.subjectName} · sugerido pelo {SOURCE[r.source] ?? r.source}
+            {r.status !== "PROPOSED" ? ` · ${DECIDED[r.status] ?? r.status}` : ""}
           </p>
           {canDecide && r.status === "PROPOSED" ? (
             <div className="mt-2 flex gap-2">
@@ -26,8 +30,8 @@ export function Recommendations({ studentId, items, canDecide }: { studentId: st
                   <input type="hidden" name="studentId" value={studentId} />
                   <input type="hidden" name="recommendationId" value={r.id} />
                   <input type="hidden" name="decision" value={d} />
-                  <button type="submit" className={`btn px-2 py-1 text-xs ${d === "ACCEPTED" ? "btn-secondary" : "btn-danger"}`}>
-                    {d === "ACCEPTED" ? "Accept" : "Dismiss"}
+                  <button type="submit" className={`btn btn-sm ${d === "ACCEPTED" ? "btn-soft" : "btn-ghost"}`}>
+                    {d === "ACCEPTED" ? "Aceitar" : "Dispensar"}
                   </button>
                 </form>
               ))}

@@ -1,32 +1,95 @@
 @import "tailwindcss";
 
+/*
+ * Design tokens. Soft, warm and legible: a cream page, white surfaces, a
+ * gentle indigo for actions and pastel families for areas and illustrations.
+ * Every "-ink" colour is the text colour to use on its pastel.
+ */
 :root {
-  --background: #f7f7f5;
-  --foreground: #1c1c1a;
+  --background: #fbf7f0;
+  --foreground: #2d2a3e;
   --surface: #ffffff;
-  --border: #e4e3df;
-  --muted: #6b6a66;
-  --primary: #2f5d50;
+  --surface-2: #f6f1e8;
+  --border: #ece4d6;
+  --muted: #676279;
+  --primary: #5b5bd6;
+  --primary-strong: #4545b5;
   --primary-foreground: #ffffff;
-  --accent: #e9f1ee;
-  --danger: #b3261e;
-  --warning: #9a6b00;
-  --success: #2e7d32;
+  --primary-soft: #eeedfc;
+  --accent: #eeedfc;
+  --danger: #c4413b;
+  --warning: #a86a12;
+  --success: #2a8559;
+
+  --sky: #dcedfb;
+  --sky-ink: #28638f;
+  --mint: #dbf3e6;
+  --mint-ink: #1f6f4f;
+  --peach: #ffe5d4;
+  --peach-ink: #a44d24;
+  --sun: #fff0c2;
+  --sun-ink: #7d5a00;
+  --lavender: #ece6fd;
+  --lavender-ink: #5a3fbf;
+  --rose: #fde2ea;
+  --rose-ink: #a5345a;
+
+  /* Ordinal ramp for the six learning stages: one hue, light to dark (validated: lightest step 2.29:1 on white). */
+  --ord-0: #aaa3ee;
+  --ord-1: #9088e6;
+  --ord-2: #776cdc;
+  --ord-3: #5f53cc;
+  --ord-4: #4a3fb4;
+  --ord-5: #372d93;
+  /* Status trio for attempt results; always shown with a label and a count. */
+  --st-good: #2a9d6a;
+  --st-mid: #d9a21b;
+  --st-low: #e0784a;
+
+  --elev-soft: 0 1px 2px rgb(45 42 62 / 0.04), 0 10px 30px -14px rgb(45 42 62 / 0.18);
+  --elev-lift: 0 2px 4px rgb(45 42 62 / 0.05), 0 18px 40px -16px rgb(45 42 62 / 0.28);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #141413;
-    --foreground: #ecebe7;
-    --surface: #1d1d1b;
-    --border: #2f2f2c;
-    --muted: #a3a29c;
-    --primary: #8fc1b0;
-    --primary-foreground: #0f1f1a;
-    --accent: #1f2a26;
-    --danger: #f28b82;
+    --background: #17161f;
+    --foreground: #edeaf5;
+    --surface: #211f2c;
+    --surface-2: #1b1a24;
+    --border: #34313f;
+    --muted: #aaa5bb;
+    --primary: #a3a3f7;
+    --primary-strong: #bdbdfa;
+    --primary-foreground: #16152a;
+    --primary-soft: #2b2a46;
+    --accent: #2b2a46;
+    --danger: #f08a84;
     --warning: #f0c36d;
-    --success: #81c995;
+    --success: #7ed3a6;
+
+    --sky: #1d3040;
+    --sky-ink: #a3d2f3;
+    --mint: #1c3329;
+    --mint-ink: #95dcb9;
+    --peach: #3b2a20;
+    --peach-ink: #f5bb97;
+    --sun: #383020;
+    --sun-ink: #f0d07e;
+    --lavender: #2c2641;
+    --lavender-ink: #cbbcfb;
+    --rose: #3b2430;
+    --rose-ink: #f3aabf;
+
+    /* Dark ramp flips its anchor: low stages sit near the surface (lowest step 2.01:1 on #211f2c). */
+    --ord-0: #4d4596;
+    --ord-1: #5f56b3;
+    --ord-2: #7469cc;
+    --ord-3: #8d83e0;
+    --ord-4: #aba3ef;
+    --ord-5: #cdc8fb;
+
+    --elev-soft: 0 1px 2px rgb(0 0 0 / 0.3), 0 10px 30px -14px rgb(0 0 0 / 0.6);
+    --elev-lift: 0 2px 4px rgb(0 0 0 / 0.3), 0 18px 40px -16px rgb(0 0 0 / 0.7);
   }
 }
 
@@ -34,15 +97,42 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
   --color-border: var(--border);
   --color-muted: var(--muted);
   --color-primary: var(--primary);
+  --color-primary-strong: var(--primary-strong);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
   --color-accent: var(--accent);
   --color-danger: var(--danger);
   --color-warning: var(--warning);
   --color-success: var(--success);
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --color-sky: var(--sky);
+  --color-sky-ink: var(--sky-ink);
+  --color-mint: var(--mint);
+  --color-mint-ink: var(--mint-ink);
+  --color-peach: var(--peach);
+  --color-peach-ink: var(--peach-ink);
+  --color-sun: var(--sun);
+  --color-sun-ink: var(--sun-ink);
+  --color-lavender: var(--lavender);
+  --color-lavender-ink: var(--lavender-ink);
+  --color-rose: var(--rose);
+  --color-rose-ink: var(--rose-ink);
+  --font-sans: var(--font-nunito), ui-rounded, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-fredoka), var(--font-nunito), ui-rounded, system-ui, sans-serif;
+  --color-ord-0: var(--ord-0);
+  --color-ord-1: var(--ord-1);
+  --color-ord-2: var(--ord-2);
+  --color-ord-3: var(--ord-3);
+  --color-ord-4: var(--ord-4);
+  --color-ord-5: var(--ord-5);
+  --color-st-good: var(--st-good);
+  --color-st-mid: var(--st-mid);
+  --color-st-low: var(--st-low);
+  --shadow-soft: var(--elev-soft);
+  --shadow-lift: var(--elev-lift);
 }
 
 body {
@@ -51,26 +141,139 @@ body {
   font-family: var(--font-sans);
 }
 
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold transition focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-primary/60 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50;
   }
   .btn-primary {
-    @apply bg-primary text-primary-foreground hover:opacity-90;
+    @apply bg-primary text-primary-foreground shadow-soft hover:bg-primary-strong;
   }
   .btn-secondary {
-    @apply border border-border bg-surface hover:bg-accent;
+    @apply border border-border bg-surface text-foreground hover:bg-surface-2;
+  }
+  .btn-soft {
+    @apply bg-primary-soft text-primary-strong hover:brightness-95;
+  }
+  .btn-ghost {
+    @apply text-muted hover:bg-surface-2 hover:text-foreground;
   }
   .btn-danger {
-    @apply border border-danger/40 text-danger hover:bg-danger/10;
+    @apply border border-danger/40 bg-surface text-danger hover:bg-danger/10;
+  }
+  .btn-lg {
+    @apply px-7 py-3.5 text-base;
+  }
+  .btn-sm {
+    @apply px-3.5 py-1.5 text-xs;
   }
   .input {
-    @apply w-full rounded-md border border-border bg-surface px-3 py-2 text-sm focus:outline-2 focus:outline-offset-1 focus:outline-primary;
+    @apply w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted/70 focus:border-primary focus:outline-3 focus:outline-primary/20;
   }
   .card {
-    @apply rounded-lg border border-border bg-surface p-5;
+    @apply rounded-3xl border border-border/80 bg-surface p-6 shadow-soft;
+  }
+  .card-flat {
+    @apply rounded-2xl border border-border/80 bg-surface p-4;
   }
   .badge {
-    @apply inline-flex items-center rounded-full border border-border px-2 py-0.5 text-xs font-medium;
+    @apply inline-flex items-center gap-1 rounded-full border border-border bg-surface px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap;
+  }
+  .eyebrow {
+    @apply text-xs font-bold tracking-wider text-muted uppercase;
+  }
+  .font-display {
+    font-family: var(--font-display);
+  }
+  /* A selectable option card: wrap a hidden radio/checkbox and its content in a <label class="choice">. */
+  .choice {
+    @apply relative block cursor-pointer rounded-2xl border-2 border-border bg-surface p-4 transition hover:border-primary/50 has-[:checked]:border-primary has-[:checked]:bg-primary-soft has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-primary/40;
+  }
+  .kid-card {
+    @apply rounded-[2rem] bg-surface p-6 shadow-lift sm:p-8;
+  }
+  .kid-btn {
+    @apply inline-flex min-h-14 items-center justify-center gap-2 rounded-full px-8 py-4 text-xl font-bold transition focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-primary/60 active:scale-[0.97];
+    font-family: var(--font-display);
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+@keyframes pop {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes confetti {
+  0% {
+    transform: translateY(-10vh) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(105vh) rotate(540deg);
+    opacity: 0.9;
+  }
+}
+@keyframes rise {
+  from {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+.animate-pop {
+  animation: pop 0.45s ease-out both;
+}
+.animate-rise {
+  animation: rise 0.4s ease-out both;
+}
+.confetti-piece {
+  position: absolute;
+  top: 0;
+  width: 10px;
+  height: 14px;
+  border-radius: 3px;
+  animation: confetti 3.2s linear forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-float,
+  .animate-pop,
+  .animate-rise {
+    animation: none;
+  }
+  .confetti-piece {
+    display: none;
+  }
+  * {
+    transition-duration: 0.01ms !important;
   }
 }

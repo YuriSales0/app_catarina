@@ -8,6 +8,7 @@ import { requireStudentAccess } from "@/lib/authorization/access";
 import { createManualLessonSchema, recordEvidenceSchema, completeLessonSchema, recordEventSchema, correctEvidenceSchema } from "@/schemas/lessons";
 import { createManualLesson, startLesson, recordEvidence, completeLesson, recordLessonEvent, cancelLesson, correctEvidence } from "@/lib/lessons/service";
 import { toActionError, formToObject, type ActionState } from "@/lib/actions/result";
+import { STATUS } from "@/lib/copy/pt";
 
 const uuid = z.string().uuid();
 
@@ -61,7 +62,7 @@ export async function recordEvidenceAction(_prev: ActionState, formData: FormDat
     const { state } = await recordEvidence(access, input, { gradedBy: "HUMAN" });
     if (input.lessonId) revalidatePath(`/lessons/${input.lessonId}`);
     revalidatePath(`/students/${studentId}`);
-    return { ok: true, message: `Recorded. Objective is now ${state.decision.status.toLowerCase().replace("_", " ")}.` };
+    return { ok: true, message: `Registrado. Agora: ${STATUS[state.decision.status].label.toLowerCase()}.` };
   } catch (err) {
     return toActionError(err);
   }
@@ -76,7 +77,7 @@ export async function teacherNoteAction(_prev: ActionState, formData: FormData):
     const access = await requireStudentAccess(actor, studentId, "RUN_LESSON");
     await recordLessonEvent(access, recordEventSchema.parse({ lessonId, eventType: "TEACHER_NOTE", payload: { text } }));
     revalidatePath(`/lessons/${lessonId}`);
-    return { ok: true, message: "Note saved." };
+    return { ok: true, message: "Anotação salva." };
   } catch (err) {
     return toActionError(err);
   }
@@ -109,7 +110,7 @@ export async function correctEvidenceAction(_prev: ActionState, formData: FormDa
     void _s;
     await correctEvidence(access, correctEvidenceSchema.parse(rest));
     if (returnTo) revalidatePath(returnTo);
-    return { ok: true, message: "Recorded as a new row; the original is kept." };
+    return { ok: true, message: "Registrado como uma nova linha; o original é mantido." };
   } catch (err) {
     return toActionError(err);
   }
@@ -126,8 +127,8 @@ export async function requestAiContentAction(_prev: ActionState, formData: FormD
     const { requestActivityContent } = await import("@/lib/lessons/ai-proposals");
     const result = await requestActivityContent(access, await getAIProvider(), lessonId, activityId);
     revalidatePath(`/lessons/${lessonId}`);
-    if (!result.ok) return { ok: false, error: `The AI provider did not return usable content (${result.error.kind.toLowerCase().replace("_", " ")}).`, issues: result.error.issues };
-    return { ok: true, message: "Content proposed. It is a suggestion for how to teach, recorded in the event log." };
+    if (!result.ok) return { ok: false, error: `A IA não devolveu um conteúdo utilizável (${result.error.kind.toLowerCase().replace("_", " ")}).`, issues: result.error.issues };
+    return { ok: true, message: "Atividade preparada pela IA. É uma sugestão de como ensinar." };
   } catch (err) {
     return toActionError(err);
   }
@@ -143,8 +144,8 @@ export async function attachNarrativeAction(_prev: ActionState, formData: FormDa
     const { attachReportNarrative } = await import("@/lib/lessons/ai-proposals");
     const result = await attachReportNarrative(access, await getAIProvider(), lessonId);
     revalidatePath(`/lessons/${lessonId}/report`);
-    if (!result.ok) return { ok: false, error: `The AI provider did not return a usable narrative (${result.error.kind.toLowerCase().replace("_", " ")}).`, issues: result.error.issues };
-    return { ok: true, message: "Narrative added as a new report version. The observed section is unchanged." };
+    if (!result.ok) return { ok: false, error: `A IA não devolveu um comentário utilizável (${result.error.kind.toLowerCase().replace("_", " ")}).`, issues: result.error.issues };
+    return { ok: true, message: "Comentário da IA adicionado. A parte do que aconteceu não muda." };
   } catch (err) {
     return toActionError(err);
   }
