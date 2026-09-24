@@ -32,6 +32,12 @@ const envSchema = z.object({
   OPENAI_MODEL: z.string().default("gpt-4o-mini"),
   /** Model for the "high" conversation quality; open and conversational tasks only. */
   OPENAI_MODEL_HIGH: z.string().default("gpt-5.4-mini"),
+  /** Live voice lessons (speech to speech), per conversation quality. */
+  OPENAI_REALTIME_MODEL: z.string().default("gpt-realtime-mini"),
+  OPENAI_REALTIME_MODEL_HIGH: z.string().default("gpt-realtime"),
+  OPENAI_REALTIME_VOICE: z.string().default("marin"),
+  /** Independent transcript of the child's speech; the system grades this, not the model's paraphrase. */
+  OPENAI_TRANSCRIBE_MODEL: z.string().default("gpt-4o-mini-transcribe"),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
 });
 

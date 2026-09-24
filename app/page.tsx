@@ -16,6 +16,9 @@ export default async function Home() {
           <a href="#como-funciona" className="hover:text-foreground">
             Como funciona
           </a>
+          <a href="#voz" className="hover:text-foreground">
+            Aula por voz
+          </a>
           <a href="#adaptacao" className="hover:text-foreground">
             Como se adapta
           </a>
@@ -169,6 +172,37 @@ export default async function Home() {
         </section>
 
         {/* How lessons adapt */}
+        <section id="voz" className="scroll-mt-8 bg-lavender/60 py-20">
+          <div className="mx-auto grid w-full max-w-6xl items-center gap-10 px-4 md:grid-cols-[1fr_1.2fr]">
+            <div className="flex justify-center" aria-hidden>
+              <div className="relative flex h-64 w-64 items-center justify-center">
+                <span className="absolute inset-0 animate-pulse rounded-full bg-surface/70" />
+                <span className="absolute inset-8 rounded-full bg-surface" />
+                <span className="relative text-8xl">🎤</span>
+              </div>
+            </div>
+            <div>
+              <p className="eyebrow">Aula por voz</p>
+              <h2 className="mt-2 font-display text-3xl font-semibold sm:text-4xl">Uma conversa de verdade com o Lumi</h2>
+              <p className="mt-4 text-lg text-muted">A aula acontece falando, como uma chamada de voz: o Lumi explica em português, ensina em inglês, espera a criança responder e continua. Um toque para começar e pronto.</p>
+              <ul className="mt-6 space-y-3">
+                {[
+                  { emoji: "👂", text: "Quem ainda não lê faz a aula sozinho: não precisa ler, digitar nem apertar nada." },
+                  { emoji: "🧩", text: "O roteiro vem do planejador, do currículo e do que a criança já mostrou. A voz só decide como ensinar." },
+                  { emoji: "✅", text: "Cada resposta é registrada. As que têm gabarito são conferidas pelo sistema a partir da transcrição." },
+                ].map((b) => (
+                  <li key={b.text} className="flex gap-3">
+                    <span className="text-2xl" aria-hidden>
+                      {b.emoji}
+                    </span>
+                    <span>{b.text}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </section>
+
         <section id="adaptacao" className="mx-auto w-full max-w-6xl scroll-mt-8 px-4 py-20">
           <p className="eyebrow text-center">Como a aula se adapta</p>
           <h2 className="mt-2 text-center font-display text-3xl font-semibold sm:text-4xl">Começa bem, lembra de tudo, fala do jeito certo</h2>
@@ -244,7 +278,7 @@ export default async function Home() {
                 name="Tutor Particular"
                 tagline="A aula inteira dentro do app"
                 highlight
-                items={["Tudo do plano Tutor", "A IA prepara e conduz as atividades dentro do app", "Correção automática das respostas", "Qualidade da conversa: Padrão ou Alto, por criança", "Comentário da IA ao fim de cada aula"]}
+                items={["Tudo do plano Tutor", "Aula por voz ao vivo com o Lumi, do começo ao fim", "A IA prepara e conduz as atividades dentro do app", "Correção automática das respostas", "Qualidade da conversa: Padrão ou Alto, por criança", "Comentário da IA ao fim de cada aula"]}
               />
             </div>
           </div>
@@ -261,8 +295,9 @@ export default async function Home() {
               { q: "A IA é obrigatória?", a: "Não. Sem IA, o app planeja a aula e você conduz com os exemplos prontos. Com IA, as atividades são preparadas e corrigidas automaticamente. Em nenhum caso a IA decide o que a criança aprendeu." },
               { q: "Como vocês sabem se o nível está certo?", a: "A primeira aula e o começo de cada módulo trazem um diagnóstico rápido, feito antes de qualquer explicação. Se a criança acerta quase tudo ou quase nada, o relatório sugere ajustar o nível. O app nunca troca o nível sozinho." },
               { q: "A IA lembra do que aconteceu nas aulas anteriores?", a: "Quem lembra é o sistema, não a IA. Cada tentativa fica registrada, e antes de cada aula a IA recebe um resumo calculado pelo sistema: o estágio de cada objetivo, os erros que se repetem, a última aula e a evolução das últimas semanas. Assim ela ajusta o ritmo sem inventar histórico." },
+              { q: "Meu filho ainda não sabe ler. Consegue usar?", a: "Sim. No plano Tutor Particular a aula é uma conversa por voz com o Lumi: ele fala, escuta e conduz tudo. Na primeira vez, um adulto só precisa permitir o microfone no navegador." },
               { q: "Quanto tempo por dia?", a: "De 10 a 20 minutos, algumas vezes por semana. Constância vale mais do que aula longa." },
-              { q: "E os dados do meu filho?", a: "Guardamos o mínimo: primeiro nome, idade e o histórico de aulas. A IA só recebe dados com o seu consentimento, e você pode exportar ou apagar tudo a qualquer momento." },
+              { q: "E os dados do meu filho?", a: "Guardamos o mínimo: primeiro nome, idade e o histórico de aulas. A IA só recebe dados com o seu consentimento. Na aula por voz, o áudio vai direto para o serviço de IA durante a conversa e não é gravado pelo app; guardamos só o texto das respostas. Você pode exportar ou apagar tudo a qualquer momento." },
             ].map((f) => (
               <details key={f.q} className="card-flat group">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-bold marker:content-none">

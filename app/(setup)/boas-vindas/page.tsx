@@ -124,7 +124,7 @@ async function ChildSteps({ step, childId }: { step: number; childId: string }) 
           <Lumi size={72} mood="think" />
           <div>
             <h1 className="font-display text-2xl font-semibold">Aulas com inteligência artificial</h1>
-            <p className="mt-1 text-sm text-muted">Quando a IA está ligada, ela prepara as atividades, corrige respostas abertas e comenta a aula. Você pode mudar isso a qualquer momento no perfil.</p>
+            <p className="mt-1 text-sm text-muted">Quando a IA está ligada, a aula vira uma conversa por voz com o Lumi: ele prepara as atividades, conduz tudo falando, corrige respostas abertas e comenta a aula. Você pode mudar isso a qualquer momento no perfil.</p>
           </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -134,6 +134,7 @@ async function ChildSteps({ step, childId }: { step: number; childId: string }) 
               <li>• O primeiro nome e a idade de {student.name}</li>
               <li>• O objetivo da aula e as tentativas recentes</li>
               <li>• Um resumo da evolução das últimas semanas, calculado pelo sistema</li>
+              <li>• Na aula por voz, o áudio da conversa, ao vivo (o app não grava áudio)</li>
             </ul>
           </div>
           <div className="rounded-2xl bg-rose p-5 text-sm">

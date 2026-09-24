@@ -74,6 +74,7 @@ export type MetricEvent =
   | "auth_failure"
   | "db_error"
   | "ai_proposal_received"
+  | "voice_session_opened"
   | "ai_proposal_rejected"
   | "ai_provider_error";
 

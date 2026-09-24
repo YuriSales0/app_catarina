@@ -23,6 +23,10 @@ export type GraderRef = {
   userId?: string;
   method?: string;
   reason?: string;
+  /** Version of the deterministic policy that graded, e.g. answer-match.v1. */
+  policy?: string;
+  /** How the child answered: typed, spoken (browser speech) or in a live voice session. */
+  input?: "typed" | "speech" | "voice_live";
 };
 
 /**

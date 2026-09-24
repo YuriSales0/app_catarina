@@ -13,7 +13,11 @@ import { Avatar, avatarOf } from "@/components/brand/avatar";
 import { Lumi, LumiSays } from "@/components/brand/lumi";
 import { AutoPrepare } from "@/components/student/auto-prepare";
 import { Confetti } from "@/components/student/confetti";
+import { VoiceLesson } from "@/components/student/voice-lesson";
+import { ReadAloud } from "@/components/student/read-aloud";
+import { voiceAvailable } from "@/lib/lessons/voice";
 import { playStartAction, playNextAction, playMarkAction, playFinishAction, playPrepareAction, playAnswerAction } from "./actions";
+import { startVoiceAction, voiceToolAction } from "./voice-actions";
 import type { Opening } from "@/lib/lessons/opening";
 
 export const metadata = { title: "Aula" };
@@ -38,9 +42,13 @@ type Evidence = { id: string; prompt: string; result: EvidenceResult; expectedRe
  * the provider and typed answers with an expected response are graded by the
  * system; otherwise the adult beside the child marks each prompt. Everything
  * goes through the same evidence path as the adult runner.
+ *
+ * With AI enabled the lesson is a live voice conversation by default (a child
+ * who cannot read can do it alone); ?modo=tela keeps the screen version.
  */
-export default async function PlayPage(props: { params: Promise<{ lessonId: string }> }) {
+export default async function PlayPage(props: { params: Promise<{ lessonId: string }>; searchParams: Promise<{ modo?: string }> }) {
   const { lessonId } = await props.params;
+  const { modo } = await props.searchParams;
   const actor = await requireActor();
   const state = await or404(async () => {
     z.string().uuid().parse(lessonId);
@@ -50,6 +58,35 @@ export default async function PlayPage(props: { params: Promise<{ lessonId: stri
   });
   const { lesson, student, current, objective, activities, completedCount, attemptsInCurrent, primaryObjective } = state;
   const avatar = avatarOf(student);
+  const [provider, consent] = await Promise.all([getAIProvider(), hasAiConsent(student.id)]);
+  const live = lesson.status === "PLANNED" || lesson.status === "IN_PROGRESS";
+  const voiceOn = live && Boolean(current) && modo !== "tela" && (await voiceAvailable(student.id, provider.id));
+
+  if (voiceOn) {
+    return (
+      <main className="flex w-full max-w-2xl flex-1 flex-col">
+        <div className="flex items-center justify-between gap-3">
+          <Avatar choice={avatar} size="md" />
+          <Link href={`/lessons/${lesson.id}`} className="btn btn-ghost btn-sm" aria-label="Sair para a visão do adulto">
+            Adulto
+          </Link>
+        </div>
+        <VoiceLesson lessonId={lesson.id} childName={student.name} total={activities.length} completed={completedCount} start={startVoiceAction} runTool={voiceToolAction} screenModeHref={`/play/${lesson.id}?modo=tela`} />
+        {lesson.status === "IN_PROGRESS" ? (
+          <details className="mb-6 rounded-2xl bg-surface-2 px-4 py-3 text-sm">
+            <summary className="cursor-pointer font-bold text-muted">Para o adulto</summary>
+            <p className="mt-2">O Lumi conduz a aula por voz e cada resposta é registrada pelo sistema. Respostas com gabarito são conferidas pelo sistema a partir da transcrição; as abertas são avaliadas pela IA e aparecem assim no relatório.</p>
+            <form action={playFinishAction} className="mt-3">
+              <input type="hidden" name="lessonId" value={lesson.id} />
+              <button type="submit" className="btn btn-secondary btn-sm">
+                Encerrar a aula agora
+              </button>
+            </form>
+          </details>
+        ) : null}
+      </main>
+    );
+  }
 
   if (lesson.status === "PLANNED") {
     return (
@@ -113,7 +150,6 @@ export default async function PlayPage(props: { params: Promise<{ lessonId: stri
     );
   }
 
-  const [provider, consent] = await Promise.all([getAIProvider(), hasAiConsent(student.id)]);
   const aiMode = provider.id !== "null" && consent && Boolean(current && objective && current.activityType !== "REVIEW");
   const isLast = completedCount + 1 >= activities.length;
 
@@ -176,6 +212,7 @@ export default async function PlayPage(props: { params: Promise<{ lessonId: stri
             <details className="rounded-2xl bg-surface-2 px-4 py-3 text-sm">
               <summary className="cursor-pointer font-bold text-muted">Para o adulto</summary>
               <p className="mt-2">{current.instructions}</p>
+              {provider.id === "null" || !consent ? <p className="mt-2 text-muted">Aula por voz com o Lumi: disponível quando a IA está ligada e a permissão de IA está ativa no perfil da criança.</p> : null}
             </details>
           </section>
 
@@ -293,6 +330,9 @@ function AiActivity({ lessonId, activityId, objectiveId, type, content, evidence
     return (
       <>
         <LumiSays size={80}>{proposal.child_facing_intro}</LumiSays>
+        <div className="flex justify-center">
+          <ReadAloud lines={[proposal.child_facing_intro, ...proposal.items.map((it) => it.expected_response ?? it.prompt)]} />
+        </div>
         <ul className="grid gap-3 sm:grid-cols-2">
           {proposal.items.map((it, i) => (
             <li key={i} className="rounded-2xl bg-lavender px-5 py-4">
@@ -315,6 +355,9 @@ function AiActivity({ lessonId, activityId, objectiveId, type, content, evidence
             Pergunta {index + 1} de {proposal.items.length}
           </p>
           <p className="rounded-3xl bg-sky px-6 py-6 text-center font-display text-3xl leading-snug font-semibold text-sky-ink">{item.prompt}</p>
+          <div className="flex justify-center">
+            <ReadAloud lines={index === 0 ? [proposal.child_facing_intro, item.prompt] : [item.prompt]} />
+          </div>
           {item.checkable !== "OPEN" && item.expected_response ? (
             <form action={playAnswerAction} className="flex flex-col gap-3 sm:flex-row">
               <input type="hidden" name="lessonId" value={lessonId} />
@@ -362,6 +405,9 @@ function ManualActivity({
   return (
     <>
       <LumiSays size={80}>{KID_SAYS[type]}</LumiSays>
+      <div className="flex justify-center">
+        <ReadAloud lines={type === "EXPLANATION" ? [KID_SAYS[type], ...prompts] : [KID_SAYS[type], prompt]} />
+      </div>
       {note ? <p className="rounded-2xl bg-sun px-4 py-2 text-sm text-sun-ink">{note}</p> : null}
       {type === "EXPLANATION" && prompts.length ? (
         <ul className="grid gap-3 sm:grid-cols-2">

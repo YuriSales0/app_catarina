@@ -184,7 +184,7 @@ export default async function StudentPage(props: { params: Promise<{ studentId: 
         {isOwner ? (
           <Section title="IA nas aulas" aside={<span className={`badge border-transparent ${aiConsent ? "bg-mint text-mint-ink" : "bg-surface-2 text-muted"}`}>{aiConsent ? "ligada" : "desligada"}</span>}>
             <p className="text-sm text-muted">
-              Com a IA ligada, um provedor de IA pode receber o primeiro nome, a idade, o objetivo da aula, as tentativas recentes e um resumo da evolução das últimas semanas de {student.name}, calculado pelo sistema, para preparar atividades e corrigir respostas abertas. Ela nunca decide o que foi aprendido nem muda o progresso.
+              Com a IA ligada, um provedor de IA pode receber o primeiro nome, a idade, o objetivo da aula, as tentativas recentes e um resumo da evolução das últimas semanas de {student.name}, calculado pelo sistema, para preparar atividades, conduzir a aula por voz e corrigir respostas abertas. Na aula por voz, o áudio vai ao vivo para o provedor e não é gravado pelo app; fica só o texto das respostas. Ela nunca decide o que foi aprendido nem muda o progresso.
             </p>
             <form action={setAiConsentAction}>
               <input type="hidden" name="studentId" value={student.id} />

@@ -90,6 +90,19 @@ below runs in CI (`.github/workflows/ci.yml`) against Postgres 16.
     economical model. Reasoning-family models get no `temperature`.
   - Context pack `context.v2` adds `long_term`, and the development page
     shows the same six-week view with its trend.
+  - Live voice lesson (`lib/ai/realtime.ts`, `lib/lessons/voice.ts`,
+    `components/student/voice-lesson.tsx`): with AI on and consent given,
+    the child screen is a speech-to-speech conversation (OpenAI Realtime over
+    WebRTC), hands-free after one tap, so a child who cannot read can do the
+    lesson alone. The server mints a two-minute client secret; the API key
+    never reaches the browser. The model receives the pack and one activity
+    brief at a time and acts only through three tools (`record_answer`,
+    `next_activity`, `finish_lesson`) that the server executes: checkable
+    items are graded by the system (`answer-match.v1`) against an
+    independent transcript, open items record the voice model's judgement as
+    AI-graded, and each item is recorded once. `?modo=tela` keeps the screen
+    lesson, which now has a 🔊 read-aloud button using the browser's voices.
+    Audio is not stored. Not yet exercised against the live API from CI.
 - **pnpm hoisted linker** because the isolated layout produced two copies of
   Next.js and broke the production build.
 

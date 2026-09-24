@@ -58,6 +58,9 @@ SELECT pg_has_role('learning_os_app', 'neon_superuser', 'member');              
 | `AI_PROVIDER` | production, preview | `null` until a provider is chosen; `openai` plus `OPENAI_API_KEY` to enable |
 | `OPENAI_MODEL` | production | Economical model, used everywhere at quality "Padrão". Default `gpt-4o-mini` |
 | `OPENAI_MODEL_HIGH` | production | Better model for conversation, openings, open grading and report comments at quality "Alto". Default `gpt-5.4-mini` |
+| `OPENAI_REALTIME_MODEL`, `OPENAI_REALTIME_MODEL_HIGH` | production | Live voice lesson (speech to speech) at "Padrão" / "Alto". Defaults `gpt-realtime-mini` / `gpt-realtime` |
+| `OPENAI_REALTIME_VOICE` | production | Lumi's voice. Default `marin` |
+| `OPENAI_TRANSCRIBE_MODEL` | production | Independent transcript of the child, which the system grades. Default `gpt-4o-mini-transcribe` |
 | `LOG_LEVEL` | production, preview | `info` |
 
 Do **not** set `AUTH_DEV_LOGIN` (the app refuses to start with it in

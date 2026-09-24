@@ -1,4 +1,5 @@
 import { and, eq } from "drizzle-orm";
+import { matchAnswer, ANSWER_MATCH_POLICY } from "@/lib/assessment/answer-match";
 import { db } from "@/lib/db/client";
 import type { DbOrTx } from "@/lib/db/create-db";
 import * as s from "@/lib/db/schema";
@@ -86,7 +87,7 @@ function validateActivityProposal(p: ActivityProposal, planned: ContextPack["les
 export async function gradeAndRecord(
   access: StudentAccess,
   provider: AIProvider,
-  input: { lessonId: string; activityId: string; packId: string; item: ResponseItem; errorTagVocabulary: string[] },
+  input: { lessonId: string; activityId: string; packId: string; item: ResponseItem; errorTagVocabulary: string[]; inputMode?: "typed" | "speech" },
   dbh: DbOrTx = db(),
 ) {
   const lesson = await dbh.query.lessons.findFirst({ where: and(eq(s.lessons.id, input.lessonId), eq(s.lessons.studentId, access.studentId)) });
@@ -97,14 +98,13 @@ export async function gradeAndRecord(
   const objectiveId = resolveHandle(handles, "objectives", input.item.objective_ref);
   if (!objectiveId) throw new ValidationError(`Unknown objective handle ${input.item.objective_ref}`);
 
-  const normalize = (t: string) => t.trim().toLowerCase().replace(/[.!?,']/g, "").replace(/\s+/g, " ");
-  const accepted = [input.item.expected_response, ...input.item.accept_also].filter((x): x is string => Boolean(x)).map(normalize);
+  const accepted = [input.item.expected_response, ...input.item.accept_also].filter((x): x is string => Boolean(x));
   if (accepted.length) {
-    const result = accepted.includes(normalize(input.item.student_response)) ? "CORRECT" : "INCORRECT";
+    const m = matchAnswer(input.item.student_response, accepted);
     return recordEvidence(
       access,
-      { lessonId: input.lessonId, activityId: input.activityId, objectiveId, prompt: input.item.prompt, studentResponse: input.item.student_response, expectedResponse: input.item.expected_response ?? undefined, result, evidenceType: "PRACTICE", confidence: "HIGH", errorTags: [] },
-      { gradedBy: "SYSTEM", graderRef: { method: "exact_match" } },
+      { lessonId: input.lessonId, activityId: input.activityId, objectiveId, prompt: input.item.prompt, studentResponse: input.item.student_response, expectedResponse: input.item.expected_response ?? undefined, result: m.match ? "CORRECT" : "INCORRECT", evidenceType: "PRACTICE", confidence: "HIGH", errorTags: [] },
+      { gradedBy: "SYSTEM", graderRef: { method: m.method === "phrase" ? "phrase_match" : "exact_match", policy: ANSWER_MATCH_POLICY.version, input: input.inputMode ?? "typed" } },
       dbh,
     );
   }
