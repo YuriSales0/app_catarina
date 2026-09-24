@@ -88,6 +88,7 @@ export const ACTIVITY: Record<ActivityType, { adult: string; kid: string; emoji:
   CONVERSATION: { adult: "Conversa", kid: "Vamos conversar!", emoji: "💬", tone: "mint" },
   ASSESSMENT: { adult: "Desafio (avaliação)", kid: "Mostre o que você sabe!", emoji: "🏅", tone: "rose" },
   REFLECTION: { adult: "Reflexão", kid: "Pensando no que aprendi", emoji: "💭", tone: "sky" },
+  ORIENTATION: { adult: "Abertura", kid: "Começando a aventura!", emoji: "🗺️", tone: "peach" },
 };
 
 export const LESSON_STATUS: Record<LessonStatus, string> = {

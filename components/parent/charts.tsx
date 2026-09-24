@@ -110,3 +110,37 @@ export function ResultBar({ correct, partial, incorrect }: { correct: number; pa
     </figure>
   );
 }
+
+/** Weekly success rate as one series of vertical bars, with the lessons of each week underneath. */
+export function WeeklyBars({ weeks }: { weeks: Array<{ week_start: string; lessons: number; attempts: number; success_rate: number | null }> }) {
+  const label = (iso: string) => {
+    const [, m, d] = iso.split("-");
+    return `${d}/${m}`;
+  };
+  return (
+    <figure>
+      <div className="flex h-36 items-end gap-3 border-b border-border" role="img" aria-label={weeks.map((w) => `semana de ${label(w.week_start)}: ${w.success_rate === null ? "sem tentativas" : `${Math.round(w.success_rate * 100)}% de acerto em ${w.attempts} tentativas`}`).join("; ")}>
+        {weeks.map((w) => {
+          const pct = w.success_rate ?? 0;
+          return (
+            <div key={w.week_start} className="group relative flex h-full flex-1 flex-col items-center justify-end">
+              {w.success_rate !== null ? <span className="mb-1 text-xs font-bold tabular-nums">{Math.round(pct * 100)}%</span> : <span className="mb-1 text-xs text-muted">—</span>}
+              <span className={`block w-full max-w-10 rounded-t-md ${w.success_rate !== null ? "bg-ord-4" : "bg-surface-2"}`} style={{ height: `${w.success_rate !== null ? Math.max(4, pct * 100) : 4}%` }} />
+              <span role="tooltip" className="pointer-events-none absolute -top-8 z-10 hidden rounded-lg bg-foreground px-2.5 py-1 text-xs font-bold whitespace-nowrap text-background group-hover:block">
+                {w.attempts} tentativas · {w.lessons} {w.lessons === 1 ? "aula" : "aulas"}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      <figcaption className="mt-2 flex gap-3">
+        {weeks.map((w) => (
+          <span key={w.week_start} className="flex-1 text-center text-[11px] leading-tight text-muted">
+            {label(w.week_start)}
+            <span className="block font-bold text-foreground">{w.lessons ? `${w.lessons} ${w.lessons === 1 ? "aula" : "aulas"}` : "—"}</span>
+          </span>
+        ))}
+      </figcaption>
+    </figure>
+  );
+}

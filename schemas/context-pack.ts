@@ -2,11 +2,12 @@ import { z } from "zod";
 import { OBJECTIVE_STATUSES, CONFIDENCE_LEVELS, EVIDENCE_RESULTS, GRADED_BY, CURRICULUM_SOURCES, ACTIVITY_TYPES } from "@/lib/db/enums";
 
 /**
- * context.v1: the only thing an AI provider ever receives about a student.
+ * context.v2: the only thing an AI provider ever receives about a student.
+ * v2 adds long_term, a rule-computed summary of the last weeks.
  * An allowlist projection with opaque handles instead of database ids, and
  * caps that are part of the schema so no student can produce an unbounded pack.
  */
-export const CONTEXT_VERSION = "context.v1" as const;
+export const CONTEXT_VERSION = "context.v2" as const;
 export const CONTEXT_CAPS = { evidence: 10, recurringErrors: 5, masteredConcepts: 8, activities: 8, teacherInstructionChars: 2000, prerequisites: 8, maxBytes: 8 * 1024 } as const;
 
 const handle = (prefix: string) => z.string().regex(new RegExp(`^${prefix}_\\d+$`), `expected a ${prefix}_n handle`);
@@ -90,6 +91,22 @@ export const contextPackSchema = z
       })
       .strict()
       .nullable(),
+    /** Rule-computed view of the last weeks (lib/learning/long-term.ts). Never model output. */
+    long_term: z
+      .object({
+        policy_version: z.string(),
+        first_lesson_at: z.string().datetime().nullable(),
+        lessons_completed: z.number().int().min(0),
+        lessons_last_30_days: z.number().int().min(0),
+        weekly: z
+          .array(z.object({ week_start: z.string(), lessons: z.number().int().min(0), attempts: z.number().int().min(0), success_rate: z.number().min(0).max(1).nullable() }).strict())
+          .max(8),
+        trend: z.enum(["IMPROVING", "STABLE", "DECLINING", "INSUFFICIENT_DATA"]),
+        objectives_secure: z.number().int().min(0),
+        objectives_total: z.number().int().min(0),
+        secured_last_30_days: z.number().int().min(0),
+      })
+      .strict(),
     lesson_plan: z
       .object({
         planned_duration_minutes: z.number().int().min(1).max(180),

@@ -44,6 +44,18 @@ in the pack fails resolution instead of being written.
 
 ---
 
+## `context.v2` (2026-09-24)
+
+Adds `long_term`: a rule-computed view of the last weeks
+(`lib/learning/long-term.ts`, policy `long-term.v1`). It holds six rolling
+weekly buckets (lessons, assessed attempts, success rate), a trend
+(IMPROVING, STABLE, DECLINING or INSUFFICIENT_DATA; last two weeks against
+the two before, at least five attempts on each side, ±10 points), lessons in
+the last 30 days, objectives secure and objectives secured in the last 30
+days. It is computed from the ledger only; no model output is read back. The
+activity task prompt (`prompt.v2`) asks the teacher to pace by it without
+mentioning numbers to the child.
+
 ## Schema (`context.v1`)
 
 ```ts

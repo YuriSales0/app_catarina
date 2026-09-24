@@ -2,27 +2,28 @@ import Link from "next/link";
 import { requireActor } from "@/lib/auth/session";
 import { requireStudentAccess } from "@/lib/authorization/access";
 import { or404 } from "@/lib/actions/page";
-import { getStudent, listGuardians, listEnrolments, getAiProcessingConsent } from "@/lib/students/service";
+import { getStudent, listGuardians, listEnrolments, getAiProcessingConsent, getAiQuality } from "@/lib/students/service";
 import { listSubjects, listPublishedVersionsForSubject } from "@/lib/curriculum/service";
 import { PageHeader, DemoBadge, DemoNotice, Field, Section, Details, ageYears, formatDate } from "@/components/ui";
 import { ActionForm } from "@/components/forms/action-form";
-import { AvatarPicker, LevelPicker, MinutesPicker } from "@/components/forms/pickers";
+import { AvatarPicker, LevelPicker, MinutesPicker, QualityPicker } from "@/components/forms/pickers";
 import { Avatar, avatarOf } from "@/components/brand/avatar";
 import { describeLevel, suggestedLevelKey } from "@/lib/curriculum/levels";
 import { TONE, ROLE } from "@/lib/copy/pt";
-import { updateStudentAction, addGuardianAction, revokeGuardianAction, enrolAction, deleteStudentAction, setAiConsentAction } from "../actions";
+import { updateStudentAction, addGuardianAction, revokeGuardianAction, enrolAction, deleteStudentAction, setAiConsentAction, setAiQualityAction } from "../actions";
 import { GUARDIAN_ROLES } from "@/lib/db/enums";
 
 export default async function StudentPage(props: { params: Promise<{ studentId: string }> }) {
   const { studentId } = await props.params;
   const actor = await requireActor();
   const access = await or404(() => requireStudentAccess(actor, studentId, "VIEW"));
-  const [student, guardians, enrolments, subjects, aiConsent] = await Promise.all([
+  const [student, guardians, enrolments, subjects, aiConsent, aiQuality] = await Promise.all([
     getStudent(access),
     listGuardians(access),
     listEnrolments(access),
     listSubjects(),
     getAiProcessingConsent(access),
+    getAiQuality(access),
   ]);
   const versions = (await Promise.all(subjects.map(async (sub) => (await listPublishedVersionsForSubject(actor, sub.id)).map((v) => ({ ...v, subjectName: sub.name }))))).flat();
   const canEdit = access.role === "OWNER" || access.role === "GUARDIAN";
@@ -183,13 +184,20 @@ export default async function StudentPage(props: { params: Promise<{ studentId: 
         {isOwner ? (
           <Section title="IA nas aulas" aside={<span className={`badge border-transparent ${aiConsent ? "bg-mint text-mint-ink" : "bg-surface-2 text-muted"}`}>{aiConsent ? "ligada" : "desligada"}</span>}>
             <p className="text-sm text-muted">
-              Com a IA ligada, um provedor de IA pode receber o primeiro nome, a idade, o objetivo da aula e as tentativas recentes de {student.name} para preparar atividades e corrigir respostas abertas. Ela nunca decide o que foi aprendido nem muda o progresso.
+              Com a IA ligada, um provedor de IA pode receber o primeiro nome, a idade, o objetivo da aula, as tentativas recentes e um resumo da evolução das últimas semanas de {student.name}, calculado pelo sistema, para preparar atividades e corrigir respostas abertas. Ela nunca decide o que foi aprendido nem muda o progresso.
             </p>
             <form action={setAiConsentAction}>
               <input type="hidden" name="studentId" value={student.id} />
               <input type="hidden" name="enabled" value={aiConsent ? "false" : "true"} />
               <button type="submit" className={`btn ${aiConsent ? "btn-secondary" : "btn-primary"}`}>
                 {aiConsent ? "Desligar a IA" : "Ligar a IA"}
+              </button>
+            </form>
+            <form action={setAiQualityAction} className="space-y-3 border-t border-border/70 pt-4">
+              <input type="hidden" name="studentId" value={student.id} />
+              <QualityPicker value={aiQuality} />
+              <button type="submit" className="btn btn-secondary btn-sm">
+                Salvar qualidade
               </button>
             </form>
           </Section>

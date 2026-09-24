@@ -42,8 +42,14 @@ describe("lesson lifecycle", () => {
     const again = await createManualLesson(access, { subjectId: englishId, primaryObjectiveId: key("DEMO.EN.GREET").id, reviewObjectiveIds: [], idempotencyKey: "k1" }, db);
     expect(again.id).toBe(lesson.id);
     const detail = await getLesson(access, lesson.id, db);
-    expect(detail.activities.map((a) => a.activityType)).toEqual(["EXPLANATION", "PRACTICE", "GAME", "ASSESSMENT"]);
+    // The first lesson on a curriculum opens the course: how lessons work, the module's goals, a diagnostic.
+    expect(detail.activities.map((a) => a.activityType)).toEqual(["ORIENTATION", "EXPLANATION", "PRACTICE", "GAME", "ASSESSMENT"]);
     expect(detail.activities.reduce((a, x) => a + (x.plannedMinutes ?? 0), 0)).toBe(20);
+    const plan = detail.lesson.planPayload as { opening: { kind: string; unit_name: string; unit_objectives: Array<{ title: string }> } | null };
+    expect(plan.opening?.kind).toBe("COURSE_START");
+    expect(plan.opening?.unit_objectives.map((o) => o.title)).toContain("Greetings");
+    expect(detail.activities[0].instructions).toMatch(/Abertura do curso.*Greetings/);
+    expect(detail.activities[0].expectedEvidenceCount).toBe(3);
   });
 
   it("evidence cannot be recorded against a lesson that has not started", async () => {

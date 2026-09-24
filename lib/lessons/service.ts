@@ -10,6 +10,7 @@ import { metric } from "@/lib/logging/logger";
 import { recomputeObjectiveState } from "@/lib/learning/recompute";
 import { getStudentProgress } from "@/lib/learning/progress";
 import { buildLessonStructure } from "./structure";
+import { decideOpening } from "./opening";
 import { nextLessonPlanSchema, PLAN_VERSION, type NextLessonPlan } from "@/schemas/lesson-plan";
 import type { CreateManualLessonInput, RecordEvidenceInput, RecordEventInput, CompleteLessonInput, CorrectEvidenceInput } from "@/schemas/lessons";
 import { generateSystemReport } from "./report";
@@ -35,6 +36,15 @@ export async function buildManualPlan(access: StudentAccess, input: CreateManual
     .map((id) => progress.objectives.find((o) => o.objective.id === id))
     .filter((o): o is NonNullable<typeof o> => Boolean(o) && o!.objective.id !== primary.objective.id);
   const minutes = input.plannedDurationMinutes ?? progress.enrolment.plannedLessonMinutes;
+  const completedOnVersion = await dbh.query.lessons.findFirst({
+    where: and(eq(s.lessons.studentId, access.studentId), eq(s.lessons.subjectId, input.subjectId), eq(s.lessons.curriculumVersionId, progress.version.id), eq(s.lessons.status, "COMPLETED")),
+    columns: { id: true },
+  });
+  const opening = decideOpening({
+    completedLessonsOnVersion: completedOnVersion ? 1 : 0,
+    unitName: primary.unit.name,
+    unitObjectives: progress.objectives.filter((o) => o.unit.id === primary.unit.id).map((o) => ({ id: o.objective.id, title: o.objective.title, status: o.status })),
+  });
 
   const plan: NextLessonPlan = {
     plan_version: PLAN_VERSION,
@@ -60,7 +70,9 @@ export async function buildManualPlan(access: StudentAccess, input: CreateManual
       { id: primary.objective.id, title: primary.objective.title, status: primary.status },
       reviews.map((r) => ({ id: r.objective.id, title: r.objective.title, status: r.status })),
       minutes,
+      opening,
     ),
+    opening,
     rationale: {
       selected_because: [{ kind: "MANUAL_SELECTION", by_user_id: access.userId }],
       prerequisites_satisfied: primary.unlock.satisfied.map((p) => ({

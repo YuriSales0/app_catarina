@@ -1,6 +1,7 @@
 import type { ObjectiveStatus } from "@/lib/db/enums";
 import type { PlannedActivity } from "@/schemas/lesson-plan";
 import type { ActivityType } from "@/lib/db/enums";
+import { openingInstructions, OPENING_DIAGNOSTIC_ITEMS, type Opening } from "./opening";
 
 export type StructureObjective = { id: string; title: string; status: ObjectiveStatus; skillId?: string | null };
 
@@ -39,9 +40,11 @@ export function templateFor(status: ObjectiveStatus): Template {
   return CONSOLIDATION;
 }
 
-export function buildLessonStructure(primary: StructureObjective, reviews: StructureObjective[], totalMinutes: number): PlannedActivity[] {
+export function buildLessonStructure(primary: StructureObjective, reviews: StructureObjective[], totalMinutes: number, opening: Opening | null = null): PlannedActivity[] {
   const template = templateFor(primary.status);
   const usable = template.filter((t) => t.target === "PRIMARY" || reviews.length > 0);
+  // An opening goes first: how lessons work, the module's goals, a short diagnostic.
+  if (opening) usable.unshift({ type: "ORIENTATION", weight: 3, target: "PRIMARY", evidence: OPENING_DIAGNOSTIC_ITEMS, instructions: (o) => openingInstructions(opening, o.title) });
   const totalWeight = usable.reduce((a, t) => a + t.weight, 0);
   let sequence = 0;
   let allocated = 0;

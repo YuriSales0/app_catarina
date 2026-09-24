@@ -14,7 +14,10 @@ test("child mode: one activity at a time, grown-up marks, no ids, statuses or sc
   await expect(page.getByRole("heading", { name: "Oi, Catarina!" })).toBeVisible();
   await page.getByRole("button", { name: /Começar!/ }).click();
   await expect(page.getByRole("list", { name: /^Atividade 1 de \d$/ })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Coisa nova!" })).toBeVisible();
+  // The first lesson of a course opens it: how lessons work, the module's goals, a diagnostic.
+  await expect(page.getByRole("heading", { name: "Começando a aventura!" })).toBeVisible();
+  await expect(page.locator("li", { hasText: "Cada atividade vale uma estrela" })).toBeVisible();
+  await expect(page.getByText(/você vai aprender:/)).toBeVisible();
 
   // The child surface never shows statuses, confidence or uuids.
   const body = await page.locator("main").innerText();
@@ -22,6 +25,9 @@ test("child mode: one activity at a time, grown-up marks, no ids, statuses or sc
 
   await page.getByRole("button", { name: "Próximo →" }).click();
   await expect(page.getByRole("list", { name: /^Atividade 2 de \d$/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Coisa nova!" })).toBeVisible();
+  await page.getByRole("button", { name: "Próximo →" }).click();
+  await expect(page.getByRole("list", { name: /^Atividade 3 de \d$/ })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Vamos praticar!" })).toBeVisible();
   await page.locator('input[name="prompt"]').fill("Count to ten");
   await page.getByRole("button", { name: "Acertou" }).click();

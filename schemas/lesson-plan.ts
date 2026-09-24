@@ -72,6 +72,16 @@ export const nextLessonPlanSchema = z
     blocking_objectives: z.array(objectiveSummarySchema).default([]),
     planned_duration_minutes: z.number().int().min(1).max(180),
     activities: z.array(plannedActivitySchema),
+    /** Course or module opening, when this lesson starts one (plans made before openings have none). */
+    opening: z
+      .object({
+        kind: z.enum(["COURSE_START", "UNIT_START"]),
+        unit_name: z.string(),
+        unit_objectives: z.array(z.object({ id: z.string().uuid(), title: z.string() }).strict()).max(20),
+      })
+      .strict()
+      .nullable()
+      .default(null),
     rationale: engineRationaleSchema,
     candidates_considered: z.number().int().min(0),
   })

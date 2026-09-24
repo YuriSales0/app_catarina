@@ -16,6 +16,9 @@ export default async function Home() {
           <a href="#como-funciona" className="hover:text-foreground">
             Como funciona
           </a>
+          <a href="#adaptacao" className="hover:text-foreground">
+            Como se adapta
+          </a>
           <a href="#niveis" className="hover:text-foreground">
             Níveis
           </a>
@@ -165,8 +168,45 @@ export default async function Home() {
           </div>
         </section>
 
+        {/* How lessons adapt */}
+        <section id="adaptacao" className="mx-auto w-full max-w-6xl scroll-mt-8 px-4 py-20">
+          <p className="eyebrow text-center">Como a aula se adapta</p>
+          <h2 className="mt-2 text-center font-display text-3xl font-semibold sm:text-4xl">Começa bem, lembra de tudo, fala do jeito certo</h2>
+          <div className="mt-12 grid gap-6 md:grid-cols-3">
+            {[
+              {
+                emoji: "🗺️",
+                tone: "peach" as const,
+                title: "Aula inaugural e abertura de cada módulo",
+                text: "Na primeira aula e no começo de cada módulo, o Lumi explica como tudo funciona, mostra o que vem pela frente e faz um diagnóstico rápido. Se o nível não parecer certo, você recebe um aviso para ajustar. Quem decide é sempre você.",
+              },
+              {
+                emoji: "🧠",
+                tone: "lavender" as const,
+                title: "Memória de curto e de longo prazo",
+                text: "A cada tentativa, o progresso é recalculado. A cada aula, um relatório. E a cada semana, uma visão da evolução que orienta o ritmo das próximas aulas, inclusive o da IA.",
+              },
+              {
+                emoji: "✨",
+                tone: "mint" as const,
+                title: "Qualidade da conversa: Padrão ou Alto",
+                text: "Escolha o nível da IA para cada criança. Padrão para exercícios e correções rápidas; Alto para conversa aberta, correção com nuance e comentários mais ricos.",
+              },
+            ].map((c) => (
+              <div key={c.title} className="card">
+                <span className={`inline-flex h-12 w-12 items-center justify-center rounded-2xl text-2xl ${TONE[c.tone].bg}`} aria-hidden>
+                  {c.emoji}
+                </span>
+                <h3 className="mt-5 font-display text-xl font-semibold">{c.title}</h3>
+                <p className="mt-2 text-sm text-muted">{c.text}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* Levels */}
-        <section id="niveis" className="mx-auto w-full max-w-6xl scroll-mt-8 px-4 py-20">
+        <section id="niveis" className="scroll-mt-8 bg-surface py-20">
+          <div className="mx-auto w-full max-w-6xl px-4">
           <p className="eyebrow text-center">Níveis</p>
           <h2 className="mt-2 text-center font-display text-3xl font-semibold sm:text-4xl">Alinhado aos níveis Cambridge para crianças</h2>
           <div className="mt-12 grid gap-6 md:grid-cols-3">
@@ -186,10 +226,11 @@ export default async function Home() {
             ))}
           </div>
           <p className="mt-6 text-center text-xs text-muted">Conteúdo alinhado aos níveis Cambridge English Young Learners. O Learning OS não é um produto oficial da Cambridge.</p>
+          </div>
         </section>
 
         {/* Plans */}
-        <section id="planos" className="scroll-mt-8 bg-surface py-20">
+        <section id="planos" className="scroll-mt-8 py-20">
           <div className="mx-auto w-full max-w-6xl px-4">
             <p className="eyebrow text-center">Planos</p>
             <h2 className="mt-2 text-center font-display text-3xl font-semibold sm:text-4xl">Do seu jeito</h2>
@@ -197,13 +238,13 @@ export default async function Home() {
               <Plan
                 name="Tutor"
                 tagline="Para quem já tem uma assinatura de IA"
-                items={["Planejamento de cada aula pelo que a criança já mostrou", "Roteiro pronto para usar no ChatGPT ou no Claude, inclusive por voz", "Você traz o resultado da aula e o app registra a evolução", "Relatórios e trilha de desenvolvimento"]}
+                items={["Planejamento de cada aula pelo que a criança já mostrou", "Aula inaugural e abertura de módulo com diagnóstico de nível", "Roteiro pronto para usar no ChatGPT ou no Claude, inclusive por voz", "Você traz o resultado da aula e o app registra a evolução", "Relatórios e evolução semana a semana"]}
               />
               <Plan
                 name="Tutor Particular"
                 tagline="A aula inteira dentro do app"
                 highlight
-                items={["Tudo do plano Tutor", "A IA prepara e conduz as atividades dentro do app", "Correção automática das respostas", "Comentário da IA ao fim de cada aula"]}
+                items={["Tudo do plano Tutor", "A IA prepara e conduz as atividades dentro do app", "Correção automática das respostas", "Qualidade da conversa: Padrão ou Alto, por criança", "Comentário da IA ao fim de cada aula"]}
               />
             </div>
           </div>
@@ -218,6 +259,8 @@ export default async function Home() {
               { q: "Qual a idade ideal?", a: "A trilha Starters funciona bem a partir dos 6 anos, e a Movers a partir dos 8. No cadastro, sugerimos o nível pela idade, e você pode mudar quando quiser." },
               { q: "Preciso falar inglês para acompanhar?", a: "Não. As instruções são em português, e cada atividade traz exemplos e o que esperar como resposta." },
               { q: "A IA é obrigatória?", a: "Não. Sem IA, o app planeja a aula e você conduz com os exemplos prontos. Com IA, as atividades são preparadas e corrigidas automaticamente. Em nenhum caso a IA decide o que a criança aprendeu." },
+              { q: "Como vocês sabem se o nível está certo?", a: "A primeira aula e o começo de cada módulo trazem um diagnóstico rápido, feito antes de qualquer explicação. Se a criança acerta quase tudo ou quase nada, o relatório sugere ajustar o nível. O app nunca troca o nível sozinho." },
+              { q: "A IA lembra do que aconteceu nas aulas anteriores?", a: "Quem lembra é o sistema, não a IA. Cada tentativa fica registrada, e antes de cada aula a IA recebe um resumo calculado pelo sistema: o estágio de cada objetivo, os erros que se repetem, a última aula e a evolução das últimas semanas. Assim ela ajusta o ritmo sem inventar histórico." },
               { q: "Quanto tempo por dia?", a: "De 10 a 20 minutos, algumas vezes por semana. Constância vale mais do que aula longa." },
               { q: "E os dados do meu filho?", a: "Guardamos o mínimo: primeiro nome, idade e o histórico de aulas. A IA só recebe dados com o seu consentimento, e você pode exportar ou apagar tudo a qualquer momento." },
             ].map((f) => (

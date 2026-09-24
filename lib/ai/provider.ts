@@ -19,6 +19,15 @@ export type ProviderMeta = { provider: string; model: string | null; promptVersi
 export type ResponseItem = { activity_ref: number; prompt: string; expected_response: string | null; accept_also: string[]; student_response: string; objective_ref: string };
 export type ExplanationRequest = { objective_ref: string; question: string | null };
 
+/**
+ * How good the conversation should be. "standard" uses the economical model
+ * everywhere; "high" moves the open, conversational tasks (conversation and
+ * opening activities, open-answer grading, explanations, report comments) to
+ * the better model. Checkable exercises stay on the economical model in both.
+ */
+export const AI_QUALITIES = ["standard", "high"] as const;
+export type AiQuality = (typeof AI_QUALITIES)[number];
+
 export interface AIProvider {
   readonly id: string;
   generateLessonActivity(pack: ContextPack, activity: ContextPack["lesson_plan"]["activities"][number]): Promise<Result<ActivityProposal>>;

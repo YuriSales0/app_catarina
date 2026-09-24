@@ -14,6 +14,7 @@ import { Lumi, LumiSays } from "@/components/brand/lumi";
 import { AutoPrepare } from "@/components/student/auto-prepare";
 import { Confetti } from "@/components/student/confetti";
 import { playStartAction, playNextAction, playMarkAction, playFinishAction, playPrepareAction, playAnswerAction } from "./actions";
+import type { Opening } from "@/lib/lessons/opening";
 
 export const metadata = { title: "Aula" };
 
@@ -26,6 +27,7 @@ const KID_SAYS: Record<ActivityType, string> = {
   CONVERSATION: "Vamos bater um papo em inglês!",
   ASSESSMENT: "Mostre tudo o que você sabe! Sem ajuda, combinado?",
   REFLECTION: "O que você aprendeu hoje?",
+  ORIENTATION: "Oi! Antes de começar, vou te contar como vai ser.",
 };
 
 type Evidence = { id: string; prompt: string; result: EvidenceResult; expectedResponse: string | null; occurredAt: Date; attemptNumber: number };
@@ -156,6 +158,7 @@ export default async function PlayPage(props: { params: Promise<{ lessonId: stri
           </div>
 
           <section className="kid-card mt-6 space-y-6">
+            {current.activityType === "ORIENTATION" ? <OpeningIntro opening={(lesson.planPayload as { opening?: Opening | null }).opening ?? null} /> : null}
             {aiMode && state.proposal ? (
               <AiActivity lessonId={lesson.id} activityId={current.id} objectiveId={objective!.id} type={current.activityType} content={state.proposal} evidence={state.currentEvidence as Evidence[]} />
             ) : aiMode && !state.proposalFailed ? (
@@ -193,6 +196,43 @@ export default async function PlayPage(props: { params: Promise<{ lessonId: stri
         </>
       )}
     </main>
+  );
+}
+
+/** The opening: how lessons work and what this module is about, before the diagnostic. */
+function OpeningIntro({ opening }: { opening: Opening | null }) {
+  return (
+    <div className="space-y-5">
+      <ul className="grid gap-3 sm:grid-cols-3">
+        {[
+          { emoji: "👣", text: "Uma atividade de cada vez" },
+          { emoji: "⭐", text: "Cada atividade vale uma estrela" },
+          { emoji: "💛", text: "Errar faz parte de aprender" },
+        ].map((c) => (
+          <li key={c.text} className="rounded-2xl bg-sun px-4 py-3 text-center font-display text-lg leading-snug font-semibold text-sun-ink">
+            <span className="block text-3xl" aria-hidden>
+              {c.emoji}
+            </span>
+            {c.text}
+          </li>
+        ))}
+      </ul>
+      {opening?.unit_objectives.length ? (
+        <div className="rounded-2xl bg-lavender px-5 py-4">
+          <p className="font-display text-lg font-semibold text-lavender-ink">
+            {opening.kind === "COURSE_START" ? "No primeiro módulo" : "Neste módulo"}, &ldquo;{opening.unit_name}&rdquo;, você vai aprender:
+          </p>
+          <ul className="mt-2 flex flex-wrap gap-2">
+            {opening.unit_objectives.map((o) => (
+              <li key={o.id} className="rounded-full bg-surface px-3 py-1 font-display text-base">
+                {o.title}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      <p className="text-center text-sm text-muted">Agora umas perguntinhas rápidas, só para o Lumi saber de onde partir. Tudo bem não saber!</p>
+    </div>
   );
 }
 

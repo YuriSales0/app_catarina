@@ -125,7 +125,8 @@ export async function requestAiContentAction(_prev: ActionState, formData: FormD
     const access = await requireStudentAccess(actor, studentId, "RUN_LESSON");
     const { getAIProvider } = await import("@/lib/ai");
     const { requestActivityContent } = await import("@/lib/lessons/ai-proposals");
-    const result = await requestActivityContent(access, await getAIProvider(), lessonId, activityId);
+    const { getAiQuality } = await import("@/lib/students/service");
+    const result = await requestActivityContent(access, await getAIProvider({ quality: await getAiQuality(access) }), lessonId, activityId);
     revalidatePath(`/lessons/${lessonId}`);
     if (!result.ok) return { ok: false, error: `A IA não devolveu um conteúdo utilizável (${result.error.kind.toLowerCase().replace("_", " ")}).`, issues: result.error.issues };
     return { ok: true, message: "Atividade preparada pela IA. É uma sugestão de como ensinar." };
@@ -142,7 +143,8 @@ export async function attachNarrativeAction(_prev: ActionState, formData: FormDa
     const access = await requireStudentAccess(actor, studentId, "RUN_LESSON");
     const { getAIProvider } = await import("@/lib/ai");
     const { attachReportNarrative } = await import("@/lib/lessons/ai-proposals");
-    const result = await attachReportNarrative(access, await getAIProvider(), lessonId);
+    const { getAiQuality } = await import("@/lib/students/service");
+    const result = await attachReportNarrative(access, await getAIProvider({ quality: await getAiQuality(access) }), lessonId);
     revalidatePath(`/lessons/${lessonId}/report`);
     if (!result.ok) return { ok: false, error: `A IA não devolveu um comentário utilizável (${result.error.kind.toLowerCase().replace("_", " ")}).`, issues: result.error.issues };
     return { ok: true, message: "Comentário da IA adicionado. A parte do que aconteceu não muda." };

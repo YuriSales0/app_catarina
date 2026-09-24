@@ -3,7 +3,7 @@ import { OpenAIProvider } from "@/lib/ai/openai-provider";
 import type { ContextPack } from "@/schemas/context-pack";
 
 const pack = {
-  context_version: "context.v1",
+  context_version: "context.v2",
   generated_at: new Date().toISOString(),
   pack_id: "pack_abcdef123456",
   student: { display_name: "T", age_years: 7, instruction_language: "pt-BR", target_language: "en", timezone: "Europe/Lisbon" },

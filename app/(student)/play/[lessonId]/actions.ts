@@ -11,6 +11,7 @@ import { recordEvidenceSchema } from "@/schemas/lessons";
 import { getAIProvider } from "@/lib/ai";
 import { requestActivityContent, gradeAndRecord } from "@/lib/lessons/ai-proposals";
 import { log } from "@/lib/logging/logger";
+import { getAiQuality } from "@/lib/students/service";
 
 async function accessFor(lessonId: string) {
   const actor = await requireActor();
@@ -63,7 +64,7 @@ export async function playPrepareAction(formData: FormData): Promise<void> {
   const state = await getPlayState(access, lessonId);
   if (state.current && !state.proposal) {
     try {
-      await requestActivityContent(access, await getAIProvider(), lessonId, state.current.id);
+      await requestActivityContent(access, await getAIProvider({ quality: await getAiQuality(access) }), lessonId, state.current.id);
     } catch (err) {
       log.warn("play.prepare_failed", { lessonId, error: (err as Error).message });
     }
@@ -87,7 +88,7 @@ export async function playAnswerAction(formData: FormData): Promise<void> {
     revalidatePath(`/play/${lessonId}`);
     return;
   }
-  await gradeAndRecord(access, await getAIProvider(), {
+  await gradeAndRecord(access, await getAIProvider({ quality: await getAiQuality(access) }), {
     lessonId,
     activityId: state.current.id,
     packId: state.proposal.packId,

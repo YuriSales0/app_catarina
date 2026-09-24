@@ -5,7 +5,8 @@ import { or404 } from "@/lib/actions/page";
 import { getStudent, getEnrolment } from "@/lib/students/service";
 import { getStudentProgress } from "@/lib/learning/progress";
 import { PageHeader, Section, StatusBadge, ProgressRing, StatTile, DemoBadge, formatDate } from "@/components/ui";
-import { StageBar, ShareBars } from "@/components/parent/charts";
+import { StageBar, ShareBars, WeeklyBars } from "@/components/parent/charts";
+import { getLongTermProgress } from "@/lib/learning/long-term";
 import { Avatar, avatarOf } from "@/components/brand/avatar";
 import { describeLevel } from "@/lib/curriculum/levels";
 import { STATUS, SKILL, TONE } from "@/lib/copy/pt";
@@ -15,14 +16,22 @@ export const metadata = { title: "Desenvolvimento" };
 
 const SECURE: ObjectiveStatus[] = ["PROFICIENT", "MASTERED"];
 
+const TREND: Record<string, { title: string; text: string; cls: string }> = {
+  IMPROVING: { title: "Melhorando 📈", text: "O acerto das últimas duas semanas subiu em relação às duas anteriores.", cls: "bg-mint text-mint-ink" },
+  STABLE: { title: "Estável", text: "O acerto está parecido nas últimas semanas. Constância é bom sinal.", cls: "bg-sky text-sky-ink" },
+  DECLINING: { title: "Pedindo atenção", text: "O acerto caiu nas últimas duas semanas. As próximas aulas vão com mais calma.", cls: "bg-peach text-peach-ink" },
+  INSUFFICIENT_DATA: { title: "Ainda cedo para tendência", text: "Com mais algumas aulas por semana, mostramos se está melhorando.", cls: "bg-surface-2 text-muted" },
+};
+
 /** The knowledge model for families: where the child is on the trail, by unit and by skill, and what changed recently. */
 export default async function ProgressPage(props: { params: Promise<{ studentId: string; subjectId: string }> }) {
   const { studentId, subjectId } = await props.params;
   const actor = await requireActor();
-  const { student, enrolment, progress } = await or404(async () => {
+  const { student, enrolment, progress, longTerm } = await or404(async () => {
     const access = await requireStudentAccess(actor, studentId, "VIEW");
     const [student, enrolment, progress] = await Promise.all([getStudent(access), getEnrolment(access, subjectId), getStudentProgress(access, subjectId)]);
-    return { student, enrolment, progress };
+    const longTerm = await getLongTermProgress(access, subjectId, { secure: progress.summary.MASTERED + progress.summary.PROFICIENT, total: progress.summary.total }, student.timezone);
+    return { student, enrolment, progress, longTerm };
   });
   const sum = progress.summary;
   const secure = sum.MASTERED + sum.PROFICIENT;
@@ -85,6 +94,29 @@ export default async function ProgressPage(props: { params: Promise<{ studentId:
         <div className="self-center">
           <p className="eyebrow mb-3">Onde cada objetivo está</p>
           <StageBar counts={sum} total={sum.total} />
+        </div>
+      </section>
+
+      <section className="card mb-6 grid gap-6 lg:grid-cols-[2fr_1fr]">
+        <div>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="font-display text-lg font-semibold">Últimas 6 semanas</h2>
+            <span className="text-xs text-muted">acerto por semana</span>
+          </div>
+          <WeeklyBars weeks={longTerm.weekly} />
+        </div>
+        <div className="space-y-3 self-center">
+          <p className={`rounded-2xl px-4 py-3 text-sm ${TREND[longTerm.trend].cls}`}>
+            <strong className="block font-display text-lg">{TREND[longTerm.trend].title}</strong>
+            {TREND[longTerm.trend].text}
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <StatTile value={longTerm.lessons_last_30_days} label="aulas em 30 dias" tone="lavender" />
+            <StatTile value={longTerm.secured_last_30_days} label="firmados em 30 dias" tone="mint" />
+          </div>
+          <p className="text-xs text-muted">
+            {longTerm.first_lesson_at ? `Aprendendo desde ${formatDate(longTerm.first_lesson_at, student.timezone)} · ${longTerm.lessons_completed} {longTerm.lessons_completed === 1 ? "aula" : "aulas"} no total. ` : ""}Calculado pelo sistema a partir das tentativas; é o mesmo resumo que a IA recebe para ajustar o ritmo.
+          </p>
         </div>
       </section>
 

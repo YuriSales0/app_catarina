@@ -5,7 +5,7 @@ import { z } from "zod";
 import { requireActor } from "@/lib/auth/session";
 import { requireStudentAccess } from "@/lib/authorization/access";
 import { createStudentSchema } from "@/schemas/students";
-import { createStudent, enrolStudentInSubject, setAiProcessingConsent } from "@/lib/students/service";
+import { createStudent, enrolStudentInSubject, setAiProcessingConsent, setAiQuality } from "@/lib/students/service";
 import { getSubjectBySlug, listPublishedVersionsForSubject } from "@/lib/curriculum/service";
 import { describeLevel } from "@/lib/curriculum/levels";
 import { toActionError, formToObject, type ActionState } from "@/lib/actions/result";
@@ -56,5 +56,6 @@ export async function onboardAiAction(formData: FormData): Promise<void> {
   const enabled = formData.get("enabled") === "true";
   const access = await requireStudentAccess(actor, studentId, "MANAGE_GUARDIANS");
   await setAiProcessingConsent(access, enabled);
+  if (enabled) await setAiQuality(access, formData.get("quality") === "high" ? "high" : "standard");
   redirect(`/boas-vindas?passo=4&crianca=${studentId}`);
 }

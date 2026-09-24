@@ -38,7 +38,10 @@ describe("context pack", () => {
   it("builds a strict, versioned pack for the next planned lesson", async () => {
     const { pack, handles, plan } = await buildLessonContext(access, englishId, undefined, { now: new Date() }, db);
     expect(contextPackSchema.strict().safeParse(pack).success).toBe(true);
-    expect(pack.context_version).toBe("context.v1");
+    expect(pack.context_version).toBe("context.v2");
+    expect(pack.long_term.policy_version).toBe("long-term.v1");
+    expect(pack.long_term.weekly).toHaveLength(6);
+    expect(pack.long_term.lessons_completed).toBeGreaterThan(0);
     expect(pack.primary_objective.code).toBe(plan.primary_objective!.code);
     expect(pack.student.display_name).toBe("Catarina");
     expect(pack.student.instruction_language).toBe("pt-BR");

@@ -30,6 +30,8 @@ const envSchema = z.object({
   OPENAI_API_KEY: z.string().min(1).optional(),
   OPENAI_BASE_URL: z.string().url().default("https://api.openai.com/v1"),
   OPENAI_MODEL: z.string().default("gpt-4o-mini"),
+  /** Model for the "high" conversation quality; open and conversational tasks only. */
+  OPENAI_MODEL_HIGH: z.string().default("gpt-5.4-mini"),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
 });
 

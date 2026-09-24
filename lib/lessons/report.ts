@@ -1,4 +1,5 @@
 import { STATUS } from "@/lib/copy/pt";
+import { placementCheck, type Opening } from "./opening";
 import { and, asc, eq, gte, inArray } from "drizzle-orm";
 import type { Tx } from "@/lib/db/create-db";
 import * as s from "@/lib/db/schema";
@@ -189,6 +190,15 @@ export async function generateSystemReport(tx: Tx, access: StudentAccess, lesson
     review.push({ objective_id: lesson.primaryObjectiveId, reason: `Ainda em "${STATUS[primaryState.status].label.toLowerCase()}" depois desta aula; vale manter na próxima.`, priority: 1 });
   }
   const parentActions: LessonReport["recommended"]["parent_actions"] = [];
+  // Opening diagnostic: if the starting point looks wrong, say so to the family. The level never changes by itself.
+  const opening = (lesson.planPayload as { opening?: Opening | null } | null)?.opening ?? null;
+  const orientation = activities.find((a) => a.activityType === "ORIENTATION");
+  if (opening && orientation) {
+    const curriculum = version ? await tx.query.curricula.findFirst({ where: eq(s.curricula.id, version.curriculumId), columns: { name: true } }) : null;
+    const diagnostic = effective.filter((e) => rowsById.get(e.id)?.activityId === orientation.id).map((e) => e.result);
+    const check = placementCheck(opening, diagnostic, curriculum?.name ?? "", CURRENT_STATE_POLICY.partialCreditScore);
+    if (check) parentActions.push(check);
+  }
   if (recurring.some((r) => errorsObserved.has(r.errorTag))) {
     parentActions.push({ action: "Durante a semana, preste atenção ao erro que se repete e fale a forma certa uma vez, sem transformar em exercício.", reason: "Um erro recorrente melhora mais com exposição frequente e leve do que com pressão de correção." });
   }

@@ -88,3 +88,30 @@ export function MinutesPicker({ value = 20 }: { value?: number }) {
     </fieldset>
   );
 }
+
+/** Conversation quality for AI lessons. Plain radios. */
+export function QualityPicker({ value = "standard" }: { value?: "standard" | "high" }) {
+  const options = [
+    { key: "standard", title: "Padrão", emoji: "🌿", text: "Ótimo para exercícios com resposta certa e correção de palavras e frases curtas. Mais econômico." },
+    { key: "high", title: "Alto", emoji: "✨", text: "Um modelo melhor para conversa aberta, correção com nuance, aberturas de módulo e comentários da aula." },
+  ] as const;
+  return (
+    <fieldset>
+      <legend className="mb-2 text-sm font-bold">Qualidade da conversa com a IA</legend>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {options.map((o) => (
+          <label key={o.key} className="choice flex gap-3">
+            <input type="radio" name="quality" value={o.key} defaultChecked={value === o.key} className="sr-only" />
+            <span className="text-2xl" aria-hidden>
+              {o.emoji}
+            </span>
+            <span>
+              <span className="block font-display text-lg font-semibold">{o.title}</span>
+              <span className="block text-sm text-muted">{o.text}</span>
+            </span>
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  );
+}

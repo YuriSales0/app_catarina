@@ -49,6 +49,11 @@ export default async function NextLessonPage(props: { params: Promise<{ studentI
       {plan.outcome === "PLANNED" && plan.primary_objective ? (
         <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
           <Section title={`Roteiro · ${totalMinutes} min`} aside={<StatusBadge status={plan.primary_objective.status} />}>
+            {plan.opening ? (
+              <p className="rounded-2xl bg-peach px-4 py-3 text-sm text-peach-ink">
+                <strong>{plan.opening.kind === "COURSE_START" ? "Aula inaugural." : `Abertura do módulo "${plan.opening.unit_name}".`}</strong> Começa explicando como as aulas funcionam e os objetivos do módulo, com um diagnóstico rápido. Se o nível parecer errado, o relatório avisa.
+              </p>
+            ) : null}
             {plan.review_objectives.length ? (
               <p className="rounded-2xl bg-sky px-4 py-3 text-sm text-sky-ink">
                 Também revisa: {plan.review_objectives.map((r) => `${r.title}${r.days_overdue !== null ? ` (${r.days_overdue} dias de atraso)` : ""}`).join(", ")}

@@ -8,6 +8,7 @@ import type { Actor } from "@/lib/auth/session";
 import { writeAudit } from "@/lib/audit/write";
 import type { CreateStudentInput, UpdateStudentInput, AddGuardianInput, EnrolStudentInput } from "@/schemas/students";
 import { generateSnapshot } from "@/lib/snapshots/generate";
+import type { AiQuality } from "@/lib/ai/provider";
 
 export const CONSENT_POLICY_VERSION = "privacy.v1";
 
@@ -270,4 +271,33 @@ export async function setAiProcessingConsent(access: StudentAccess, enabled: boo
 export async function getAiProcessingConsent(access: StudentAccess, dbh: DbOrTx = db()): Promise<boolean> {
   const row = await dbh.query.consents.findFirst({ where: and(eq(s.consents.studentId, access.studentId), eq(s.consents.kind, "AI_PROCESSING")) });
   return Boolean(row && !row.revokedAt);
+}
+
+/** Conversation quality for AI lessons, stored per child. Defaults to "standard". */
+export async function getAiQuality(access: StudentAccess, dbh: DbOrTx = db()): Promise<AiQuality> {
+  const row = await dbh.query.students.findFirst({ where: eq(s.students.id, access.studentId), columns: { metadata: true } });
+  const q = (row?.metadata as { aiQuality?: string } | null)?.aiQuality;
+  return q === "high" ? "high" : "standard";
+}
+
+/** Owner only, audited: it changes which model receives this child's data. */
+export async function setAiQuality(access: StudentAccess, quality: AiQuality, dbh: DbOrTx = db()) {
+  if (access.role !== "OWNER") throw new NotFoundError();
+  return dbh.transaction(async (tx) => {
+    await tx
+      .update(s.students)
+      .set({ metadata: sql`${s.students.metadata} || ${JSON.stringify({ aiQuality: quality })}::jsonb` })
+      .where(eq(s.students.id, access.studentId));
+    await writeAudit(tx, {
+      actorUserId: access.userId,
+      actorType: "USER",
+      action: "student.ai_quality_set",
+      resourceType: "student",
+      resourceId: access.studentId,
+      studentId: access.studentId,
+      result: "ALLOWED",
+      requestId: access.requestId,
+      metadata: { quality },
+    });
+  });
 }

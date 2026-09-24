@@ -9,7 +9,7 @@ below runs in CI (`.github/workflows/ci.yml`) against Postgres 16.
 | --- | --- |
 | `pnpm typecheck` | clean |
 | `pnpm lint` | clean, module boundaries enforced |
-| `pnpm test` | 116 unit and integration tests passing |
+| `pnpm test` | 133 unit and integration tests passing |
 | `pnpm test:e2e` | 7 Playwright flows passing |
 | `pnpm db:verify` | schema matches migrations; every FK indexed; ledger tables append-only |
 | `pnpm build` | production build succeeds |
@@ -76,6 +76,20 @@ below runs in CI (`.github/workflows/ci.yml`) against Postgres 16.
   activity proposals were stored as `{ proposal, packId }` but read as a bare
   proposal, so the adult lesson screen would have crashed on the first AI
   suggestion; both shapes are now read (`lib/lessons/proposal-payload.ts`).
+- **Openings, conversation quality and the long view (2026-09-24):**
+  - The first lesson on a curriculum version (COURSE_START) and the first
+    lesson of an untouched unit (UNIT_START) begin with an ORIENTATION
+    activity: how lessons work, the module's goals, and a three-item
+    diagnostic before any teaching (`lib/lessons/opening.ts`, migration
+    `0003`). The report turns a near-perfect or near-zero diagnostic into a
+    suggestion to the family; the level never changes by itself.
+  - Conversation quality per child (`students.metadata.aiQuality`,
+    owner-only, audited): "Padrão" uses `OPENAI_MODEL` everywhere; "Alto"
+    moves conversation, openings, open-answer grading, explanations and
+    report comments to `OPENAI_MODEL_HIGH`. Checkable exercises stay on the
+    economical model. Reasoning-family models get no `temperature`.
+  - Context pack `context.v2` adds `long_term`, and the development page
+    shows the same six-week view with its trend.
 - **pnpm hoisted linker** because the isolated layout produced two copies of
   Next.js and broke the production build.
 

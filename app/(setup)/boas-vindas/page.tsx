@@ -8,7 +8,7 @@ import { getStudent, listEnrolments, getAiProcessingConsent } from "@/lib/studen
 import { getSubjectBySlug, listPublishedVersionsForSubject } from "@/lib/curriculum/service";
 import { describeLevel, suggestedLevelKey } from "@/lib/curriculum/levels";
 import { ActionForm } from "@/components/forms/action-form";
-import { AvatarPicker, LevelPicker, MinutesPicker } from "@/components/forms/pickers";
+import { AvatarPicker, LevelPicker, MinutesPicker, QualityPicker } from "@/components/forms/pickers";
 import { TimezoneInput } from "@/components/forms/timezone-input";
 import { Avatar, avatarOf } from "@/components/brand/avatar";
 import { Lumi, LumiSays } from "@/components/brand/lumi";
@@ -133,6 +133,7 @@ async function ChildSteps({ step, childId }: { step: number; childId: string }) 
             <ul className="mt-2 space-y-1">
               <li>• O primeiro nome e a idade de {student.name}</li>
               <li>• O objetivo da aula e as tentativas recentes</li>
+              <li>• Um resumo da evolução das últimas semanas, calculado pelo sistema</li>
             </ul>
           </div>
           <div className="rounded-2xl bg-rose p-5 text-sm">
@@ -143,14 +144,15 @@ async function ChildSteps({ step, childId }: { step: number; childId: string }) 
             </ul>
           </div>
         </div>
+        <form action={onboardAiAction} className="space-y-4 rounded-2xl bg-surface-2 p-5">
+          <input type="hidden" name="studentId" value={student.id} />
+          <input type="hidden" name="enabled" value="true" />
+          <QualityPicker />
+          <button type="submit" className="btn btn-primary btn-lg">
+            Sim, usar IA quando disponível
+          </button>
+        </form>
         <div className="flex flex-wrap gap-3">
-          <form action={onboardAiAction}>
-            <input type="hidden" name="studentId" value={student.id} />
-            <input type="hidden" name="enabled" value="true" />
-            <button type="submit" className="btn btn-primary btn-lg">
-              Sim, usar IA quando disponível
-            </button>
-          </form>
           <form action={onboardAiAction}>
             <input type="hidden" name="studentId" value={student.id} />
             <input type="hidden" name="enabled" value="false" />

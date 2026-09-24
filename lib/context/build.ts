@@ -1,3 +1,4 @@
+import { getLongTermProgress } from "@/lib/learning/long-term";
 import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import type { DbOrTx } from "@/lib/db/create-db";
@@ -146,6 +147,9 @@ export async function buildLessonContext(
   const vocabulary = progress.version.errorTagVocabulary;
   const unitPosition = progress.units.filter((u) => u.parentUnitId === null).findIndex((u) => u.id === (primary.unit.parentUnitId ?? primary.unit.id)) + 1;
 
+  // The long view (weeks, trend), computed by rules from the ledger.
+  const longTerm = await getLongTermProgress(access, subjectId, { secure: progress.summary.MASTERED + progress.summary.PROFICIENT, total: progress.summary.total }, student.timezone, dbh, now);
+
   const pack: ContextPack = {
     context_version: CONTEXT_VERSION,
     generated_at: now.toISOString(),
@@ -207,6 +211,7 @@ export async function buildLessonContext(
     })),
     mastered_relevant_concepts: masteredRelevant.map((o) => ({ ref: H.objective(o.objective.id), code: o.objective.code, title: o.objective.title, mastered_at: o.state?.lastAssessedAt?.toISOString() ?? null })),
     previous_lesson_summary: previousSummary,
+    long_term: longTerm,
     lesson_plan: {
       planned_duration_minutes: plan.planned_duration_minutes,
       activities: plan.activities.slice(0, CONTEXT_CAPS.activities).map((a) => ({

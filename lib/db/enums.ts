@@ -47,6 +47,8 @@ export const ACTIVITY_TYPES = [
   "CONVERSATION",
   "ASSESSMENT",
   "REFLECTION",
+  /** Course or module opening: how lessons work, the module's goals, a short diagnostic. */
+  "ORIENTATION",
 ] as const;
 export const LESSON_EVENT_TYPES = [
   "LESSON_STARTED",
