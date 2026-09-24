@@ -14,6 +14,13 @@ export const activityProposalSchema = z
     objective_ref: objHandle,
     title: z.string().min(1).max(120),
     child_facing_intro: z.string().min(1).max(600),
+    /** An everyday situation the language belongs to, in the instruction language. */
+    scene: z.string().max(400).nullable().default(null),
+    /** A short model exchange in the target language, each line with its meaning in the instruction language. */
+    model_dialogue: z
+      .array(z.object({ speaker: z.string().min(1).max(30), line: z.string().min(1).max(200), meaning: z.string().max(200) }).strict())
+      .max(8)
+      .default([]),
     items: z
       .array(
         z

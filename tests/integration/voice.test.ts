@@ -7,7 +7,9 @@ import { seedDemo } from "@/scripts/seed-demo";
 import { requireStudentAccess, type StudentAccess } from "@/lib/authorization/access";
 import { createManualLesson, startLesson, getLesson } from "@/lib/lessons/service";
 import { setAiProcessingConsent } from "@/lib/students/service";
-import { voiceBrief, voiceRecordAnswer, voiceNextActivity, voiceFinish } from "@/lib/lessons/voice";
+import { voiceBrief, voiceBeginLesson, voiceRecordAnswer, voiceNextActivity, voiceFinish, lessonOverview } from "@/lib/lessons/voice";
+import { getPlayState } from "@/lib/lessons/play";
+import { buildLessonContext } from "@/lib/context/build";
 import type { ContextPack } from "@/schemas/context-pack";
 import { asUserId } from "@/types/ids";
 
@@ -19,6 +21,7 @@ describe("live voice lesson tools", () => {
   const db = testDb();
   let access: StudentAccess;
   let lessonId = "";
+  let englishId = "";
 
   const activityFor = (pack?: ContextPack, planned?: unknown) => {
     const a = planned as ContextPack["lesson_plan"]["activities"][number];
@@ -27,6 +30,8 @@ describe("live voice lesson tools", () => {
       objective_ref: a.objective_ref ?? pack!.primary_objective.ref,
       title: "Numbers",
       child_facing_intro: "Vamos contar!",
+      scene: "Na fazenda, contando os patinhos.",
+      model_dialogue: [{ speaker: "Lumi", line: "How many ducks?", meaning: "Quantos patinhos?" }],
       items: [
         { prompt: "How many ducks?", expected_response: "three", accept_also: ["3"], skill_ref: null, checkable: "EXACT" },
         { prompt: "Count to five", expected_response: null, accept_also: [], skill_ref: null, checkable: "OPEN" },
@@ -39,7 +44,7 @@ describe("live voice lesson tools", () => {
     await resetDatabase();
     const seed = await seedDemo(db);
     access = await requireStudentAccess({ userId: asUserId(seed.parentId), requestId: "r" }, seed.aurora, "MANAGE_GUARDIANS", db);
-    const englishId = (await db.query.subjects.findFirst({ where: eq(s.subjects.slug, "english") }))!.id;
+    englishId = (await db.query.subjects.findFirst({ where: eq(s.subjects.slug, "english") }))!.id;
     const objs = await db.query.learningObjectives.findMany({ where: eq(s.learningObjectives.curriculumVersionId, seed.demoEnglishVersionId) });
     const numbers = objs.find((o) => o.objectiveKey === "DEMO.EN.NUMBERS")!.id;
     lessonId = (await createManualLesson(access, { subjectId: englishId, primaryObjectiveId: numbers, reviewObjectiveIds: [] }, db)).id;
@@ -47,6 +52,23 @@ describe("live voice lesson tools", () => {
     await setAiProcessingConsent(access, true, db);
   });
   afterAll(closeTestDb);
+
+  it("the session opens with the lesson overview: theme, goals and plan, and no exercises", async () => {
+    const { pack } = await buildLessonContext(access, englishId, lessonId, {}, db);
+    const overview = lessonOverview(await getPlayState(access, lessonId, db), pack);
+    expect(overview.mode).toBe("START");
+    expect(overview.theme.title).toBeTruthy();
+    expect(overview.plan.length).toBeGreaterThan(1);
+    expect(overview.plan.every((p) => p.label && !p.done)).toBe(true);
+    expect(JSON.stringify(overview)).not.toMatch(/"items"|[0-9a-f]{8}-[0-9a-f]{4}-/);
+  });
+
+  it("begin_lesson hands over the first activity with its scene and model dialogue", async () => {
+    const fake = new FakeAIProvider().on("generateLessonActivity", activityFor);
+    const begun = await voiceBeginLesson(access, fake, lessonId, db);
+    expect(begun).toMatchObject({ lesson_complete: false, activity: { activity_number: 1, scene: "Na fazenda, contando os patinhos." } });
+    expect((begun as { activity: { model_dialogue: unknown[]; label: string } }).activity.model_dialogue).toHaveLength(1);
+  });
 
   it("briefs the current activity from a validated proposal, by number, with no database ids", async () => {
     const fake = new FakeAIProvider().on("generateLessonActivity", activityFor);
@@ -84,6 +106,14 @@ describe("live voice lesson tools", () => {
     const fake = new FakeAIProvider().on("generateLessonActivity", activityFor);
     const next = await voiceNextActivity(access, fake, lessonId, db);
     expect(next).toMatchObject({ lesson_complete: false, activity: { activity_number: 2 } });
+    // A reconnect after this point resumes instead of opening again.
+    const { pack } = await buildLessonContext(access, englishId, lessonId, {}, db);
+    expect(lessonOverview(await getPlayState(access, lessonId, db), pack).mode).toBe("RESUME");
+    // Closing the remaining activities ends in the closing data, not a bare "complete".
+    let step: Awaited<ReturnType<typeof voiceNextActivity>> = next;
+    for (let i = 0; i < 10 && !step.lesson_complete; i++) step = await voiceNextActivity(access, new FakeAIProvider().on("generateLessonActivity", activityFor), lessonId, db);
+    expect(step).toMatchObject({ lesson_complete: true, closing: { activities_done: expect.any(Number) } });
+    expect((step as { closing: { key_phrases: string[] } }).closing.key_phrases).toBeInstanceOf(Array);
     await voiceFinish(access, lessonId, db);
     const lesson = await getLesson(access, lessonId, db);
     expect(lesson.lesson.status).toBe("COMPLETED");

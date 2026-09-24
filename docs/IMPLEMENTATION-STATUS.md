@@ -103,6 +103,17 @@ below runs in CI (`.github/workflows/ci.yml`) against Postgres 16.
     AI-graded, and each item is recorded once. `?modo=tela` keeps the screen
     lesson, which now has a 🔊 read-aloud button using the browser's voices.
     Audio is not stored. Not yet exercised against the live API from CI.
+  - Voice lesson arc (`voice.v2`): every lesson has three parts, enforced
+    by the tools rather than only prompted. The session starts with a lesson
+    overview (theme, why it is useful, what the child will be able to do,
+    the module, last lesson, the plan) and no exercises; activity content is
+    handed over only when the model calls `begin_lesson` after the opening.
+    Each activity opens with a transition; explanation, conversation and game
+    activities carry a `scene` and a `model_dialogue` (proposal fields added
+    in `prompt.v3`) that Lumi performs and then teaches line by line. The last
+    `next_activity` returns closing data (key phrases, can-do goals) for a
+    recap before `finish_lesson`. Speech is slowed to 0.9 and the prompt asks
+    for one idea per turn. A reconnect resumes instead of opening again.
 - **pnpm hoisted linker** because the isolated layout produced two copies of
   Next.js and broke the production build.
 

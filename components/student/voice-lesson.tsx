@@ -96,7 +96,7 @@ export function VoiceLesson({
     for (const call of calls) {
       const said = call.name === "record_answer" ? await takeHeard() : null;
       const result = await runTool(lessonId, call.name, call.arguments, said);
-      if (call.name === "next_activity") {
+      if (call.name === "next_activity" || call.name === "begin_lesson") {
         const activity = result.activity as { activity_number?: number } | undefined;
         if (result.lesson_complete) setStars((s) => ({ ...s, done: s.total }));
         else if (activity?.activity_number) setStars((s) => ({ ...s, done: activity.activity_number! - 1 }));

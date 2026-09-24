@@ -53,7 +53,7 @@ weekly buckets (lessons, assessed attempts, success rate), a trend
 the two before, at least five attempts on each side, ±10 points), lessons in
 the last 30 days, objectives secure and objectives secured in the last 30
 days. It is computed from the ledger only; no model output is read back. The
-activity task prompt (`prompt.v2`) asks the teacher to pace by it without
+activity task prompt (`prompt.v2`, and `prompt.v3`, which adds a scene and a model dialogue to explanation, conversation and game activities) asks the teacher to pace by it without
 mentioning numbers to the child.
 
 ## Schema (`context.v1`)

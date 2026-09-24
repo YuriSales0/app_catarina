@@ -17,7 +17,7 @@ import {
 import { renderTeacherSystemPrompt, TEACHER_CONTRACT_VERSION } from "./contracts/teacher-contract.v1";
 import { CURRICULUM_FILE_SCHEMA_VERSION } from "@/schemas/curriculum-file";
 
-export const PROMPT_VERSION = "prompt.v2";
+export const PROMPT_VERSION = "prompt.v3";
 
 /** Shared pacing hint: the long view is rule-computed data in the pack. */
 const PACING_HINT = "Use long_term in the pack to pace: if the trend is DECLINING or recent weeks are weak, keep items shorter and easier and add encouragement; if IMPROVING, add a little challenge. Never mention numbers or trends to the child.";
@@ -118,8 +118,12 @@ export class OpenAIProvider implements AIProvider {
     const task = opening
       ? `Produce the content for activity ${activity.sequence} (ORIENTATION) on objective ${activity.objective_ref}. This is a course or module opening. In child_facing_intro, in the instruction language and in words a child understands: welcome the child, explain how lessons work, and present the module goals exactly as listed in the activity instructions, without adding or removing goals. Then give ${activity.expected_evidence_count ?? 3} quick diagnostic items on the objective, asked before any teaching, easy to answer if the child already knows it. Mark each item checkable EXACT when one answer is right, SET when a few are, OPEN otherwise. Set activity_ref to ${activity.sequence}.`
       : `Produce the content for activity ${activity.sequence} (${activity.activity_type}) on objective ${activity.objective_ref}. Give a short child-facing intro in the instruction language and ${activity.expected_evidence_count ?? 4} items. Mark each item checkable EXACT when one answer is right, SET when a few are, OPEN otherwise. Set activity_ref to ${activity.sequence}. ${PACING_HINT}`;
+    const withDialogue = ["EXPLANATION", "CONVERSATION", "GAME"].includes(activity.activity_type);
+    const context = withDialogue
+      ? " Also set scene: one or two sentences, in the instruction language, describing an everyday situation from a child's life where this language is used (meeting a friend at the park, a birthday party). And set model_dialogue: two to six short lines between two named characters (one of them may be Lumi, the owl teacher) in the target language, using only the objective's language and mastered concepts, each with its meaning in the instruction language. The items then come from that dialogue: for EXPLANATION, the key phrases to repeat; otherwise, turns the child takes in the same situation."
+      : " Set scene to a short everyday situation when it helps the items make sense, otherwise null, and model_dialogue to an empty list.";
     const conversational = opening || activity.activity_type === "CONVERSATION" || activity.activity_type === "GAME";
-    return this.call(activityProposalSchema, "activity_proposal", renderTeacherSystemPrompt(), this.packMessage(pack, task, activity), pack.pack_id, this.modelFor(conversational ? "conversation" : "activity"));
+    return this.call(activityProposalSchema, "activity_proposal", renderTeacherSystemPrompt(), this.packMessage(pack, task + (opening ? "" : context), activity), pack.pack_id, this.modelFor(conversational ? "conversation" : "activity"));
   }
 
   async evaluateResponse(pack: ContextPack, item: ResponseItem): Promise<Result<EvaluationProposal>> {

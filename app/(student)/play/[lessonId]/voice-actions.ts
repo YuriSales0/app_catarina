@@ -7,7 +7,7 @@ import { resolveLessonStudent } from "@/lib/lessons/resolve";
 import { getAIProvider } from "@/lib/ai";
 import { VOICE_JUDGEMENTS } from "@/lib/ai/realtime";
 import { getAiQuality } from "@/lib/students/service";
-import { openVoiceSession, voiceRecordAnswer, voiceNextActivity, voiceFinish, type VoiceSessionTicket } from "@/lib/lessons/voice";
+import { openVoiceSession, voiceBeginLesson, voiceRecordAnswer, voiceNextActivity, voiceFinish, type VoiceSessionTicket } from "@/lib/lessons/voice";
 import { log } from "@/lib/logging/logger";
 
 /**
@@ -52,6 +52,7 @@ export async function voiceToolAction(lessonId: string, name: string, rawArgs: s
       if (!parsed.success) return { error: "invalid arguments", issues: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`) };
       return await voiceRecordAnswer(access, quality, lessonId, { ...parsed.data, heard: heard ? heard.slice(0, 500) : null });
     }
+    if (name === "begin_lesson") return await voiceBeginLesson(access, provider, lessonId);
     if (name === "next_activity") return await voiceNextActivity(access, provider, lessonId);
     if (name === "finish_lesson") {
       finishArgs.parse(args);
