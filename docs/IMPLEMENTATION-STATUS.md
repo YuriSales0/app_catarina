@@ -114,6 +114,14 @@ below runs in CI (`.github/workflows/ci.yml`) against Postgres 16.
     `next_activity` returns closing data (key phrases, can-do goals) for a
     recap before `finish_lesson`. Speech is slowed to 0.9 and the prompt asks
     for one idea per turn. A reconnect resumes instead of opening again.
+  - Meaning first and tolerant correction (`voice.v3`, `prompt.v4`,
+    `answer-match.v2`): new language is introduced two or three items at a
+    time with its meaning and a link to the child's life, heard and
+    recognised before the child is invited to say it; "repeat after me" never
+    comes first. Mistakes are welcome: an accent is fine, the correct form is
+    modelled inside praise, a word is never asked for twice. The system gives
+    partial credit for a near miss ("mondei", "cats"), never for a different
+    word or number.
 - **pnpm hoisted linker** because the isolated layout produced two copies of
   Next.js and broke the production build.
 

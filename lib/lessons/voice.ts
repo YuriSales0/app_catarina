@@ -27,7 +27,7 @@ import type { ContextPack } from "@/schemas/context-pack";
  * when the model calls begin_lesson after the opening, and the closing data
  * comes with the end of the last activity.
  */
-export const VOICE_POLICY = { version: "voice.v2", itemsFromNotes: 4 } as const;
+export const VOICE_POLICY = { version: "voice.v3", itemsFromNotes: 4 } as const;
 
 type Notes = Partial<Record<"example_prompts" | "vocabulary" | "structures" | "activity_ideas" | "success_criteria", string[]>>;
 
@@ -186,8 +186,8 @@ export async function voiceRecordAnswer(access: StudentAccess, quality: AiQualit
     const m = matchAnswer(response, [item.expected!, ...item.accept_also]);
     await recordEvidence(
       access,
-      { ...base, result: m.match ? "CORRECT" : "INCORRECT", confidence: "MEDIUM" },
-      { gradedBy: "SYSTEM", graderRef: { method: m.method === "phrase" ? "phrase_match" : "exact_match", policy: ANSWER_MATCH_POLICY.version, input: "voice_live", reason: `voice_judgement:${input.judgement}${heard ? "" : ",no_transcript"}` } },
+      { ...base, result: m.result, confidence: "MEDIUM" },
+      { gradedBy: "SYSTEM", graderRef: { method: `${m.method}_match`, policy: ANSWER_MATCH_POLICY.version, input: "voice_live", reason: `voice_judgement:${input.judgement}${heard ? "" : ",no_transcript"}` } },
       dbh,
     );
   } else {

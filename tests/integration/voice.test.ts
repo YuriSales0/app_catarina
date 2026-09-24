@@ -88,7 +88,7 @@ describe("live voice lesson tools", () => {
     expect(ev.gradedBy).toBe("SYSTEM");
     expect(ev.result).toBe("INCORRECT");
     expect(ev.studentResponse).toBe("It's a four.");
-    expect(ev.graderRef).toMatchObject({ input: "voice_live", policy: "answer-match.v1", reason: "voice_judgement:CORRECT" });
+    expect(ev.graderRef).toMatchObject({ input: "voice_live", policy: "answer-match.v2", reason: "voice_judgement:CORRECT" });
   });
 
   it("records each item once; open items take the voice model's judgement, labelled AI-graded", async () => {

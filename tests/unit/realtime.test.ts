@@ -48,6 +48,20 @@ describe("live voice session", () => {
     expect(text).toMatch(/Start now with PART 1 - OPENING/);
   });
 
+  it("new language is taught meaning first, in small groups, and mistakes are welcome", () => {
+    const text = renderVoiceInstructions({ pack, overview });
+    expect(text).toContain('Never start with "repeat after me" for something the child has not understood yet');
+    expect(text).toContain("at most two or three new words or phrases at a time");
+    expect(text).toContain("Check understanding before asking the child to speak");
+    expect(text).toContain("It is an invitation");
+    expect(text).toContain("A Brazilian accent is fine");
+    expect(text).toContain("Never ask the child to repeat the same word more than once");
+    expect(text).toContain("Judgement (generous");
+    expect(text).not.toMatch(/After two tries, say the answer, ask the child to repeat it/);
+    // Teaching rules come before the lesson parts, so they frame everything that follows.
+    expect(text.indexOf("HOW TO TEACH SOMETHING NEW")).toBeLessThan(text.indexOf("PART 1 - OPENING"));
+  });
+
   it("speaks of the subject and languages by name, and never assumes English", () => {
     const english = renderVoiceInstructions({ pack, overview });
     expect(english).toContain("an owl who teaches English");

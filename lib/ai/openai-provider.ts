@@ -17,7 +17,13 @@ import {
 import { renderTeacherSystemPrompt, TEACHER_CONTRACT_VERSION } from "./contracts/teacher-contract.v1";
 import { CURRICULUM_FILE_SCHEMA_VERSION } from "@/schemas/curriculum-file";
 
-export const PROMPT_VERSION = "prompt.v3";
+export const PROMPT_VERSION = "prompt.v4";
+
+/**
+ * Meaning before production: a child should understand and recognise new
+ * language before being asked to say it, and a near miss is progress.
+ */
+const MEANING_FIRST = "Teach meaning first: for EXPLANATION items, put the meaning in the instruction language in prompt and the target-language form in expected_response, at most three new items. Order practice items from recognition to production: first items the child answers by understanding (saying the meaning in the instruction language, yes or no, choosing between two), then items where the child says the target language. Accept common young-learner variants in accept_also.";
 
 /** Shared pacing hint: the long view is rule-computed data in the pack. */
 const PACING_HINT = "Use long_term in the pack to pace: if the trend is DECLINING or recent weeks are weak, keep items shorter and easier and add encouragement; if IMPROVING, add a little challenge. Never mention numbers or trends to the child.";
@@ -117,7 +123,7 @@ export class OpenAIProvider implements AIProvider {
     const opening = activity.activity_type === "ORIENTATION";
     const task = opening
       ? `Produce the content for activity ${activity.sequence} (ORIENTATION) on objective ${activity.objective_ref}. This is a course or module opening. In child_facing_intro, in the instruction language and in words a child understands: welcome the child, explain how lessons work, and present the module goals exactly as listed in the activity instructions, without adding or removing goals. Then give ${activity.expected_evidence_count ?? 3} quick diagnostic items on the objective, asked before any teaching, easy to answer if the child already knows it. Mark each item checkable EXACT when one answer is right, SET when a few are, OPEN otherwise. Set activity_ref to ${activity.sequence}.`
-      : `Produce the content for activity ${activity.sequence} (${activity.activity_type}) on objective ${activity.objective_ref}. Give a short child-facing intro in the instruction language and ${activity.expected_evidence_count ?? 4} items. Mark each item checkable EXACT when one answer is right, SET when a few are, OPEN otherwise. Set activity_ref to ${activity.sequence}. ${PACING_HINT}`;
+      : `Produce the content for activity ${activity.sequence} (${activity.activity_type}) on objective ${activity.objective_ref}. Give a short child-facing intro in the instruction language and ${activity.expected_evidence_count ?? 4} items. Mark each item checkable EXACT when one answer is right, SET when a few are, OPEN otherwise. Set activity_ref to ${activity.sequence}. ${MEANING_FIRST} ${PACING_HINT}`;
     const withDialogue = ["EXPLANATION", "CONVERSATION", "GAME"].includes(activity.activity_type);
     const context = withDialogue
       ? " Also set scene: one or two sentences, in the instruction language, describing an everyday situation from a child's life where this language is used (meeting a friend at the park, a birthday party). And set model_dialogue: two to six short lines between two named characters (one of them may be Lumi, the owl teacher) in the target language, using only the objective's language and mastered concepts, each with its meaning in the instruction language. The items then come from that dialogue: for EXPLANATION, the key phrases to repeat; otherwise, turns the child takes in the same situation."
@@ -127,7 +133,7 @@ export class OpenAIProvider implements AIProvider {
   }
 
   async evaluateResponse(pack: ContextPack, item: ResponseItem): Promise<Result<EvaluationProposal>> {
-    const task = "Evaluate the student's response to this one item. Report CORRECT, PARTIALLY_CORRECT or INCORRECT for what was actually said; NOT_ASSESSED if it cannot be judged. Use only error tags that appear in the pack's recurring_errors or are plainly of the same kind; leave empty otherwise. Do not claim anything about mastery.";
+    const task = "Evaluate the student's response to this one item, generously, as for a young beginner: CORRECT when the meaning is right and the words are recognisable despite spelling, accent or a small slip; PARTIALLY_CORRECT for part of it or the right idea in the instruction language; INCORRECT only for a different meaning; NOT_ASSESSED if it cannot be judged. Use only error tags that appear in the pack's recurring_errors or are plainly of the same kind; leave empty otherwise. Do not claim anything about mastery.";
     return this.call(evaluationProposalSchema, "evaluation_proposal", renderTeacherSystemPrompt(), this.packMessage(pack, task, item), pack.pack_id, this.modelFor("evaluation"));
   }
 

@@ -103,8 +103,8 @@ export async function gradeAndRecord(
     const m = matchAnswer(input.item.student_response, accepted);
     return recordEvidence(
       access,
-      { lessonId: input.lessonId, activityId: input.activityId, objectiveId, prompt: input.item.prompt, studentResponse: input.item.student_response, expectedResponse: input.item.expected_response ?? undefined, result: m.match ? "CORRECT" : "INCORRECT", evidenceType: "PRACTICE", confidence: "HIGH", errorTags: [] },
-      { gradedBy: "SYSTEM", graderRef: { method: m.method === "phrase" ? "phrase_match" : "exact_match", policy: ANSWER_MATCH_POLICY.version, input: input.inputMode ?? "typed" } },
+      { lessonId: input.lessonId, activityId: input.activityId, objectiveId, prompt: input.item.prompt, studentResponse: input.item.student_response, expectedResponse: input.item.expected_response ?? undefined, result: m.result, evidenceType: "PRACTICE", confidence: "HIGH", errorTags: [] },
+      { gradedBy: "SYSTEM", graderRef: { method: `${m.method}_match`, policy: ANSWER_MATCH_POLICY.version, input: input.inputMode ?? "typed" } },
       dbh,
     );
   }

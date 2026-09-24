@@ -15,7 +15,7 @@ type Template = Array<{ type: ActivityType; weight: number; target: "PRIMARY" | 
 
 const NEW_MATERIAL: Template = [
   { type: "REVIEW", weight: 2, target: "REVIEW", evidence: 3, instructions: (o) => `Aquecimento com "${o.title}": três perguntas rápidas que a criança já conhece.` },
-  { type: "EXPLANATION", weight: 3, target: "PRIMARY", evidence: 0, instructions: (o) => `Apresente "${o.title}": mostre, fale e deixe a criança repetir. Ainda sem avaliar.` },
+  { type: "EXPLANATION", weight: 3, target: "PRIMARY", evidence: 0, instructions: (o) => `Apresente "${o.title}" com o significado primeiro: poucas palavras por vez, ligadas ao dia a dia da criança. Ela ouve e reconhece antes de repetir. Ainda sem avaliar.` },
   { type: "PRACTICE", weight: 6, target: "PRIMARY", evidence: 5, instructions: (o) => `Prática guiada de "${o.title}": cinco perguntas, corrija com gentileza e registre cada tentativa.` },
   { type: "GAME", weight: 5, target: "PRIMARY", evidence: 3, instructions: (o) => `Um jogo que use "${o.title}" de forma natural. Registre o que a criança produziu sozinha.` },
   { type: "ASSESSMENT", weight: 4, target: "PRIMARY", evidence: 3, instructions: (o) => `Desafio rápido de "${o.title}": três perguntas sem ajuda. Registre com honestidade.` },
