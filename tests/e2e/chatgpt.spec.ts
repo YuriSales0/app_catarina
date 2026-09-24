@@ -24,13 +24,16 @@ test("a parent runs a lesson in their own ChatGPT: copies the script, pastes the
   await page.getByRole("button", { name: "Fazer no ChatGPT" }).click();
   await expect(page).toHaveURL(/\/lessons\/[0-9a-f-]{36}\/chatgpt$/);
 
-  // The script: Lumi's pedagogy, today's plan, and a closing template with this lesson's code.
+  // The script: Lumi's pedagogy and today's concrete material, activity by activity.
   const script = await page.getByLabel("Roteiro da aula").inputValue();
   expect(script).toContain("Você é o Lumi");
-  expect(script).toContain("PLANO DE HOJE");
+  expect(script).toContain("MATERIAL DE HOJE");
   expect(script).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-/);
-  const code = script.match(/"lesson_code": "([A-Z0-9]+)"/)![1];
-  const firstActivity = Number(script.match(/"activity": (\d+)/)![1]);
+  // The closing is asked for separately, after the voice lesson.
+  const request = await page.getByLabel("Pedido de fechamento").inputValue();
+  const code = request.match(/"lesson_code": "([A-Z0-9]+)"/)![1];
+  const firstActivity = Number(request.match(/"activity": (\d+)/)![1]);
+  await expect(page.getByRole("button", { name: "Copiar pedido" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Copiar roteiro" })).toBeVisible();
   await expect(page.getByRole("link", { name: /Abrir o ChatGPT/ })).toHaveAttribute("href", "https://chatgpt.com/");
 

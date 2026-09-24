@@ -6,7 +6,7 @@ import { buildLessonContext } from "@/lib/context/build";
 import { matchAnswer, ANSWER_MATCH_POLICY } from "@/lib/assessment/answer-match";
 import { ACTIVITY } from "@/lib/copy/pt";
 import { externalClosingSchema, extractClosingJson, type ExternalClosing } from "@/schemas/external-closing";
-import { renderExternalLessonPrompt, EXTERNAL_PROMPT_VERSION } from "./external-prompt";
+import { renderExternalLessonPrompt, renderExternalClosingRequest, materialFor, EXTERNAL_PROMPT_VERSION } from "./external-prompt";
 import { lessonOverview } from "./voice";
 import { getPlayState } from "./play";
 import { getLesson, startLesson, recordEvidence, recordLessonEvent, completeLesson } from "./service";
@@ -15,7 +15,8 @@ import { metric } from "@/lib/logging/logger";
 /**
  * Running a lesson in the family's own ChatGPT. The app writes the script;
  * the parent pastes it into ChatGPT, the child has the lesson there by voice,
- * and the parent pastes ChatGPT's closing block back here.
+ * then the parent sends the closing request as a typed message and pastes
+ * ChatGPT's closing block back here.
  *
  * What comes back is a report from a model the system did not watch, so it
  * is treated like any AI grading and weaker: every attempt is recorded as
@@ -36,16 +37,31 @@ export async function buildExternalLesson(access: StudentAccess, lessonId: strin
   if (state.lesson.status === "COMPLETED" || state.lesson.status === "CANCELLED") throw new ConflictError("Esta aula já terminou.");
   const { pack } = await buildLessonContext(access, state.lesson.subjectId, lessonId, {}, dbh);
   const overview = lessonOverview(state, pack);
-  const activities = state.activities.map((a) => ({
-    sequence: a.sequence,
-    label: ACTIVITY[a.activityType].kid,
-    activity_type: a.activityType,
-    instructions: a.instructions,
-    minutes: a.plannedMinutes ?? 0,
-    expected_attempts: a.expectedEvidenceCount,
-  }));
+  type Notes = { vocabulary?: string[]; structures?: string[] };
+  const notesOf = (o: { teachingNotes: unknown } | undefined | null) => (o?.teachingNotes ?? {}) as Notes;
+  const objectiveById = new Map(state.objectives.map((o) => [o.id, o]));
+  const activities = state.activities.map((a) => {
+    const objective = a.objectiveId ? objectiveById.get(a.objectiveId) : null;
+    const isReview = Boolean(objective && objective.id !== state.primaryObjective.id);
+    return {
+      sequence: a.sequence,
+      label: ACTIVITY[a.activityType].kid,
+      activity_type: a.activityType,
+      instructions: a.instructions,
+      minutes: a.plannedMinutes ?? 0,
+      expected_attempts: a.expectedEvidenceCount,
+      review: isReview && objective ? { title: objective.title, vocabulary: notesOf(objective).vocabulary ?? [], phrases: notesOf(objective).structures ?? [] } : null,
+    };
+  });
+  const primary = notesOf(state.primaryObjective);
+  const material = materialFor(overview.stage, primary.vocabulary ?? [], (primary.structures ?? []).slice(0, 6), pack.pedagogical_constraints.max_new_vocabulary_items);
   const code = lessonCode(lessonId);
-  return { prompt: renderExternalLessonPrompt({ pack, overview, activities, lessonCode: code }), code, state };
+  return {
+    prompt: renderExternalLessonPrompt({ pack, overview, activities, material }),
+    closingRequest: renderExternalClosingRequest({ childName: pack.student.display_name, lessonCode: code, activities }),
+    code,
+    state,
+  };
 }
 
 export function formatClosingNote(c: ExternalClosing): string {
@@ -64,12 +80,12 @@ export function parseClosing(pasted: string): ExternalClosing {
   try {
     json = extractClosingJson(pasted);
   } catch {
-    throw new ValidationError("Não encontrei o bloco de fechamento. Copie a resposta inteira do ChatGPT, incluindo o bloco de código com o JSON. Se ele ainda não gerou, escreva FECHAMENTO na conversa.");
+    throw new ValidationError("Não encontrei o bloco de fechamento. Saia do modo voz, cole o pedido de fechamento (passo 3) na mesma conversa e copie a resposta inteira do ChatGPT.");
   }
   const parsed = externalClosingSchema.safeParse(json);
   if (!parsed.success) {
     throw new ValidationError(
-      "O bloco de fechamento veio num formato diferente do esperado. Peça ao ChatGPT para gerar o FECHAMENTO de novo no formato do roteiro.",
+      "O bloco de fechamento veio num formato diferente do esperado. Cole o pedido de fechamento (passo 3) de novo na conversa e copie a nova resposta.",
       parsed.error.issues.slice(0, 6).map((i) => `${i.path.join(".") || "bloco"}: ${i.message}`),
     );
   }

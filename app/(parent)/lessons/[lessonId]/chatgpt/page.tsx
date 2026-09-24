@@ -54,7 +54,7 @@ export default async function ExternalLessonPage(props: { params: Promise<{ less
           <div className="space-y-6">
             <Section title="1. Copie o roteiro da aula" aside={<CopyButton targetId="roteiro" />}>
               <p className="text-sm text-muted">
-                O roteiro traz o plano de hoje, o jeito de ensinar do Lumi e o que {student.name} já sabe. Leva só o primeiro nome, a idade e o resumo do progresso: nada de sobrenome, contato ou dados de outras crianças.
+                O roteiro traz o material de hoje (palavras em grupos, frases, jogos), cada atividade com um mínimo de rodadas, o jeito de ensinar do Lumi e o que {student.name} já sabe. Leva só o primeiro nome, a idade e o resumo do progresso: nada de sobrenome, contato ou dados de outras crianças.
               </p>
               <label htmlFor="roteiro" className="sr-only">
                 Roteiro da aula
@@ -62,9 +62,19 @@ export default async function ExternalLessonPage(props: { params: Promise<{ less
               <textarea id="roteiro" readOnly rows={14} className="input font-mono text-xs leading-relaxed" defaultValue={external.prompt} />
             </Section>
 
-            <Section title="3. Cole aqui o fechamento">
+            <Section title="3. Peça o fechamento" aside={<CopyButton targetId="pedido" label="Copiar pedido" />}>
               <p className="text-sm text-muted">
-                No fim da aula, o ChatGPT escreve um bloco de fechamento. Copie a resposta dele (pode copiar a mensagem inteira) e cole abaixo. O código desta aula é <strong className="font-mono">{external.code}</strong>.
+                Quando a aula acabar, saia do modo voz e cole este pedido <strong>na mesma conversa</strong>. O ChatGPT responde com o bloco de fechamento da aula, montado a partir da conversa.
+              </p>
+              <label htmlFor="pedido" className="sr-only">
+                Pedido de fechamento
+              </label>
+              <textarea id="pedido" readOnly rows={6} className="input font-mono text-xs leading-relaxed" defaultValue={external.closingRequest} />
+            </Section>
+
+            <Section title="4. Cole aqui a resposta do ChatGPT">
+              <p className="text-sm text-muted">
+                Copie a resposta dele (pode ser a mensagem inteira) e cole abaixo. O código desta aula é <strong className="font-mono">{external.code}</strong>.
               </p>
               <ActionForm action={submitExternalClosingAction} submitLabel="Registrar o fechamento" size="lg">
                 <input type="hidden" name="lessonId" value={lesson.id} />
@@ -81,9 +91,9 @@ export default async function ExternalLessonPage(props: { params: Promise<{ less
               <ol className="list-decimal space-y-2 pl-5 text-sm">
                 <li>Abra uma conversa nova no ChatGPT e cole o roteiro.</li>
                 <li>Envie e, quando ele responder, toque no botão de voz para {student.name} conversar com o Lumi.</li>
-                <li>Deixe a aula acontecer. Você pode acompanhar ao lado.</li>
+                <li>Deixe a aula acontecer: ela tem várias atividades e dura cerca de {detail.lesson.plannedDurationMinutes ?? 20} minutos. Você pode acompanhar ao lado.</li>
                 <li>
-                  No fim, o ChatGPT gera o fechamento. Se não gerar, saia do modo voz e escreva <strong>FECHAMENTO</strong>.
+                  Se precisar parar no meio, diga <strong>ENCERRAR</strong>. Depois, siga para o passo 3.
                 </li>
               </ol>
               <a href="https://chatgpt.com/" target="_blank" rel="noopener noreferrer" className="btn btn-secondary mt-2">

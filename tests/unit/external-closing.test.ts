@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { externalClosingSchema, extractClosingJson } from "@/schemas/external-closing";
-import { renderExternalLessonPrompt } from "@/lib/lessons/external-prompt";
+import { renderExternalLessonPrompt, renderExternalClosingRequest, materialFor, chunkWords, type ExternalActivity } from "@/lib/lessons/external-prompt";
 import type { ContextPack } from "@/schemas/context-pack";
 import type { LessonOverview } from "@/lib/lessons/voice";
 
@@ -45,39 +45,67 @@ describe("external lesson script", () => {
   const overview: LessonOverview = {
     mode: "START",
     lesson_kind: "REGULAR",
-    stage: "PHRASES_AND_DIALOGUE",
+    stage: "WORDS_TO_PHRASES",
     first_lesson_ever: false,
-    theme: { title: "Days of the week", description: "Say the days", vocabulary: ["Monday", "Tuesday"], key_phrases: ["Today is Monday."] },
-    can_do_at_the_end: ["Says what day it is today"],
-    situation_ideas: ["A weekly calendar"],
-    module: { name: "My week", goals: [] },
+    theme: { title: "Days of the week and times", description: "Say the days", vocabulary: [], key_phrases: [] },
+    can_do_at_the_end: [],
+    situation_ideas: [],
+    module: null,
     previous_lesson: { practised: ["Numbers 1 to 10"], went_well: [], was_hard: [] },
     plan: [],
-    minutes: 20,
+    minutes: 30,
   };
-  const text = renderExternalLessonPrompt({
-    pack,
-    overview,
-    lessonCode: "A1B2C3",
-    activities: [{ sequence: 1, label: "Coisa nova!", activity_type: "EXPLANATION", instructions: "Apresente os dias.", minutes: 4, expected_attempts: 0 }],
+  const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday", "o'clock", "half past", "morning", "afternoon", "evening", "night"];
+  const material = materialFor("WORDS_TO_PHRASES", days, ["It's three o'clock.", "On Monday I go swimming."], 6);
+  const activities: ExternalActivity[] = [
+    { sequence: 1, label: "Coisa nova!", activity_type: "EXPLANATION", instructions: "x", minutes: 5, expected_attempts: 0, review: null },
+    { sequence: 2, label: "Vamos praticar!", activity_type: "PRACTICE", instructions: "x", minutes: 10, expected_attempts: 5, review: null },
+    { sequence: 3, label: "Hora do jogo!", activity_type: "GAME", instructions: "x", minutes: 8, expected_attempts: 3, review: null },
+    { sequence: 4, label: "Mostre o que você sabe!", activity_type: "ASSESSMENT", instructions: "x", minutes: 7, expected_attempts: 3, review: null },
+  ];
+  const text = renderExternalLessonPrompt({ pack, overview, activities, material });
+
+  it("a new topic takes at most the age cap of new words, in groups of three, and leaves the rest for later lessons", () => {
+    expect(material.groups).toEqual([["Monday", "Tuesday", "Wednesday"], ["Thursday", "Friday", "Saturday"]]);
+    expect(material.later).toContain("Sunday");
+    expect(material.later).toContain("half past");
+    expect(material.phrases).toEqual(["On Monday I go swimming."]);
+    expect(chunkWords(["a", "b", "c", "d"])).toEqual([["a", "b"], ["c", "d"]]);
+    expect(text).toContain("grupo 1: Monday; Tuesday; Wednesday");
+    expect(text).toContain("Ficam para as próximas aulas (não ensine hoje): Sunday");
   });
 
-  it("carries the same pedagogy as the in-app lesson, in Portuguese", () => {
+  it("every activity has concrete steps and a minimum of rounds, and the lesson cannot end early", () => {
+    expect(text).toContain("A aula dura cerca de 30 minutos");
+    expect(text).toContain("Não pule, não resuma e não encerre antes da última etapa");
+    expect(text).toContain("ATIVIDADE 1: Coisa nova!");
+    expect(text).toContain("jogo de reconhecer: 4 rodadas");
+    expect(text).toContain("Pelo menos 6 perguntas");
+    expect(text).toContain("Jogue pelo menos 6 rodadas");
+    expect(text).toContain("Desafio: 4 perguntas SEM ajuda");
+    expect(text).toContain("ENCERRAMENTO (depois da última atividade)");
+    expect(text).not.toMatch(/encerramento curto/);
+  });
+
+  it("keeps Lumi's pedagogy and forbids questions about facts the assistant cannot know", () => {
     expect(text).toContain("Você é o Lumi");
-    expect(text).toContain('Nunca comece com "repita comigo"');
-    expect(text).toContain("DAS PALAVRAS PARA FRASES E CONVERSA");
-    expect(text).toContain("o foco é em frases e diálogos curtos");
-    expect(text).toContain("A AULA TEM TRÊS PARTES");
+    expect(text).toContain('nunca comece com "repita comigo"');
+    expect(text).toContain("Das palavras para frases e conversa");
+    expect(text).toContain("que dia é hoje, que horas são");
     expect(text).toContain("se despedir em inglês");
     expect(text).toContain("vá mais devagar");
-    expect(text).toContain("Silent initial h");
+    expect(text).not.toMatch(/undefined|\[object Object\]|\$\{/);
   });
 
-  it("asks for a closing block with this lesson's code and each planned activity", () => {
-    expect(text).toContain('"lesson_code": "A1B2C3"');
-    expect(text).toContain('"format": "learning-os-closing.v1"');
-    expect(text).toContain('"activity": 1');
-    expect(text).toContain("FECHAMENTO");
-    expect(text).not.toMatch(/undefined|\[object Object\]|\$\{/);
+  it("the closing is a separate, self-contained request with this lesson's code", () => {
+    expect(text).not.toContain("lesson_code");
+    expect(text).toContain("pedido de fechamento");
+    const request = renderExternalClosingRequest({ childName: "Catarina", lessonCode: "A1B2C3", activities });
+    expect(request).toContain("Responda só em texto");
+    expect(request).toContain('"lesson_code": "A1B2C3"');
+    expect(request).toContain('"format": "learning-os-closing.v1"');
+    expect(request).toContain("2 = Vamos praticar!");
+    expect(request).toContain("use child_said null e result NOT_ASSESSED");
+    expect(externalClosingSchema.safeParse(extractClosingJson(request)).success).toBe(true);
   });
 });

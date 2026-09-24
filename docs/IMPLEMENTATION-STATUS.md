@@ -137,6 +137,15 @@ below runs in CI (`.github/workflows/ci.yml`) against Postgres 16.
     `answer-match.v2`), the activities' completion, a lesson event with the
     whole closing, and the teacher note shown in the report. A second paste
     is refused. No API key is needed for this path.
+  - `external-prompt.v2`, after a real lesson in ChatGPT's voice mode lasted
+    five minutes and never produced its closing: the script now carries
+    concrete material (today's new words capped by age and grouped in
+    threes, the rest listed as "for later lessons", key phrases that do not
+    need postponed words, voice-only games), a minimum number of rounds per
+    activity, and a rule against ending before the last activity. It forbids
+    questions about facts the assistant cannot know. The closing is a
+    separate, self-contained request the parent sends as text after leaving
+    voice mode, since a voice conversation cannot write a block.
 - **pnpm hoisted linker** because the isolated layout produced two copies of
   Next.js and broke the production build.
 

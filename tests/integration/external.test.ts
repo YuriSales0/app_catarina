@@ -35,11 +35,12 @@ describe("lesson in an external ChatGPT", () => {
   const closingFor = (activities: unknown[], extra: Record<string, unknown> = {}) =>
     "Aqui está o fechamento:\n```json\n" + JSON.stringify({ format: "learning-os-closing.v1", lesson_code: code, minutes: 17, activities, summary: "Aula animada.", went_well: ["Cumprimentou o boneco"], was_hard: ["Good afternoon"], next_time: "Frases de apresentação", ...extra }) + "\n```";
 
-  it("the script is built from the plan without starting the lesson, and carries the lesson code", async () => {
-    const { prompt, code: c } = await buildExternalLesson(access, lessonId, db);
+  it("the script and the closing request are built from the plan without starting the lesson", async () => {
+    const { prompt, closingRequest, code: c } = await buildExternalLesson(access, lessonId, db);
     expect(c).toBe(code);
-    expect(prompt).toContain(`"lesson_code": "${code}"`);
-    expect(prompt).toContain("PLANO DE HOJE");
+    expect(closingRequest).toContain(`"lesson_code": "${code}"`);
+    expect(prompt).toContain("ATIVIDADE 1:");
+    expect(prompt).toContain("MATERIAL DE HOJE");
     expect(prompt).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-/);
     expect((await getLesson(access, lessonId, db)).lesson.status).toBe("PLANNED");
   });
