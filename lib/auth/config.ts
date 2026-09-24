@@ -7,6 +7,17 @@ import { db } from "@/lib/db/client";
 import { users, accounts, sessions, verificationTokens } from "@/lib/db/schema";
 import { getEnv } from "@/lib/env";
 import { log, metric } from "@/lib/logging/logger";
+import { checkAccessCode, parseAllowedEmails } from "@/lib/auth/access-code";
+
+async function findOrCreateUser(email: string, name: string | null) {
+  const existing = await db().query.users.findFirst({ where: sql`lower(${users.email}) = ${email}` });
+  if (existing) {
+    if (existing.deletedAt) return null;
+    return { id: existing.id, email: existing.email, name: existing.name };
+  }
+  const [created] = await db().insert(users).values({ email, name, emailVerified: new Date() }).returning();
+  return { id: created.id, email: created.email, name: created.name };
+}
 
 /**
  * Auth.js v5 with our own canonical users table (decision D1).
@@ -14,7 +25,9 @@ import { log, metric } from "@/lib/logging/logger";
  *
  * MVP sign-in: Google OAuth. A development-only credentials form exists so the
  * product can be run and tested with no external identity provider; it is
- * refused in production by lib/env.
+ * refused in production by lib/env. An access-code form (shared secret plus an
+ * email allowlist, lib/auth/access-code) can be enabled in any environment so a
+ * deployment can be evaluated before Google is configured.
  */
 function buildConfig(): NextAuthConfig {
   const env = getEnv();
@@ -40,13 +53,26 @@ function buildConfig(): NextAuthConfig {
           const email = String(credentials?.email ?? "").trim().toLowerCase();
           const name = String(credentials?.name ?? "").trim() || null;
           if (!email || !email.includes("@")) return null;
-          const existing = await db().query.users.findFirst({ where: sql`lower(${users.email}) = ${email}` });
-          if (existing) {
-            if (existing.deletedAt) return null;
-            return { id: existing.id, email: existing.email, name: existing.name };
+          return findOrCreateUser(email, name);
+        },
+      }),
+    );
+  }
+
+  if (env.AUTH_ACCESS_CODE) {
+    const config = { code: env.AUTH_ACCESS_CODE, emails: parseAllowedEmails(env.AUTH_ACCESS_EMAILS ?? "") };
+    providers.push(
+      Credentials({
+        id: "access-code",
+        name: "Access code",
+        credentials: { email: { label: "Email", type: "email" }, code: { label: "Access code", type: "password" } },
+        async authorize(credentials) {
+          const email = checkAccessCode(config, credentials?.email, credentials?.code);
+          if (!email) {
+            metric("auth_failure", { reason: "access_code_rejected" });
+            return null;
           }
-          const [created] = await db().insert(users).values({ email, name, emailVerified: new Date() }).returning();
-          return { id: created.id, email: created.email, name: created.name };
+          return findOrCreateUser(email, null);
         },
       }),
     );

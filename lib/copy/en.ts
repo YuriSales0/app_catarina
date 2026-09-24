@@ -10,6 +10,9 @@ export const copy = {
     email: "Email",
     name: "Name",
     submit: "Sign in",
+    accessTitle: "Sign in with an access code",
+    accessHint: "For invited evaluators. Use the email you were invited with.",
+    accessCode: "Access code",
     noProviders: "No sign-in method is configured. Set AUTH_GOOGLE_ID and AUTH_GOOGLE_SECRET, or AUTH_DEV_LOGIN=true in development.",
   },
   nav: {

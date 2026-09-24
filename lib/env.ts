@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { parseAllowedEmails } from "@/lib/auth/access-code";
 
 /**
  * Every secret and configuration value the server reads, parsed once.
@@ -19,6 +20,12 @@ const envSchema = z.object({
     .enum(["true", "false"])
     .default("false")
     .transform((v) => v === "true"),
+  /**
+   * Access-code sign-in for evaluation without an identity provider. Both must
+   * be set; only the listed emails (comma separated) can sign in.
+   */
+  AUTH_ACCESS_CODE: z.string().min(24, "AUTH_ACCESS_CODE must be at least 24 characters").optional(),
+  AUTH_ACCESS_EMAILS: z.string().optional(),
   AI_PROVIDER: z.enum(["null", "openai"]).default("null"),
   OPENAI_API_KEY: z.string().min(1).optional(),
   OPENAI_BASE_URL: z.string().url().default("https://api.openai.com/v1"),
@@ -42,6 +49,9 @@ export function getEnv(): Env {
   const env = parsed.data;
   if (env.NODE_ENV === "production" && env.AUTH_DEV_LOGIN) {
     throw new Error("AUTH_DEV_LOGIN must not be enabled in production");
+  }
+  if (env.AUTH_ACCESS_CODE && parseAllowedEmails(env.AUTH_ACCESS_EMAILS ?? "").length === 0) {
+    throw new Error("AUTH_ACCESS_CODE requires AUTH_ACCESS_EMAILS");
   }
   if (env.AI_PROVIDER === "openai" && !env.OPENAI_API_KEY) {
     throw new Error("AI_PROVIDER=openai requires OPENAI_API_KEY");

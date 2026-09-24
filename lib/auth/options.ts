@@ -7,5 +7,6 @@ export function getSignInOptions() {
   return {
     google: Boolean(env.AUTH_GOOGLE_ID && env.AUTH_GOOGLE_SECRET),
     devLogin: env.AUTH_DEV_LOGIN && env.NODE_ENV !== "production",
+    accessCode: Boolean(env.AUTH_ACCESS_CODE),
   };
 }

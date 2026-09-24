@@ -54,6 +54,7 @@ SELECT pg_has_role('learning_os_app', 'neon_superuser', 'member');              
 | `DATABASE_MIGRATOR_URL` | production | `learning_os_owner`, **direct** host (no `-pooler`), `sslmode=verify-full` |
 | `AUTH_SECRET` | production | 48+ random bytes, base64url |
 | `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET` | production | See Google sign-in below |
+| `AUTH_ACCESS_CODE`, `AUTH_ACCESS_EMAILS` | production | Optional evaluator sign-in, see below |
 | `AI_PROVIDER` | production, preview | `null` until a provider is chosen; `openai` plus `OPENAI_*` to enable |
 | `LOG_LEVEL` | production, preview | `info` |
 
@@ -94,8 +95,8 @@ Migrations are forward-only; to undo one, write a new migration.
 
 ## Google sign-in
 
-Production has no dev login. Until Google is configured, `/login` reports that
-no sign-in method is available.
+Production has no dev login. Until Google is configured, the only way in is
+the access code below.
 
 1. Google Cloud Console, APIs and Services, Credentials: create an OAuth
    client of type Web application.
@@ -111,6 +112,26 @@ no sign-in method is available.
 Each parent signs in once with Google. The parent who creates a student owns
 that student and grants the other parent access from the student's settings
 (by email, after that parent has signed in at least once).
+
+## Access-code sign-in (evaluators)
+
+A sign-in form that needs an allowlisted email and a shared code. It exists so
+the deployment can be evaluated before Google is set up, and it is allowed in
+production because the allowlist bounds who can use it.
+
+- `AUTH_ACCESS_CODE`: 24+ random characters (sensitive).
+- `AUTH_ACCESS_EMAILS`: comma-separated emails. Anyone else is refused even
+  with the right code.
+
+Once an email has signed in with the code, Google sign-in for that same email
+is refused (`OAuthAccountNotLinked`), because `allowDangerousEmailAccountLinking`
+is off by design. Before moving that person to Google, either keep them on the
+code, or decide to enable linking for Google (it verifies email ownership) in
+`lib/auth/config.ts`.
+
+To turn it off, delete both variables and redeploy. To rotate, change the
+code and redeploy; existing sessions stay valid until they expire (7 days) or
+`AUTH_SECRET` is rotated.
 
 ## Rotating credentials
 

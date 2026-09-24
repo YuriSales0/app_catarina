@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { AuthError } from "next-auth";
 import { signIn } from "@/lib/auth/config";
 import { getActor } from "@/lib/auth/session";
 import { getSignInOptions } from "@/lib/auth/options";
@@ -23,6 +24,21 @@ export default async function LoginPage(props: { searchParams: Promise<{ callbac
       name: String(formData.get("name") ?? ""),
       redirectTo: target,
     });
+  }
+
+  async function accessCodeSignIn(formData: FormData) {
+    "use server";
+    try {
+      await signIn("access-code", {
+        email: String(formData.get("email") ?? ""),
+        code: String(formData.get("code") ?? ""),
+        redirectTo: target,
+      });
+    } catch (e) {
+      // A rejected code throws; success throws Next's redirect, which must propagate.
+      if (e instanceof AuthError) redirect(`/login?error=${e.type}&callbackUrl=${encodeURIComponent(target)}`);
+      throw e;
+    }
   }
 
   return (
@@ -69,7 +85,25 @@ export default async function LoginPage(props: { searchParams: Promise<{ callbac
           </form>
         ) : null}
 
-        {!options.google && !options.devLogin ? <p className="text-sm text-danger">{copy.login.noProviders}</p> : null}
+        {options.accessCode ? (
+          <form action={accessCodeSignIn} className="space-y-3">
+            <h3 className="text-sm font-medium">{copy.login.accessTitle}</h3>
+            <p className="text-xs text-muted">{copy.login.accessHint}</p>
+            <label className="block text-sm">
+              <span className="mb-1 block">{copy.login.email}</span>
+              <input name="email" type="email" required autoComplete="email" className="input" />
+            </label>
+            <label className="block text-sm">
+              <span className="mb-1 block">{copy.login.accessCode}</span>
+              <input name="code" type="password" required autoComplete="current-password" className="input" />
+            </label>
+            <button type="submit" className="btn btn-secondary w-full">
+              {copy.login.submit}
+            </button>
+          </form>
+        ) : null}
+
+        {!options.google && !options.devLogin && !options.accessCode ?<p className="text-sm text-danger">{copy.login.noProviders}</p> : null}
       </section>
     </main>
   );
