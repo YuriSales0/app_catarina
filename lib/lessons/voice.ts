@@ -4,7 +4,7 @@ import type { StudentAccess } from "@/lib/authorization/access";
 import { ValidationError } from "@/lib/authorization/errors";
 import { getEnv } from "@/lib/env";
 import type { AIProvider, AiQuality } from "@/lib/ai/provider";
-import { buildRealtimeSession, createRealtimeClientSecret, realtimeCallsUrl, renderVoiceInstructions, VOICE_PROMPT_VERSION, type VoiceActivityBrief, type VoiceClosing, type VoiceJudgement, type VoiceLessonOverview } from "@/lib/ai/realtime";
+import { buildRealtimeSession, createRealtimeClientSecret, realtimeCallsUrl, renderVoiceInstructions, VOICE_PROMPT_VERSION, type VoiceActivityBrief, type VoiceClosing, type VoiceJudgement, type VoiceLessonOverview, stageFor } from "@/lib/ai/realtime";
 import { matchAnswer, ANSWER_MATCH_POLICY } from "@/lib/assessment/answer-match";
 import { buildLessonContext } from "@/lib/context/build";
 import type { Opening } from "./opening";
@@ -27,7 +27,10 @@ import type { ContextPack } from "@/schemas/context-pack";
  * when the model calls begin_lesson after the opening, and the closing data
  * comes with the end of the last activity.
  */
-export const VOICE_POLICY = { version: "voice.v3", itemsFromNotes: 4 } as const;
+export const VOICE_POLICY = { version: "voice.v4", itemsFromNotes: 4 } as const;
+
+/** The lesson overview, shared by the live voice lesson and the external-chat script. */
+export type LessonOverview = VoiceLessonOverview;
 
 type Notes = Partial<Record<"example_prompts" | "vocabulary" | "structures" | "activity_ideas" | "success_criteria", string[]>>;
 
@@ -91,6 +94,7 @@ export function lessonOverview(state: PlayState, pack: ContextPack): VoiceLesson
   return {
     mode: started ? "RESUME" : "START",
     lesson_kind: opening?.kind ?? "REGULAR",
+    stage: stageFor(pack.current_student_state.status),
     first_lesson_ever: pack.long_term.lessons_completed === 0,
     theme: { title: primary.title, description: primary.description ?? "", vocabulary: (notes.vocabulary ?? []).slice(0, 12), key_phrases: (notes.structures ?? []).slice(0, 6) },
     can_do_at_the_end: (notes.success_criteria ?? []).slice(0, 3),

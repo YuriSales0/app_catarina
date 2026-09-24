@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildRealtimeSession, createRealtimeClientSecret, renderVoiceInstructions, realtimeCallsUrl, VOICE_TOOLS, type VoiceLessonOverview } from "@/lib/ai/realtime";
+import { buildRealtimeSession, createRealtimeClientSecret, renderVoiceInstructions, realtimeCallsUrl, stageFor, VOICE_TOOLS, type VoiceLessonOverview } from "@/lib/ai/realtime";
 import type { ContextPack } from "@/schemas/context-pack";
 
 const pack = {
@@ -11,6 +11,7 @@ const pack = {
 const overview: VoiceLessonOverview = {
   mode: "START",
   lesson_kind: "COURSE_START",
+  stage: "WORDS_TO_PHRASES",
   first_lesson_ever: true,
   theme: { title: "Greet and say goodbye", description: "Use hello and goodbye", vocabulary: ["hello", "goodbye"], key_phrases: ["Hello!", "Goodbye!"] },
   can_do_at_the_end: ["Replies to a greeting"],
@@ -60,6 +61,16 @@ describe("live voice session", () => {
     expect(text).not.toMatch(/After two tries, say the answer, ask the child to repeat it/);
     // Teaching rules come before the lesson parts, so they frame everything that follows.
     expect(text.indexOf("HOW TO TEACH SOMETHING NEW")).toBeLessThan(text.indexOf("PART 1 - OPENING"));
+  });
+
+  it("words are only the first step: phrases and dialogue follow, by stage", () => {
+    const text = renderVoiceInstructions({ pack, overview });
+    expect(text).toContain("FROM WORDS TO PHRASES TO CONVERSATION (never stop at isolated words)");
+    expect(text).toContain("put them inside a short phrase");
+    expect(text).toContain('"stage":"WORDS_TO_PHRASES"');
+    expect(stageFor("NOT_STARTED")).toBe("WORDS_TO_PHRASES");
+    expect(stageFor("DEVELOPING")).toBe("PHRASES_AND_DIALOGUE");
+    expect(stageFor("MASTERED")).toBe("CONVERSATION");
   });
 
   it("speaks of the subject and languages by name, and never assumes English", () => {

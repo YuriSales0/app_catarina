@@ -17,13 +17,13 @@ import {
 import { renderTeacherSystemPrompt, TEACHER_CONTRACT_VERSION } from "./contracts/teacher-contract.v1";
 import { CURRICULUM_FILE_SCHEMA_VERSION } from "@/schemas/curriculum-file";
 
-export const PROMPT_VERSION = "prompt.v4";
+export const PROMPT_VERSION = "prompt.v5";
 
 /**
  * Meaning before production: a child should understand and recognise new
  * language before being asked to say it, and a near miss is progress.
  */
-const MEANING_FIRST = "Teach meaning first: for EXPLANATION items, put the meaning in the instruction language in prompt and the target-language form in expected_response, at most three new items. Order practice items from recognition to production: first items the child answers by understanding (saying the meaning in the instruction language, yes or no, choosing between two), then items where the child says the target language. Accept common young-learner variants in accept_also.";
+const MEANING_FIRST = "Teach meaning first: for EXPLANATION items, put the meaning in the instruction language in prompt and the target-language form in expected_response, at most three new items. Order practice items from recognition to production: first items the child answers by understanding (saying the meaning in the instruction language, yes or no, choosing between two), then items where the child says the target language. Accept common young-learner variants in accept_also. Go from words to phrases to short exchanges: in PRACTICE, GAME and CONVERSATION most items should ask for a phrase or a turn in a mini-dialogue, not a single word; when current_student_state.status is PRACTISING or beyond, use full phrases and dialogue turns in new situations.";
 
 /** Shared pacing hint: the long view is rule-computed data in the pack. */
 const PACING_HINT = "Use long_term in the pack to pace: if the trend is DECLINING or recent weeks are weak, keep items shorter and easier and add encouragement; if IMPROVING, add a little challenge. Never mention numbers or trends to the child.";

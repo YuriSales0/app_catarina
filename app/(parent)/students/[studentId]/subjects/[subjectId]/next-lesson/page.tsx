@@ -22,7 +22,7 @@ export default async function NextLessonPage(props: { params: Promise<{ studentI
   });
   const canRun = roleAllows(access.role, "RUN_LESSON");
   const totalMinutes = plan.activities.reduce((a, b) => a + b.planned_minutes, 0);
-  const hidden = (surface: "play" | "lesson") => (
+  const hidden = (surface: "play" | "lesson" | "chatgpt") => (
     <>
       <input type="hidden" name="studentId" value={student.id} />
       <input type="hidden" name="subjectId" value={subjectId} />
@@ -89,6 +89,12 @@ export default async function NextLessonPage(props: { params: Promise<{ studentI
                   {hidden("lesson")}
                   <button type="submit" className="btn btn-secondary btn-lg">
                     Conduzir pela visão do adulto
+                  </button>
+                </form>
+                <form action={startTodayAction}>
+                  {hidden("chatgpt")}
+                  <button type="submit" className="btn btn-soft btn-lg">
+                    Fazer no ChatGPT
                   </button>
                 </form>
               </div>

@@ -122,6 +122,21 @@ below runs in CI (`.github/workflows/ci.yml`) against Postgres 16.
     modelled inside praise, a word is never asked for twice. The system gives
     partial credit for a near miss ("mondei", "cats"), never for a different
     word or number.
+  - Words to phrases to conversation (`voice.v4`, `prompt.v5`): a lesson
+    never stops at isolated words. The overview carries a `stage` from the
+    objective's state: new topics go from small groups of words to phrases
+    and a mini-dialogue; topics being practised work mostly in phrases and
+    dialogue; secure topics in free conversation.
+  - Lesson in the family's own ChatGPT (`lib/lessons/external.ts`,
+    `/lessons/[id]/chatgpt`): the app writes a Portuguese script
+    (`external-prompt.v1`) with the same pedagogy, the plan, the progress
+    summary and a closing template carrying a lesson code. The parent pastes
+    ChatGPT's closing back (`learning-os-closing.v1`); it is validated in full
+    before anything is written, must match the lesson code, and becomes
+    AI-graded evidence with LOW confidence (keyed answers re-checked by
+    `answer-match.v2`), the activities' completion, a lesson event with the
+    whole closing, and the teacher note shown in the report. A second paste
+    is refused. No API key is needed for this path.
 - **pnpm hoisted linker** because the isolated layout produced two copies of
   Next.js and broke the production build.
 

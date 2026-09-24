@@ -71,6 +71,11 @@ export default async function LessonPage(props: { params: Promise<{ lessonId: st
                 <span aria-hidden>🦉</span> Modo criança
               </Link>
             ) : null}
+            {open && canRun ? (
+              <Link href={`/lessons/${lesson.id}/chatgpt`} className="btn btn-soft">
+                <span aria-hidden>💬</span> No ChatGPT
+              </Link>
+            ) : null}
             {lesson.status === "PLANNED" && canRun ? (
               <form action={startLessonAction}>
                 <input type="hidden" name="studentId" value={student.id} />

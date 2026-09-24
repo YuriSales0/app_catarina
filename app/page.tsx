@@ -272,7 +272,7 @@ export default async function Home() {
               <Plan
                 name="Tutor"
                 tagline="Para quem já tem uma assinatura de IA"
-                items={["Planejamento de cada aula pelo que a criança já mostrou", "Aula inaugural e abertura de módulo com diagnóstico de nível", "Roteiro pronto para usar no ChatGPT ou no Claude, inclusive por voz", "Você traz o resultado da aula e o app registra a evolução", "Relatórios e evolução semana a semana"]}
+                items={["Planejamento de cada aula pelo que a criança já mostrou", "Aula inaugural e abertura de módulo com diagnóstico de nível", "Aula no seu próprio ChatGPT, por voz, com roteiro pronto do Lumi", "O fechamento da aula volta para o app e registra a evolução", "Relatórios e evolução semana a semana"]}
               />
               <Plan
                 name="Tutor Particular"
@@ -296,6 +296,7 @@ export default async function Home() {
               { q: "Como vocês sabem se o nível está certo?", a: "A primeira aula e o começo de cada módulo trazem um diagnóstico rápido, feito antes de qualquer explicação. Se a criança acerta quase tudo ou quase nada, o relatório sugere ajustar o nível. O app nunca troca o nível sozinho." },
               { q: "A IA lembra do que aconteceu nas aulas anteriores?", a: "Quem lembra é o sistema, não a IA. Cada tentativa fica registrada, e antes de cada aula a IA recebe um resumo calculado pelo sistema: o estágio de cada objetivo, os erros que se repetem, a última aula e a evolução das últimas semanas. Assim ela ajusta o ritmo sem inventar histórico." },
               { q: "Meu filho ainda não sabe ler. Consegue usar?", a: "Sim. No plano Tutor Particular a aula é uma conversa por voz com o Lumi: ele fala, escuta e conduz tudo. Na primeira vez, um adulto só precisa permitir o microfone no navegador." },
+              { q: "Já tenho ChatGPT. Posso usar?", a: "Pode. O app prepara o roteiro da aula com o jeito de ensinar do Lumi e o que a criança já sabe; você cola no ChatGPT e a criança conversa por voz. No fim, o ChatGPT gera um fechamento que você cola de volta, e o progresso continua registrado." },
               { q: "Quanto tempo por dia?", a: "De 10 a 20 minutos, algumas vezes por semana. Constância vale mais do que aula longa." },
               { q: "E os dados do meu filho?", a: "Guardamos o mínimo: primeiro nome, idade e o histórico de aulas. A IA só recebe dados com o seu consentimento. Na aula por voz, o áudio vai direto para o serviço de IA durante a conversa e não é gravado pelo app; guardamos só o texto das respostas. Você pode exportar ou apagar tudo a qualquer momento." },
             ].map((f) => (

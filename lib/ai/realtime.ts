@@ -12,7 +12,7 @@ import { TEACHER_CONTRACT_RULES, TEACHER_CONTRACT_VERSION } from "./contracts/te
  * answers itself and writes through the ordinary evidence service. The API
  * key never leaves the server: the browser gets a short-lived client secret.
  */
-export const VOICE_PROMPT_VERSION = "voice.v3" as const;
+export const VOICE_PROMPT_VERSION = "voice.v4" as const;
 
 export const VOICE_JUDGEMENTS = ["CORRECT", "PARTIALLY_CORRECT", "INCORRECT", "NOT_ASSESSED"] as const;
 export type VoiceJudgement = (typeof VOICE_JUDGEMENTS)[number];
@@ -29,6 +29,8 @@ export type VoiceLessonOverview = {
   /** START opens the lesson; RESUME picks up a lesson already under way (a reconnect). */
   mode: "START" | "RESUME";
   lesson_kind: "COURSE_START" | "UNIT_START" | "REGULAR";
+  /** Where the child is with this objective, from the system's state: it sets words, phrases or conversation. */
+  stage: LessonStage;
   first_lesson_ever: boolean;
   theme: { title: string; description: string; vocabulary: string[]; key_phrases: string[] };
   can_do_at_the_end: string[];
@@ -38,6 +40,19 @@ export type VoiceLessonOverview = {
   plan: Array<{ step: number; activity_type: string; label: string; minutes: number; done: boolean }>;
   minutes: number;
 };
+
+/**
+ * From words to phrases to conversation. NEW topics go from small groups of
+ * words to phrases and a mini-dialogue; topics being practised work mostly in
+ * phrases and dialogue; secure topics are used in free conversation.
+ */
+export type LessonStage = "WORDS_TO_PHRASES" | "PHRASES_AND_DIALOGUE" | "CONVERSATION";
+
+export function stageFor(status: string): LessonStage {
+  if (status === "NOT_STARTED" || status === "INTRODUCED") return "WORDS_TO_PHRASES";
+  if (status === "PROFICIENT" || status === "MASTERED") return "CONVERSATION";
+  return "PHRASES_AND_DIALOGUE";
+}
 
 /** One activity, handed over only after the opening, through begin_lesson or next_activity. */
 export type VoiceActivityBrief = {
@@ -148,6 +163,11 @@ export function renderVoiceInstructions(input: { pack: ContextPack; overview: Vo
     "- For each one: give its meaning and link it to the child's life (\"Monday é segunda-feira, o dia em que a gente volta pra escola\"). Say it two or three times in context so the child hears it before saying it.",
     "- Check understanding before asking the child to speak: let the child recognise it (\"Eu falo um dia em inglês e você me diz qual é em português\"). Answering in the child's own language is a good answer at this stage.",
     "- Only then invite the child to say it, first together with you, then alone. It is an invitation (\"Quer tentar comigo?\"), never a demand.",
+    "",
+    "FROM WORDS TO PHRASES TO CONVERSATION (never stop at isolated words):",
+    "- Words are only the first step. As soon as the child recognises a small group of words, put them inside a short phrase (key_phrases or the dialogue), with its meaning, and use it in the scene (\"Today is Monday!\", \"On Monday I go to school.\").",
+    "- Then use the phrase in a mini-exchange: you ask, the child answers (\"What day is it today?\" \"It's Monday!\"). A single word is fine at first; then invite the whole phrase once, playfully.",
+    "- Follow stage in the lesson overview. WORDS_TO_PHRASES (new topic): small groups of words, then phrases, and a mini-dialogue before the lesson ends. PHRASES_AND_DIALOGUE (the child has met these words): at most a quick word warm-up, then mostly phrases and short dialogues in new situations. CONVERSATION (the child knows this well): real conversation, little stories and questions in new contexts, inviting longer answers.",
     "",
     "MISTAKES ARE PART OF LEARNING:",
     "- The child will make mistakes; that is normal and good. Never say \"errado\", \"não é assim\" or \"incorreto\", and never make the child feel wrong.",

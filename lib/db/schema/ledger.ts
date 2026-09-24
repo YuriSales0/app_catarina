@@ -25,8 +25,8 @@ export type GraderRef = {
   reason?: string;
   /** Version of the deterministic policy that graded, e.g. answer-match.v2. */
   policy?: string;
-  /** How the child answered: typed, spoken (browser speech) or in a live voice session. */
-  input?: "typed" | "speech" | "voice_live";
+  /** How the child answered: typed, spoken (browser speech), in a live voice session, or as reported by an external assistant. */
+  input?: "typed" | "speech" | "voice_live" | "external_report";
 };
 
 /**

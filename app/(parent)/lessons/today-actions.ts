@@ -10,13 +10,13 @@ import { createLessonFromPlan, listLessons } from "@/lib/lessons/service";
 /**
  * "Today's lesson" in one click: continue an open lesson if there is one,
  * otherwise ask the engine for the next plan (recomputed server-side) and
- * create it. Opens child mode or the adult runner.
+ * create it. Opens child mode, the adult runner, or the external-ChatGPT page.
  */
 export async function startTodayAction(formData: FormData): Promise<void> {
   const actor = await requireActor();
   const studentId = z.string().uuid().parse(formData.get("studentId"));
   const subjectId = z.string().uuid().parse(formData.get("subjectId"));
-  const surface = z.enum(["play", "lesson"]).catch("play").parse(formData.get("surface"));
+  const surface = z.enum(["play", "lesson", "chatgpt"]).catch("play").parse(formData.get("surface"));
   const access = await requireStudentAccess(actor, studentId, "RUN_LESSON");
   const open = (await listLessons(access, subjectId, 10)).find((l) => l.status === "IN_PROGRESS" || l.status === "PLANNED");
   let lessonId = open?.id;
@@ -26,5 +26,5 @@ export async function startTodayAction(formData: FormData): Promise<void> {
     const lesson = await createLessonFromPlan(access, plan, { idempotencyKey: `engine:${plan.curriculum_version_id}:${plan.primary_objective!.id}:${plan.generated_at.slice(0, 13)}` });
     lessonId = lesson.id;
   }
-  redirect(surface === "play" ? `/play/${lessonId}` : `/lessons/${lessonId}`);
+  redirect(surface === "play" ? `/play/${lessonId}` : surface === "chatgpt" ? `/lessons/${lessonId}/chatgpt` : `/lessons/${lessonId}`);
 }
