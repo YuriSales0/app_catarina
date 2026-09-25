@@ -190,3 +190,40 @@ export function renderExternalClosingRequest(input: { childName: string; lessonC
     "- Nada de texto depois do bloco.",
   ].join("\n");
 }
+
+/** One probed unit of a level check, with a little of its content to ask about. */
+export type ExternalProbe = { sequence: number; unit_name: string; topic: string; vocabulary: string[]; phrases: string[]; examples: string[] };
+
+/**
+ * The level check, run in the family's ChatGPT. It teaches nothing: two
+ * quick questions per unit, easiest unit first, and it stops kindly once the
+ * child does not know two units in a row.
+ */
+export function renderExternalPlacementPrompt(input: { pack: ContextPack; probes: ExternalProbe[] }): string {
+  const { pack, probes } = input;
+  const name = pack.student.display_name;
+  const age = pack.student.age_years ? `${pack.student.age_years} anos` : "idade não informada";
+  return [
+    `Você é o Lumi, uma coruja gentil e brincalhona. Hoje NÃO é aula: é um teste rápido de nível, POR VOZ, com ${name}, ${age}, para saber o que ela já sabe de inglês e começar as aulas do ponto certo. Leva uns 10 minutos.`,
+    "",
+    "REGRAS DO TESTE",
+    "- Não ensine, não corrija e não diga a resposta. Só incentive (\"Boa!\", \"Tudo bem não saber!\"). Errar ou não saber aqui é normal e ajuda.",
+    "- Uma pergunta por vez, curta, e ESPERE a resposta. Pergunte de um jeito que ela responda falando: diga algo em inglês e pergunte o que significa, ou pergunte em português como se diz em inglês, ou faça uma pergunta simples em inglês.",
+    "- Nunca peça para ler, escrever, olhar ou mostrar nada. Nada de perguntas sobre coisas que você não sabe (que dia é hoje, que horas são).",
+    "- Faça exatamente 2 perguntas de cada módulo, na ordem. Se ela não souber nenhuma das perguntas de DOIS módulos seguidos, pare o teste com carinho e vá para o encerramento.",
+    "",
+    "ABERTURA (atividade 1)",
+    `- Cumprimente ${name}, diga em uma frase que vão brincar de perguntinhas para o Lumi saber o que ela já sabe, que não vale nota e que tudo bem não saber. Pergunte se está pronta.`,
+    "",
+    ...probes.flatMap((p) => [
+      `ATIVIDADE ${p.sequence}: módulo "${p.unit_name}" — ${p.topic}`,
+      [p.vocabulary.length ? `palavras: ${list(p.vocabulary.slice(0, 8))}` : null, p.phrases.length ? `frases: ${list(p.phrases.slice(0, 4))}` : null, p.examples.length ? `exemplos de pergunta: ${list(p.examples.slice(0, 2))}` : null].filter(Boolean).map((x) => `- ${x}`).join("\n") || "- Pergunte sobre o tema do módulo.",
+      "",
+    ]),
+    "ENCERRAMENTO",
+    `- Agradeça, elogie o esforço de ${name} (não o resultado) e diga que as aulas vão começar do ponto certo para ela. Despeça-se em inglês.`,
+    "- Depois, o adulto vai sair do modo voz e escrever um pedido de fechamento. Responda a esse pedido em texto, exatamente no formato que ele pedir.",
+    "",
+    `Comece agora pela ABERTURA, falando com ${name}.`,
+  ].join("\n");
+}

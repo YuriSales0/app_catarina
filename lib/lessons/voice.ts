@@ -93,7 +93,7 @@ export function lessonOverview(state: PlayState, pack: ContextPack): VoiceLesson
   const done = new Set(state.events.filter((e) => e.eventType === "ACTIVITY_COMPLETED" && e.activityId).map((e) => e.activityId!));
   return {
     mode: started ? "RESUME" : "START",
-    lesson_kind: opening?.kind ?? "REGULAR",
+    lesson_kind: (state.lesson.planPayload as { placement_test?: unknown }).placement_test ? "PLACEMENT" : (opening?.kind ?? "REGULAR"),
     stage: stageFor(pack.current_student_state.status),
     first_lesson_ever: pack.long_term.lessons_completed === 0,
     theme: { title: primary.title, description: primary.description ?? "", vocabulary: (notes.vocabulary ?? []).slice(0, 12), key_phrases: (notes.structures ?? []).slice(0, 6) },

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { selectNextObjective, type EngineInput, type EngineObjective } from "@/lib/learning/engine";
-import { ENGINE_POLICY_V1 } from "@/lib/learning/engine-policy";
+import { ENGINE_POLICY_V1, ENGINE_POLICY_V2 } from "@/lib/learning/engine-policy";
 import type { PrerequisiteEdge } from "@/lib/learning/prerequisites";
 import type { ObjectiveStatus } from "@/lib/db/enums";
 import { OBJECTIVE_STATUSES } from "@/lib/db/enums";
@@ -157,5 +157,29 @@ describe("Next Lesson Engine", () => {
     expect(d.primary!.reasons.length).toBeGreaterThan(0);
     const sum = d.primary!.breakdown.reduce((a, b) => a + b.value, 0);
     expect(sum).toBeCloseTo(d.primary!.score, 6);
+  });
+
+  it("v2 opens units in order: a new objective in a later unit waits until the earlier unit is being practised", () => {
+    // A beginner practised the days once; the next unit's past tense must not start yet.
+    const objectives = [obj("A", 0, 1, "INTRODUCED"), obj("B", 0, 2), obj("C", 1, 1)];
+    const edges = [edge("A", "B", "HARD", "DEVELOPING")];
+    const recentLessons = [{ id: "l1", primaryObjectiveId: idOf("A"), completedAt: NOW, status: "COMPLETED" }];
+    const v2 = selectNextObjective(base(objectives, edges, { recentLessons }), ENGINE_POLICY_V2);
+    expect(v2.primary?.objective.code).toBe("A");
+    expect(v2.rejected.find((r) => r.objective_code === "C")?.reason).toBe("UNIT_NOT_OPEN");
+    // v1 would have jumped to the next unit.
+    expect(selectNextObjective(base(objectives, edges, { recentLessons }), ENGINE_POLICY_V1).primary?.objective.code).toBe("C");
+    // Once every objective of the unit is at least practised, the next unit opens.
+    const later = [obj("A", 0, 1, "PRACTISING"), obj("B", 0, 2, "PRACTISING"), obj("C", 1, 1)];
+    expect(selectNextObjective(base(later, [], { recentLessons: [{ id: "l2", primaryObjectiveId: idOf("A"), completedAt: NOW, status: "COMPLETED" }, { id: "l3", primaryObjectiveId: idOf("B"), completedAt: NOW, status: "COMPLETED" }] }), ENGINE_POLICY_V2).rejected.find((r) => r.objective_code === "C")).toBeUndefined();
+  });
+
+  it("units placed out at enrolment are not taught and count as met prerequisites", () => {
+    const objectives = [obj("A", 0, 1, "NOT_STARTED", { placedOut: true }), obj("B", 0, 2, "NOT_STARTED", { placedOut: true }), obj("C", 1, 1), obj("D", 1, 2)];
+    const edges = [edge("B", "C", "HARD", "PROFICIENT"), edge("C", "D", "HARD", "PROFICIENT")];
+    const d = selectNextObjective(base(objectives, edges), ENGINE_POLICY_V2);
+    expect(d.primary?.objective.code).toBe("C");
+    expect(d.rejected.find((r) => r.objective_code === "A")?.reason).toBe("PLACED_OUT");
+    expect(d.rejected.find((r) => r.objective_code === "D")?.reason).toBe("LOCKED");
   });
 });

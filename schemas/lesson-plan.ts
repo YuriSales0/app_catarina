@@ -25,6 +25,7 @@ export const rationaleReasonSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("NEXT_IN_SEQUENCE"), unit: z.string(), position: z.number().int() }).strict(),
   z.object({ kind: z.literal("RETENTION_CHECK"), proficient_since: z.string() }).strict(),
   z.object({ kind: z.literal("INTRODUCED_CONTINUATION"), evidence_ids: z.array(z.string().uuid()) }).strict(),
+  z.object({ kind: z.literal("PLACEMENT_TEST"), units: z.number().int().min(1) }).strict(),
 ]);
 
 export const engineRationaleSchema = z
@@ -35,7 +36,7 @@ export const engineRationaleSchema = z
       z
         .object({
           objective_code: z.string(),
-          reason: z.enum(["LOCKED", "RECENTLY_TAUGHT", "LOWER_PRIORITY", "MASTERED", "INACTIVE"]),
+          reason: z.enum(["LOCKED", "RECENTLY_TAUGHT", "LOWER_PRIORITY", "MASTERED", "INACTIVE", "PLACED_OUT", "UNIT_NOT_OPEN"]),
           blocking: z.array(z.string()).optional(),
           score: z.number().optional(),
         })
@@ -78,6 +79,14 @@ export const nextLessonPlanSchema = z
         kind: z.enum(["COURSE_START", "UNIT_START"]),
         unit_name: z.string(),
         unit_objectives: z.array(z.object({ id: z.string().uuid(), title: z.string() }).strict()).max(20),
+      })
+      .strict()
+      .nullable()
+      .default(null),
+    /** A level check instead of a lesson: one quick challenge per unit, easiest first (lib/lessons/placement.ts). */
+    placement_test: z
+      .object({
+        units: z.array(z.object({ unit_key: z.string(), unit_name: z.string(), objective_id: z.string().uuid(), objective_title: z.string() }).strict()).min(1).max(12),
       })
       .strict()
       .nullable()

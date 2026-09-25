@@ -28,7 +28,8 @@ export type VoiceItemKind = "CHECK" | "OPEN" | "TEACH";
 export type VoiceLessonOverview = {
   /** START opens the lesson; RESUME picks up a lesson already under way (a reconnect). */
   mode: "START" | "RESUME";
-  lesson_kind: "COURSE_START" | "UNIT_START" | "REGULAR";
+  /** PLACEMENT is a level check: questions only, nothing taught. */
+  lesson_kind: "COURSE_START" | "UNIT_START" | "REGULAR" | "PLACEMENT";
   /** Where the child is with this objective, from the system's state: it sets words, phrases or conversation. */
   stage: LessonStage;
   first_lesson_ever: boolean;
@@ -177,7 +178,9 @@ export function renderVoiceInstructions(input: { pack: ContextPack; overview: Vo
     "",
     "THE LESSON HAS THREE PARTS, IN THIS ORDER. Never skip a part and never start exercises early.",
     "",
-    resume
+    overview.lesson_kind === "PLACEMENT"
+      ? `THIS IS A LEVEL CHECK, NOT A LESSON. Never teach, never correct and never say the answer; only encourage. Ask exactly the items of each activity, one at a time, and record each first attempt. If the child knows nothing in two activities in a row, stop kindly and go to PART 3. PART 1 - OPENING: greet ${name}, say in one sentence that you will play a quick question game so Lumi knows where to start, that there is no score and it is fine not to know, ask if they are ready, then call begin_lesson.`
+      : resume
       ? "PART 1 - WELCOME BACK (this lesson is already under way): greet the child, say in one sentence what today's lesson is about and which step you are on (plan, steps marked done are finished), ask if they are ready, then call begin_lesson."
       : ["PART 1 - OPENING. No exercises and no \"repeat after me\" yet. Talk over several turns, waiting for the child's replies:", ...opening].join("\n"),
     "",

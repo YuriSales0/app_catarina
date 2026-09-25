@@ -23,7 +23,8 @@ test("a new parent goes through first steps, and cannot see another parent's chi
   await a.getByText("Raposa").click();
   await a.getByRole("button", { name: "Continuar" }).click();
   await expect(a).toHaveURL(/passo=2/);
-  await a.locator("label", { hasText: "Starters" }).click();
+  await expect(a.getByText(/já teve contato com inglês\?/)).toBeVisible();
+  await a.locator("label", { hasText: "Está começando agora" }).click();
   await a.getByRole("button", { name: "Continuar" }).click();
   await expect(a).toHaveURL(/passo=3/);
   await a.getByRole("button", { name: "Agora não" }).click();

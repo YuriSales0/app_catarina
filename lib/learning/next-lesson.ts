@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, inArray } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import type { DbOrTx } from "@/lib/db/create-db";
 import * as s from "@/lib/db/schema";
@@ -12,6 +12,8 @@ import { buildLessonStructure } from "@/lib/lessons/structure";
 import { decideOpening } from "@/lib/lessons/opening";
 import { nextLessonPlanSchema, PLAN_VERSION, type NextLessonPlan } from "@/schemas/lesson-plan";
 import { effectiveEvidence, isAssessed, type EvidenceRow } from "./evidence-view";
+import { placementOf, placedOutUnitKeys, placementProbes } from "./placement";
+import { buildPlacementStructure } from "@/lib/lessons/placement";
 
 /**
  * Load, compute, plan. The I/O boundary around the pure engine. Returns a
@@ -71,6 +73,10 @@ export async function getNextLessonPlan(
     if (effectiveEvidence(rows).some((r) => isAssessed(r) && r.result !== "INCORRECT")) successWithinWindow.add(objectiveId);
   }
 
+  // The starting point the family chose or confirmed: earlier units are skipped.
+  const placement = placementOf(progress.enrolment.metadata);
+  const unitKeysInOrder = [...new Set(progress.objectives.map((o) => o.unit.unitKey))];
+  const placedOut = placedOutUnitKeys(unitKeysInOrder, placement);
   const unitOrder = new Map<string, number>();
   progress.objectives.forEach((o, i) => {
     if (!unitOrder.has(o.unit.id)) unitOrder.set(o.unit.id, i);
@@ -85,6 +91,7 @@ export async function getNextLessonPlan(
     sequence: o.objective.sequence,
     difficulty: o.objective.difficulty,
     unitActive: true,
+    placedOut: placedOut.has(o.unit.unitKey),
     status: o.status,
     confidence: o.confidence,
     decidedByEvidenceIds: o.state?.decidedByEvidenceIds ?? [],
@@ -97,14 +104,43 @@ export async function getNextLessonPlan(
     objectives,
     edges: progress.edges,
     recurringErrors: recurring.map((r) => ({ errorTag: r.errorTag, occurrences: r.occurrences, lessonIds: r.lessonIds, objectiveIds: r.objectiveIds })),
-    recentLessons: recentLessons.map((l) => ({ id: l.id, primaryObjectiveId: l.primaryObjectiveId, completedAt: l.completedAt, status: l.status })),
+    // A level check taught nothing: it does not count as a recent lesson on its first probe.
+    recentLessons: recentLessons
+      .filter((l) => !(l.planPayload as { placement_test?: unknown } | null)?.placement_test)
+      .map((l) => ({ id: l.id, primaryObjectiveId: l.primaryObjectiveId, completedAt: l.completedAt, status: l.status })),
     successWithinWindow,
     now,
     hasCurriculum: true,
   };
+  const minutes = opts.lessonMinutes ?? progress.enrolment.plannedLessonMinutes;
+  const summary = (o: EngineObjective) => ({ id: o.id, code: o.code, title: o.title, status: o.status, confidence: o.confidence });
+
+  // A pending level check comes before any teaching.
+  if (placement?.status === "PENDING_TEST") {
+    const probes = placementProbes(progress.objectives.map((o) => ({ unitKey: o.unit.unitKey, unit_key: o.unit.unitKey, unit_name: o.unit.name, objective_id: o.objective.id, objective_title: o.objective.title })));
+    const first = objectives.find((o) => o.id === probes[0]?.objective_id);
+    if (first) {
+      const activities = buildPlacementStructure(probes);
+      return nextLessonPlanSchema.parse({
+        ...emptyPlan(access.studentId, subjectId, progress.version.id, "PLANNED", now, activities.reduce((a, x) => a + x.planned_minutes, 0)),
+        primary_objective: summary(first),
+        activities,
+        placement_test: { units: probes.map(({ unit_key, unit_name, objective_id, objective_title }) => ({ unit_key, unit_name, objective_id, objective_title })) },
+        rationale: { selected_because: [{ kind: "PLACEMENT_TEST", units: probes.length }], prerequisites_satisfied: [], alternatives_rejected: [], score_breakdown: [], policy_version: CURRENT_ENGINE_POLICY.version },
+      });
+    }
+  }
+
   const decision = selectNextObjective(input, CURRENT_ENGINE_POLICY);
+  // The course opening belongs to the first real lesson: a level check does not count.
   const completedOnVersion = await dbh.query.lessons.findFirst({
-    where: and(eq(s.lessons.studentId, access.studentId), eq(s.lessons.subjectId, subjectId), eq(s.lessons.curriculumVersionId, progress.version.id), eq(s.lessons.status, "COMPLETED")),
+    where: and(
+      eq(s.lessons.studentId, access.studentId),
+      eq(s.lessons.subjectId, subjectId),
+      eq(s.lessons.curriculumVersionId, progress.version.id),
+      eq(s.lessons.status, "COMPLETED"),
+      sql`((${s.lessons.planPayload} -> 'placement_test') is null or (${s.lessons.planPayload} -> 'placement_test') = 'null'::jsonb)`,
+    ),
     columns: { id: true },
   });
   const primaryRow = decision.primary ? progress.objectives.find((o) => o.objective.id === decision.primary!.objective.id) : null;
@@ -115,9 +151,7 @@ export async function getNextLessonPlan(
         unitObjectives: progress.objectives.filter((o) => o.unit.id === primaryRow.unit.id).map((o) => ({ id: o.objective.id, title: o.objective.title, status: o.status })),
       })
     : null;
-  const minutes = opts.lessonMinutes ?? progress.enrolment.plannedLessonMinutes;
   const codeOf = (id: string) => objectives.find((o) => o.id === id)?.code ?? id;
-  const summary = (o: EngineObjective) => ({ id: o.id, code: o.code, title: o.title, status: o.status, confidence: o.confidence });
 
   const plan: NextLessonPlan = {
     plan_version: PLAN_VERSION,
@@ -141,6 +175,7 @@ export async function getNextLessonPlan(
         )
       : [],
     opening,
+    placement_test: null,
     rationale: {
       selected_because: decision.primary?.reasons ?? [],
       prerequisites_satisfied: (decision.primary?.unlock.satisfied ?? []).map((p) => ({ objective_code: codeOf(p.prerequisiteObjectiveId), status: p.actual })),
@@ -169,6 +204,7 @@ function emptyPlan(studentId: string, subjectId: string, versionId: string, outc
     planned_duration_minutes: minutes,
     activities: [],
     opening: null,
+    placement_test: null,
     rationale: { selected_because: [], prerequisites_satisfied: [], alternatives_rejected: [], score_breakdown: [], policy_version: CURRENT_ENGINE_POLICY.version },
     candidates_considered: 0,
   };

@@ -12,7 +12,7 @@ test("a parent runs a lesson in their own ChatGPT: copies the script, pastes the
   await page.locator('input[name="dateOfBirth"]').fill("2018-05-20");
   await page.getByText("Raposa").click();
   await page.getByRole("button", { name: "Continuar" }).click();
-  await page.locator("label", { hasText: "Starters" }).click();
+  await page.locator("label", { hasText: "Está começando agora" }).click();
   await page.getByRole("button", { name: "Continuar" }).click();
   await page.getByRole("button", { name: "Agora não" }).click();
   await expect(page.getByRole("heading", { name: "Tudo pronto, Lara!" })).toBeVisible();

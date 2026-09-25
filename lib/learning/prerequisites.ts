@@ -25,6 +25,8 @@ export function evaluateUnlock(
   edges: PrerequisiteEdge[],
   lineageOf: ReadonlyMap<string, string>,
   statusByLineage: StatusByLineage,
+  /** Prerequisites the child was placed past at enrolment: met without being taught. */
+  metLineages: ReadonlySet<string> = new Set(),
 ): UnlockResult {
   const result: UnlockResult = { unlocked: true, hardBlockers: [], softUnmet: [], satisfied: [] };
   for (const e of edges) {
@@ -32,7 +34,7 @@ export function evaluateUnlock(
     const lineage = lineageOf.get(e.prerequisiteObjectiveId);
     const actual: ObjectiveStatus = (lineage ? statusByLineage.get(lineage) : undefined) ?? "NOT_STARTED";
     const entry = { prerequisiteObjectiveId: e.prerequisiteObjectiveId, requiredStatus: e.requiredStatus, actual };
-    if (statusAtLeast(actual, e.requiredStatus)) result.satisfied.push(entry);
+    if (statusAtLeast(actual, e.requiredStatus) || (lineage !== undefined && metLineages.has(lineage))) result.satisfied.push(entry);
     else if (e.strength === "HARD") {
       result.hardBlockers.push(entry);
       result.unlocked = false;

@@ -25,6 +25,12 @@ export type EnginePolicy = {
   difficultyGapPenalty: number;
   difficultyGapAllowed: number;
   maxReviewObjectives: number;
+  /**
+   * Units open in order: an objective in a later unit that is below this
+   * status (new, or only touched by a level check) is not taught until every
+   * objective of the earlier units has reached it. Unset (v1) means no gate.
+   */
+  unitGateStatus?: "INTRODUCED" | "PRACTISING" | "DEVELOPING";
 };
 
 export const ENGINE_POLICY_V1: EnginePolicy = {
@@ -52,5 +58,12 @@ export const ENGINE_POLICY_V1: EnginePolicy = {
   maxReviewObjectives: 2,
 };
 
-export const CURRENT_ENGINE_POLICY = ENGINE_POLICY_V1;
-export const ENGINE_VERSION = "engine.v1";
+/**
+ * v2: after a beginner's second lesson jumped from the days of the week to
+ * the past tense in another unit, new units open only once the earlier ones
+ * are all being practised; and units placed out at enrolment are skipped.
+ */
+export const ENGINE_POLICY_V2: EnginePolicy = { ...ENGINE_POLICY_V1, version: "engine-policy.v2", unitGateStatus: "PRACTISING" };
+
+export const CURRENT_ENGINE_POLICY = ENGINE_POLICY_V2;
+export const ENGINE_VERSION = "engine.v2";

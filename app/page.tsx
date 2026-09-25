@@ -290,7 +290,7 @@ export default async function Home() {
           <h2 className="mt-2 text-center font-display text-3xl font-semibold sm:text-4xl">Perguntas frequentes</h2>
           <div className="mt-10 space-y-3">
             {[
-              { q: "Qual a idade ideal?", a: "A trilha Starters funciona bem a partir dos 6 anos, e a Movers a partir dos 8. No cadastro, sugerimos o nível pela idade, e você pode mudar quando quiser." },
+              { q: "Qual a idade ideal?", a: "A trilha Starters funciona bem a partir dos 6 anos, e a Movers a partir dos 8. No cadastro, perguntamos se a criança já teve contato com inglês: quem está começando parte do comecinho; quem já teve contato faz um teste rápido de nível, e você confirma por onde começar." },
               { q: "Preciso falar inglês para acompanhar?", a: "Não. As instruções são em português, e cada atividade traz exemplos e o que esperar como resposta." },
               { q: "A IA é obrigatória?", a: "Não. Sem IA, o app planeja a aula e você conduz com os exemplos prontos. Com IA, as atividades são preparadas e corrigidas automaticamente. Em nenhum caso a IA decide o que a criança aprendeu." },
               { q: "Como vocês sabem se o nível está certo?", a: "A primeira aula e o começo de cada módulo trazem um diagnóstico rápido, feito antes de qualquer explicação. Se a criança acerta quase tudo ou quase nada, o relatório sugere ajustar o nível. O app nunca troca o nível sozinho." },

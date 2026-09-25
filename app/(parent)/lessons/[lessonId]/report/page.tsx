@@ -16,6 +16,10 @@ import { hasAiConsent } from "@/lib/lessons/ai-proposals";
 import { roleAllows } from "@/lib/authorization/permissions";
 import { Avatar, avatarOf } from "@/components/brand/avatar";
 import { Lumi } from "@/components/brand/lumi";
+import { getEnrolment } from "@/lib/students/service";
+import { getStartingPoint } from "@/lib/lessons/starting-point";
+import { StartingPointPanel } from "@/components/parent/starting-point";
+import { describeLevel } from "@/lib/curriculum/levels";
 
 export const metadata = { title: "Como foi a aula" };
 
@@ -29,9 +33,11 @@ export default async function LessonReportPage(props: { params: Promise<{ lesson
     const studentId = await resolveLessonStudent(lessonId);
     const access = await requireStudentAccess(actor, studentId, "VIEW");
     const [detail, student] = await Promise.all([getLesson(access, lessonId), getStudent(access)]);
-    return { access, detail, student };
+    const [placement, enrolment] = await Promise.all([getStartingPoint(access, detail.lesson.subjectId), getEnrolment(access, detail.lesson.subjectId)]);
+    return { access, detail, student, placement, enrolment };
   });
-  const { access, detail, student } = data;
+  const { access, detail, student, placement, enrolment } = data;
+  const isLevelCheck = Boolean((detail.lesson.planPayload as { placement_test?: unknown }).placement_test);
   const [provider, aiConsent] = await Promise.all([getAIProvider(), hasAiConsent(student.id)]);
   const canNarrate = provider.id !== "null" && aiConsent && roleAllows(access.role, "RUN_LESSON") && detail.report?.generatedBy === "SYSTEM";
   const { lesson, subject, report, objectives, primaryObjective } = detail;
@@ -63,6 +69,11 @@ export default async function LessonReportPage(props: { params: Promise<{ lesson
         </EmptyState>
       ) : (
         <>
+          {isLevelCheck && placement?.result?.lesson_id === lesson.id ? (
+            <div className="mb-6">
+              <StartingPointPanel studentId={student.id} subjectId={subject.id} placement={placement} levelKey={enrolment.curriculumName ? describeLevel(enrolment.curriculumName).key : null} canEdit={roleAllows(access.role, "MANAGE_ENROLMENT")} back={`/students/${student.id}/subjects/${subject.id}/next-lesson`} />
+            </div>
+          ) : null}
           <ReportView report={parsed.data} objectives={objectives} studentId={student.id} subjectId={subject.id} />
           {canNarrate ? (
             <div className="card mt-6 flex flex-col items-start gap-4 sm:flex-row sm:items-center">

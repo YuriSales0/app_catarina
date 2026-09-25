@@ -1,4 +1,5 @@
 import { and, asc, desc, eq, inArray, sql, isNull } from "drizzle-orm";
+import { recordPlacementResultIfAny } from "./placement";
 import { db } from "@/lib/db/client";
 import type { DbOrTx, Tx } from "@/lib/db/create-db";
 import * as s from "@/lib/db/schema";
@@ -73,6 +74,7 @@ export async function buildManualPlan(access: StudentAccess, input: CreateManual
       opening,
     ),
     opening,
+    placement_test: null,
     rationale: {
       selected_because: [{ kind: "MANUAL_SELECTION", by_user_id: access.userId }],
       prerequisites_satisfied: primary.unlock.satisfied.map((p) => ({
@@ -366,6 +368,8 @@ export async function completeLesson(access: StudentAccess, input: CompleteLesso
       .returning();
     await appendEvent(tx, access, lesson.id, "LESSON_COMPLETED", { by_user_id: access.userId, actual_duration_minutes: actual });
     const report = await generateSystemReport(tx, access, updated);
+    // A level check stores its suggested starting point for the family to confirm.
+    await recordPlacementResultIfAny(tx, updated, completedAt);
     await generateSnapshot(access, { scope: "STUDENT", trigger: "LESSON_COMPLETED", now: completedAt }, tx);
     metric("lesson_completed", { studentId: access.studentId, lessonId: lesson.id });
     return { lesson: updated, report };

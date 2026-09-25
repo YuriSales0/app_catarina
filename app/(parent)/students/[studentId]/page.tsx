@@ -12,6 +12,8 @@ import { describeLevel, suggestedLevelKey } from "@/lib/curriculum/levels";
 import { TONE, ROLE } from "@/lib/copy/pt";
 import { updateStudentAction, addGuardianAction, revokeGuardianAction, enrolAction, deleteStudentAction, setAiConsentAction, setAiQualityAction } from "../actions";
 import { GUARDIAN_ROLES } from "@/lib/db/enums";
+import { getStartingPoint } from "@/lib/lessons/starting-point";
+import { StartingPointPanel } from "@/components/parent/starting-point";
 
 export default async function StudentPage(props: { params: Promise<{ studentId: string }> }) {
   const { studentId } = await props.params;
@@ -25,6 +27,7 @@ export default async function StudentPage(props: { params: Promise<{ studentId: 
     getAiProcessingConsent(access),
     getAiQuality(access),
   ]);
+  const startingPoints = new Map(await Promise.all(enrolments.map(async (e) => [e.subjectId, await getStartingPoint(access, e.subjectId)] as const)));
   const versions = (await Promise.all(subjects.map(async (sub) => (await listPublishedVersionsForSubject(actor, sub.id)).map((v) => ({ ...v, subjectName: sub.name }))))).flat();
   const canEdit = access.role === "OWNER" || access.role === "GUARDIAN";
   const isOwner = access.role === "OWNER";
@@ -79,6 +82,11 @@ export default async function StudentPage(props: { params: Promise<{ studentId: 
                       ›
                     </span>
                   </Link>
+                  {!e.curriculumIsDemo ? (
+                    <div className="mt-2">
+                      <StartingPointPanel studentId={student.id} subjectId={e.subjectId} placement={startingPoints.get(e.subjectId) ?? null} levelKey={level?.key ?? null} canEdit={canEdit} back={`/students/${student.id}`} />
+                    </div>
+                  ) : null}
                 </li>
               );
             })}

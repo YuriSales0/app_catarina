@@ -146,6 +146,25 @@ below runs in CI (`.github/workflows/ci.yml`) against Postgres 16.
     questions about facts the assistant cannot know. The closing is a
     separate, self-contained request the parent sends as text after leaving
     voice mode, since a voice conversation cannot write a block.
+  - Starting point, asked at enrolment (`lib/learning/placement.ts`,
+    `lib/lessons/placement.ts`, `lib/lessons/starting-point.ts`): "starting
+    from zero" enrols in Starters at the first unit; "some experience" makes
+    the first lesson a level check (a welcome, then two quick questions on
+    the first objective of each unit, teaching nothing); "I choose" keeps
+    the track picker. The level check's result (first unit below 75%) is
+    stored on the enrolment as a suggestion and applied only when the family
+    confirms; confirmed earlier units are placed out: not taught, and met as
+    prerequisites, without writing any learning state. Changing the starting
+    point cancels lessons planned for the old one. The profile, next-lesson
+    and level-check report pages show the starting point and its controls.
+  - Engine v2 (`engine-policy.v2`): units open in order. An objective in a
+    later unit below PRACTISING waits until every objective of the earlier
+    units is being practised, so a beginner no longer jumps from the days of
+    the week to the past tense. A level check does not count as a recent
+    lesson, nor as the course's first lesson (the opening still comes).
+  - Enrolments made before the level cards carried no target language; the
+    context pack now falls back to the curriculum's, which had made the AI
+    produce Portuguese-only practice.
 - **pnpm hoisted linker** because the isolated layout produced two copies of
   Next.js and broke the production build.
 

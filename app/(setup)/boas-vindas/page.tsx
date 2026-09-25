@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getStartingPoint } from "@/lib/lessons/starting-point";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireActor } from "@/lib/auth/session";
@@ -8,7 +9,7 @@ import { getStudent, listEnrolments, getAiProcessingConsent } from "@/lib/studen
 import { getSubjectBySlug, listPublishedVersionsForSubject } from "@/lib/curriculum/service";
 import { describeLevel, suggestedLevelKey } from "@/lib/curriculum/levels";
 import { ActionForm } from "@/components/forms/action-form";
-import { AvatarPicker, LevelPicker, MinutesPicker, QualityPicker } from "@/components/forms/pickers";
+import { AvatarPicker, LevelPicker, MinutesPicker, QualityPicker, ExperiencePicker } from "@/components/forms/pickers";
 import { TimezoneInput } from "@/components/forms/timezone-input";
 import { Avatar, avatarOf } from "@/components/brand/avatar";
 import { Lumi, LumiSays } from "@/components/brand/lumi";
@@ -103,12 +104,19 @@ async function ChildSteps({ step, childId }: { step: number; childId: string }) 
           <Avatar choice={avatar} size="lg" />
           <div>
             <h1 className="font-display text-2xl font-semibold">Qual é o ponto de partida de {student.name}?</h1>
-            <p className="text-sm text-muted">{age !== null ? `Com ${age} anos, sugerimos o nível marcado. ` : ""}Dá para mudar depois, e o avanço já feito é preservado.</p>
+            <p className="text-sm text-muted">Cada trilha começa do básico. Dá para mudar depois, e o avanço já feito é preservado.</p>
           </div>
         </div>
         <ActionForm action={onboardLevelAction} submitLabel="Continuar" size="lg" className="space-y-6">
           <input type="hidden" name="studentId" value={student.id} />
-          <LevelPicker options={options} suggested={suggestedLevelKey(age)} />
+          <ExperiencePicker name={student.name}>
+            <details className="rounded-2xl bg-surface-2 px-4 py-3">
+              <summary className="cursor-pointer text-sm font-bold">Escolher a trilha (só vale se marcar &ldquo;Prefiro escolher a trilha&rdquo;)</summary>
+              <div className="mt-3">
+                <LevelPicker options={options} suggested={suggestedLevelKey(age)} />
+              </div>
+            </details>
+          </ExperiencePicker>
           <MinutesPicker value={15} />
           <p className="text-xs text-muted">O inglês é ensinado com instruções em português.</p>
         </ActionForm>
@@ -169,6 +177,8 @@ async function ChildSteps({ step, childId }: { step: number; childId: string }) 
 
   const enrolment = (await listEnrolments(access)).find((e) => e.curriculumVersionId);
   const level = enrolment?.curriculumName ? describeLevel(enrolment.curriculumName) : null;
+  const placement = enrolment ? await getStartingPoint(access, enrolment.subjectId) : null;
+  const firstLesson = placement?.status === "PENDING_TEST" ? "A primeira aula é um teste rápido de nível, sem nota." : "A primeira aula começa do comecinho e já está esperando.";
   return (
     <div className="kid-card relative overflow-hidden text-center">
       <div aria-hidden className="pointer-events-none absolute -top-16 left-1/2 h-48 w-48 -translate-x-1/2 rounded-full bg-sun blur-3xl" />
@@ -179,7 +189,7 @@ async function ChildSteps({ step, childId }: { step: number; childId: string }) 
         </div>
         <h1 className="mt-6 font-display text-3xl font-semibold">Tudo pronto, {student.name}!</h1>
         <p className="mx-auto mt-2 max-w-md text-muted">
-          {level ? `Trilha ${level.title}${level.cefr ? ` (${level.cefr})` : ""}, aulas de ${enrolment!.plannedLessonMinutes} minutos.` : "Falta escolher um nível."} A primeira aula já está esperando.
+          {level ? `Trilha ${level.title}${level.cefr ? ` (${level.cefr})` : ""}, aulas de ${enrolment!.plannedLessonMinutes} minutos.` : "Falta escolher um nível."} {firstLesson}
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           {enrolment ? (

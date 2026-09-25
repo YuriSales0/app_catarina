@@ -6,7 +6,7 @@ import { buildLessonContext } from "@/lib/context/build";
 import { matchAnswer, ANSWER_MATCH_POLICY } from "@/lib/assessment/answer-match";
 import { ACTIVITY } from "@/lib/copy/pt";
 import { externalClosingSchema, extractClosingJson, type ExternalClosing } from "@/schemas/external-closing";
-import { renderExternalLessonPrompt, renderExternalClosingRequest, materialFor, EXTERNAL_PROMPT_VERSION } from "./external-prompt";
+import { renderExternalLessonPrompt, renderExternalClosingRequest, renderExternalPlacementPrompt, materialFor, EXTERNAL_PROMPT_VERSION } from "./external-prompt";
 import { lessonOverview } from "./voice";
 import { getPlayState } from "./play";
 import { getLesson, startLesson, recordEvidence, recordLessonEvent, completeLesson } from "./service";
@@ -53,9 +53,25 @@ export async function buildExternalLesson(access: StudentAccess, lessonId: strin
       review: isReview && objective ? { title: objective.title, vocabulary: notesOf(objective).vocabulary ?? [], phrases: notesOf(objective).structures ?? [] } : null,
     };
   });
+  const code = lessonCode(lessonId);
+  const placementTest = (state.lesson.planPayload as { placement_test?: { units: Array<{ unit_name: string; objective_id: string; objective_title: string }> } | null }).placement_test;
+  if (placementTest?.units.length) {
+    // The level check: activity 1 is the welcome, then one activity per probed unit.
+    const probeActivities = state.activities.filter((a) => a.activityType === "ASSESSMENT");
+    const probes = placementTest.units.map((u, i) => {
+      const notes = notesOf(objectiveById.get(u.objective_id)) as Notes & { example_prompts?: string[] };
+      return { sequence: probeActivities[i]?.sequence ?? i + 2, unit_name: u.unit_name, topic: u.objective_title, vocabulary: notes.vocabulary ?? [], phrases: notes.structures ?? [], examples: notes.example_prompts ?? [] };
+    });
+    const labelled = activities.map((a) => ({ ...a, label: a.activity_type === "ORIENTATION" ? "Abertura do teste" : `Teste: ${probes.find((p) => p.sequence === a.sequence)?.unit_name ?? a.label}` }));
+    return {
+      prompt: renderExternalPlacementPrompt({ pack, probes }),
+      closingRequest: renderExternalClosingRequest({ childName: pack.student.display_name, lessonCode: code, activities: labelled }),
+      code,
+      state,
+    };
+  }
   const primary = notesOf(state.primaryObjective);
   const material = materialFor(overview.stage, primary.vocabulary ?? [], (primary.structures ?? []).slice(0, 6), pack.pedagogical_constraints.max_new_vocabulary_items);
-  const code = lessonCode(lessonId);
   return {
     prompt: renderExternalLessonPrompt({ pack, overview, activities, material }),
     closingRequest: renderExternalClosingRequest({ childName: pack.student.display_name, lessonCode: code, activities }),

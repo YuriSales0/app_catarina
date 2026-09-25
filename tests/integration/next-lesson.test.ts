@@ -34,7 +34,10 @@ describe("getNextLessonPlan", () => {
     expect(plan.primary_objective?.code).toBe("DEMO.MA.NUM20");
     expect(plan.rationale.selected_because[0].kind).toBe("NEXT_IN_SEQUENCE");
     const locked = plan.rationale.alternatives_rejected.filter((r) => r.reason === "LOCKED");
-    expect(locked.length).toBe(7);
+    const notOpen = plan.rationale.alternatives_rejected.filter((r) => r.reason === "UNIT_NOT_OPEN");
+    // Later units wait until the first one is being practised; within the open unit, prerequisites still lock.
+    expect(notOpen.length).toBeGreaterThan(0);
+    expect(locked.length + notOpen.length).toBe(7);
     expect(plan.activities.length).toBeGreaterThan(0);
     expect(plan.activities.reduce((a, x) => a + x.planned_minutes, 0)).toBe(20);
   });
@@ -54,7 +57,7 @@ describe("getNextLessonPlan", () => {
   it("a plan from the engine creates a lesson through the same store as a manual one", async () => {
     const plan = await getNextLessonPlan(access, mathsId, {}, db);
     const lesson = await createLessonFromPlan(access, plan, {}, db);
-    expect(lesson.planEngineVersion).toBe("engine.v1");
+    expect(lesson.planEngineVersion).toBe("engine.v2");
     expect(lesson.primaryObjectiveId).toBe(plan.primary_objective!.id);
     await startLesson(access, lesson.id, db);
     for (let i = 0; i < 3; i++) {

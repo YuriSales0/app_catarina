@@ -71,6 +71,38 @@ export function LevelPicker({ options, suggested, current }: { options: LevelOpt
   );
 }
 
+/**
+ * The first question about a child's English: starting from zero, or with
+ * some experience (a short level check suggests where to start), or the
+ * family picks the track. Starting from zero is preselected: it is the safe
+ * default and never skips anything.
+ */
+export function ExperiencePicker({ name, children }: { name: string; children?: React.ReactNode }) {
+  const options = [
+    { value: "BEGINNER", emoji: "🌱", title: "Está começando agora", text: `Nunca estudou inglês ou só conhece palavras soltas. ${name} começa do comecinho: cumprimentos, pessoas, números, cores.` },
+    { value: "TEST", emoji: "🧭", title: "Já teve contato com inglês", text: "Na escola, em curso ou em casa. A primeira aula é um teste rápido de nível, sem nota, e o app sugere por onde começar. Você confirma." },
+    { value: "CHOSEN", emoji: "🗺️", title: "Prefiro escolher a trilha", text: "Você escolhe o nível abaixo e as aulas começam do início dele." },
+  ];
+  return (
+    <fieldset className="space-y-3">
+      <legend className="mb-1 text-sm font-bold">{name} já teve contato com inglês?</legend>
+      {options.map((o) => (
+        <label key={o.value} className="choice flex gap-4">
+          <input type="radio" name="experience" value={o.value} defaultChecked={o.value === "BEGINNER"} required className="sr-only" />
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-surface-2 text-2xl" aria-hidden>
+            {o.emoji}
+          </span>
+          <span className="min-w-0">
+            <span className="font-display text-lg font-semibold">{o.title}</span>
+            <span className="mt-1 block text-sm text-muted">{o.text}</span>
+          </span>
+        </label>
+      ))}
+      {children}
+    </fieldset>
+  );
+}
+
 export function MinutesPicker({ value = 20 }: { value?: number }) {
   const options = [10, 15, 20, 30];
   const chosen = options.includes(value) ? value : 20;

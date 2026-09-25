@@ -18,6 +18,8 @@ export type EngineObjective = {
   sequence: number;
   difficulty: number;
   unitActive: boolean;
+  /** In a unit before the child's confirmed starting point: not taught, and met as a prerequisite. */
+  placedOut?: boolean;
   status: ObjectiveStatus;
   confidence: ConfidenceLevel;
   decidedByEvidenceIds: string[];
@@ -101,8 +103,19 @@ export function selectNextObjective(input: EngineInput, policy: EnginePolicy): E
   const blocking: EngineObjective[] = [];
   const candidates: Candidate[] = [];
 
-  // Frontier: the first NOT_STARTED objective in curriculum order that is unlocked.
-  const frontierId = ordered.find((o) => o.status === "NOT_STARTED" && o.unitActive && evaluateUnlock(o.id, input.edges, lineageOf, statusByLineage).unlocked)?.id ?? null;
+  const placedOutLineages = new Set(ordered.filter((o) => o.placedOut).map((o) => o.lineageId));
+  const unlockOf = (id: string) => evaluateUnlock(id, input.edges, lineageOf, statusByLineage, placedOutLineages);
+
+  // Unit gate: the first unit, in order, still below the gate status is the last one open for new objectives.
+  let openUpTo = Number.POSITIVE_INFINITY;
+  if (policy.unitGateStatus) {
+    const gate = rank(policy.unitGateStatus);
+    const firstOpen = ordered.find((o) => !o.placedOut && o.unitActive && rank(o.status) < gate);
+    if (firstOpen) openUpTo = firstOpen.unitOrder;
+  }
+
+  // Frontier: the first NOT_STARTED objective in curriculum order that is unlocked, in an open unit.
+  const frontierId = ordered.find((o) => o.status === "NOT_STARTED" && o.unitActive && !o.placedOut && o.unitOrder <= openUpTo && unlockOf(o.id).unlocked)?.id ?? null;
 
   const recentPrimaries = input.recentLessons.filter((l) => l.status === "COMPLETED" || l.status === "IN_PROGRESS" || l.status === "PLANNED").map((l) => l.primaryObjectiveId);
   const recurringByObjective = new Map<string, EngineRecurringError[]>();
@@ -114,7 +127,16 @@ export function selectNextObjective(input: EngineInput, policy: EnginePolicy): E
       rejected.push({ objective_code: o.code, reason: "INACTIVE" });
       continue;
     }
-    const unlock = evaluateUnlock(o.id, input.edges, lineageOf, statusByLineage);
+    if (o.placedOut) {
+      rejected.push({ objective_code: o.code, reason: "PLACED_OUT" });
+      continue;
+    }
+    // Later units stay closed, also for objectives a level check only touched.
+    if (o.unitOrder > openUpTo && policy.unitGateStatus && rank(o.status) < rank(policy.unitGateStatus)) {
+      rejected.push({ objective_code: o.code, reason: "UNIT_NOT_OPEN" });
+      continue;
+    }
+    const unlock = unlockOf(o.id);
     if (!unlock.unlocked) {
       rejected.push({ objective_code: o.code, reason: "LOCKED", blocking: unlock.hardBlockers.map((b) => byId.get(b.prerequisiteObjectiveId)?.code ?? b.prerequisiteObjectiveId) });
       for (const b of unlock.hardBlockers) {

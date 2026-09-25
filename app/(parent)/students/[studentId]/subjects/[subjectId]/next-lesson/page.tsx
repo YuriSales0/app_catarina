@@ -9,16 +9,19 @@ import { PlanRationale } from "@/components/parent/plan-rationale";
 import { roleAllows } from "@/lib/authorization/permissions";
 import { ACTIVITY, PLAN_OUTCOME, TONE } from "@/lib/copy/pt";
 import { startTodayAction } from "@/app/(parent)/lessons/today-actions";
+import { getStartingPoint } from "@/lib/lessons/starting-point";
+import { StartingPointPanel } from "@/components/parent/starting-point";
+import { describeLevel } from "@/lib/curriculum/levels";
 
 export const metadata = { title: "Próxima aula" };
 
 export default async function NextLessonPage(props: { params: Promise<{ studentId: string; subjectId: string }> }) {
   const { studentId, subjectId } = await props.params;
   const actor = await requireActor();
-  const { access, student, enrolment, plan } = await or404(async () => {
+  const { access, student, enrolment, plan, placement } = await or404(async () => {
     const access = await requireStudentAccess(actor, studentId, "VIEW");
-    const [student, enrolment, plan] = await Promise.all([getStudent(access), getEnrolment(access, subjectId), getNextLessonPlan(access, subjectId)]);
-    return { access, student, enrolment, plan };
+    const [student, enrolment, plan, placement] = await Promise.all([getStudent(access), getEnrolment(access, subjectId), getNextLessonPlan(access, subjectId), getStartingPoint(access, subjectId)]);
+    return { access, student, enrolment, plan, placement };
   });
   const canRun = roleAllows(access.role, "RUN_LESSON");
   const totalMinutes = plan.activities.reduce((a, b) => a + b.planned_minutes, 0);
@@ -48,7 +51,15 @@ export default async function NextLessonPage(props: { params: Promise<{ studentI
       />
       {plan.outcome === "PLANNED" && plan.primary_objective ? (
         <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
-          <Section title={`Roteiro · ${totalMinutes} min`} aside={<StatusBadge status={plan.primary_objective.status} />}>
+          <Section title={plan.placement_test ? `Teste de nível · ${totalMinutes} min` : `Roteiro · ${totalMinutes} min`} aside={<StatusBadge status={plan.primary_objective.status} />}>
+            {placement?.status === "RESULT_READY" ? (
+              <StartingPointPanel studentId={student.id} subjectId={subjectId} placement={placement} levelKey={enrolment.curriculumName ? describeLevel(enrolment.curriculumName).key : null} canEdit={roleAllows(access.role, "MANAGE_ENROLMENT")} back={`/students/${student.id}/subjects/${subjectId}/next-lesson`} />
+            ) : null}
+            {plan.placement_test ? (
+              <p className="rounded-2xl bg-sky px-4 py-3 text-sm text-sky-ink">
+                <strong>Teste de nível.</strong> Perguntas rápidas de {plan.placement_test.units.length} módulos, do mais fácil ao mais difícil, sem ensinar e sem nota. No fim, o app sugere por onde começar e você confirma.
+              </p>
+            ) : null}
             {plan.opening ? (
               <p className="rounded-2xl bg-peach px-4 py-3 text-sm text-peach-ink">
                 <strong>{plan.opening.kind === "COURSE_START" ? "Aula inaugural." : `Abertura do módulo "${plan.opening.unit_name}".`}</strong> Começa explicando como as aulas funcionam e os objetivos do módulo, com um diagnóstico rápido. Se o nível parecer errado, o relatório avisa.

@@ -7,6 +7,8 @@ const REJECTED: Record<string, string> = {
   LOCKED: "bloqueado por pré-requisito",
   RECENTLY_TAUGHT: "ensinado há pouco",
   LOWER_PRIORITY: "prioridade menor",
+  PLACED_OUT: "antes do ponto de partida",
+  UNIT_NOT_OPEN: "módulo ainda não aberto",
   MASTERED: "já dominado",
   INACTIVE: "inativo",
 };
@@ -92,5 +94,7 @@ function describe(reason: NextLessonPlan["rationale"]["selected_because"][number
       return `Já consegue desde ${date(reason.proficient_since)}. Acertar agora mostra que ficou na memória e conta para "dominou".`;
     case "RECURRING_ERROR":
       return `Um mesmo erro ("${reason.error_tag}") apareceu ${reason.occurrences} vezes em ${reason.lesson_ids.length} aulas.`;
+    case "PLACEMENT_TEST":
+      return `A família contou que a criança já teve contato com inglês: antes de ensinar, um teste rápido passa por ${reason.units} módulos para sugerir por onde começar.`;
   }
 }

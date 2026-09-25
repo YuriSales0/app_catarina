@@ -143,6 +143,8 @@ export async function buildLessonContext(
   const notes = primary.objective.teachingNotes as Partial<Record<"vocabulary" | "structures" | "example_prompts" | "activity_ideas" | "success_criteria", string[]>>;
   const age = ageYears(student.dateOfBirth, now);
   const enrolment = progress.enrolment;
+  // Enrolments made before the level cards carried no target language: the curriculum's own applies.
+  const targetLanguage = enrolment.targetLanguage ?? progress.version.targetLanguage ?? null;
   const instructions = (enrolment.metadata as { teacher_instructions?: { text?: string; authored_at?: string } }).teacher_instructions;
   const vocabulary = progress.version.errorTagVocabulary;
   const unitPosition = progress.units.filter((u) => u.parentUnitId === null).findIndex((u) => u.id === (primary.unit.parentUnitId ?? primary.unit.id)) + 1;
@@ -158,7 +160,7 @@ export async function buildLessonContext(
       display_name: student.name,
       age_years: age,
       instruction_language: enrolment.instructionLanguage,
-      target_language: enrolment.targetLanguage,
+      target_language: targetLanguage,
       timezone: student.timezone,
     },
     subject: { name: progress.subject.name, slug: progress.subject.slug },
@@ -227,7 +229,7 @@ export async function buildLessonContext(
     pedagogical_constraints: {
       age_appropriate_for_years: age,
       instruction_language: enrolment.instructionLanguage,
-      target_language: enrolment.targetLanguage,
+      target_language: targetLanguage,
       max_new_vocabulary_items: age !== null && age <= 7 ? 6 : 8,
       avoid_topics: [],
       reading_level: age === null ? null : age <= 6 ? "PRE_READER" : age <= 8 ? "EARLY_READER" : "FLUENT",
