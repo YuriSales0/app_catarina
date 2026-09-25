@@ -34,6 +34,7 @@ export async function startingPointAction(formData: FormData): Promise<void> {
     back: formData.get("back") ?? undefined,
   });
   const access = await requireStudentAccess(actor, v.studentId, "MANAGE_ENROLMENT");
+  let switched = false;
   if (v.track !== "keep") {
     const enrolment = await getEnrolment(access, v.subjectId);
     const target = (await listPublishedVersionsForSubject(actor, v.subjectId)).find((x) => !x.isDemo && describeLevel(x.curriculumName).key === (v.track as LevelInfo["key"]));
@@ -46,9 +47,10 @@ export async function startingPointAction(formData: FormData): Promise<void> {
         targetLevel: describeLevel(target.curriculumName).cefr ?? undefined,
         plannedLessonMinutes: enrolment.plannedLessonMinutes,
       });
+      switched = true;
     }
   }
-  await setStartingPoint(access, v.subjectId, v.choice);
+  await setStartingPoint(access, v.subjectId, v.choice, undefined, { curriculumVersionChanged: switched });
   revalidatePath(`/students/${v.studentId}`);
   redirect(v.back ?? `/students/${v.studentId}/subjects/${v.subjectId}/next-lesson`);
 }

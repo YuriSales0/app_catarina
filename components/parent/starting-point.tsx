@@ -1,5 +1,6 @@
 import type { Placement } from "@/lib/learning/placement";
 import { startingPointAction } from "@/app/(parent)/students/starting-point-actions";
+import { startTodayAction } from "@/app/(parent)/lessons/today-actions";
 
 /**
  * Where a child starts in a track, and the family's controls over it: start
@@ -68,6 +69,20 @@ export function StartingPointPanel({
             </li>
           ))}
         </ul>
+      ) : null}
+      {placement?.status === "PENDING_TEST" && canEdit ? (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {(["chatgpt", "play"] as const).map((surface) => (
+            <form key={surface} action={startTodayAction}>
+              <input type="hidden" name="studentId" value={studentId} />
+              <input type="hidden" name="subjectId" value={subjectId} />
+              <input type="hidden" name="surface" value={surface} />
+              <button type="submit" className={`btn btn-sm ${surface === "chatgpt" ? "btn-primary" : "btn-soft"}`}>
+                {surface === "chatgpt" ? "💬 Fazer o teste no ChatGPT" : "🦉 Fazer o teste com o Lumi"}
+              </button>
+            </form>
+          ))}
+        </div>
       ) : null}
       {canEdit ? (
         <div className="mt-3 flex flex-wrap gap-2">

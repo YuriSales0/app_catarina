@@ -21,10 +21,15 @@ test("a child with some English takes a level check first, and the family confir
   await page.goto("/students");
   await page.getByRole("link", { name: /Nina/ }).click();
   await expect(page.getByText(/A próxima aula é um teste rápido de nível/)).toBeVisible();
-  await page.getByRole("link", { name: /English/ }).click();
-  await page.getByRole("link", { name: "Próxima aula" }).click();
-  await expect(page.getByText(/Teste de nível\./)).toBeVisible();
-  await page.getByRole("button", { name: "Fazer no ChatGPT" }).click();
+  await expect(page.getByRole("button", { name: /Fazer o teste com o Lumi/ })).toBeVisible();
+  // The dashboard offers the same, and says it is a level check.
+  await page.goto("/dashboard");
+  await expect(page.getByText("Teste de nível", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: /No ChatGPT/ })).toBeVisible();
+  await page.goto("/students");
+  await page.getByRole("link", { name: /Nina/ }).click();
+  await page.getByRole("button", { name: /Fazer o teste no ChatGPT/ }).click();
+  await expect(page).toHaveURL(/\/chatgpt$/);
   const script = await page.getByLabel("Roteiro da aula").inputValue();
   expect(script).toContain("teste rápido de nível");
   const request = await page.getByLabel("Pedido de fechamento").inputValue();

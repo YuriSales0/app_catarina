@@ -128,6 +128,7 @@ export const REASON: Record<string, string> = {
   RETENTION_CHECK: "Conferir se ficou na memória",
   RECURRING_ERROR: "Reforçar um ponto que se repete",
   MANUAL_SELECTION: "Escolhido por você",
+  PLACEMENT_TEST: "Teste de nível antes de começar",
 };
 
 export const PLAN_OUTCOME: Record<string, { title: string; text: string }> = {

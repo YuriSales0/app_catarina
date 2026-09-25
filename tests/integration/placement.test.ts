@@ -95,4 +95,13 @@ describe("starting point and level check", () => {
     expect((await getLesson(access, planned.id, db)).lesson.status).toBe("CANCELLED");
     expect((await getNextLessonPlan(access, englishId, {}, db)).primary_objective?.code).toBe("EN.S1.GREET");
   });
+
+  it("asking for the level check again does not cancel one under way", async () => {
+    await setStartingPoint(access, englishId, "TEST", db);
+    const plan = await getNextLessonPlan(access, englishId, {}, db);
+    const lesson = await createLessonFromPlan(access, plan, {}, db);
+    await startLesson(access, lesson.id, db);
+    await setStartingPoint(access, englishId, "TEST", db);
+    expect((await getLesson(access, lesson.id, db)).lesson.status).toBe("IN_PROGRESS");
+  });
 });

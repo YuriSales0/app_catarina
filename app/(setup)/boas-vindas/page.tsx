@@ -198,7 +198,17 @@ async function ChildSteps({ step, childId }: { step: number; childId: string }) 
               <input type="hidden" name="subjectId" value={enrolment.subjectId} />
               <input type="hidden" name="surface" value="play" />
               <button type="submit" className="kid-btn bg-primary text-primary-foreground shadow-lift hover:bg-primary-strong">
-                Começar a primeira aula
+                {placement?.status === "PENDING_TEST" ? "Fazer o teste com o Lumi" : "Começar a primeira aula"}
+              </button>
+            </form>
+          ) : null}
+          {enrolment ? (
+            <form action={startTodayAction}>
+              <input type="hidden" name="studentId" value={student.id} />
+              <input type="hidden" name="subjectId" value={enrolment.subjectId} />
+              <input type="hidden" name="surface" value="chatgpt" />
+              <button type="submit" className="btn btn-soft btn-lg">
+                💬 {placement?.status === "PENDING_TEST" ? "Fazer o teste no ChatGPT" : "Fazer no ChatGPT"}
               </button>
             </form>
           ) : (

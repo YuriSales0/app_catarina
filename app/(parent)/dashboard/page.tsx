@@ -157,7 +157,7 @@ function WeekStrip({ st }: { st: StudentCard }) {
 }
 
 function TodayPanel({ st, sub, canRun, showSubject }: { st: StudentCard; sub: SubjectCard; canRun: boolean; showSubject: boolean }) {
-  const hidden = (surface: "play" | "lesson") => (
+  const hidden = (surface: "play" | "lesson" | "chatgpt") => (
     <>
       <input type="hidden" name="studentId" value={st.id} />
       <input type="hidden" name="subjectId" value={sub.subjectId} />
@@ -185,7 +185,7 @@ function TodayPanel({ st, sub, canRun, showSubject }: { st: StudentCard; sub: Su
         </p>
       ) : sub.inProgressLessonId || planned ? (
         <>
-          <p className="mt-1 font-display text-xl font-semibold">{sub.next?.primaryTitle ?? "Continuar de onde parou"}</p>
+          <p className="mt-1 font-display text-xl font-semibold">{sub.next?.reasons[0] === "PLACEMENT_TEST" ? "Teste de nível" : (sub.next?.primaryTitle ?? "Continuar de onde parou")}</p>
           {sub.next?.reasons[0] && !sub.inProgressLessonId ? (
             <p className="text-sm text-muted">
               {REASON[sub.next.reasons[0]] ?? "Escolhido pelo planejador"} ·{" "}
@@ -200,6 +200,12 @@ function TodayPanel({ st, sub, canRun, showSubject }: { st: StudentCard; sub: Su
                 {hidden("play")}
                 <button type="submit" className="btn btn-primary">
                   {sub.inProgressLessonId ? "Continuar com a criança" : "Começar aula"} →
+                </button>
+              </form>
+              <form action={startTodayAction}>
+                {hidden("chatgpt")}
+                <button type="submit" className="btn btn-soft">
+                  💬 No ChatGPT
                 </button>
               </form>
               <form action={startTodayAction}>

@@ -95,6 +95,9 @@ export default async function StudentSubjectPage(props: { params: Promise<{ stud
                       <Link href={`/play/${inProgress.id}`} className="btn btn-primary btn-sm">
                         Com a criança
                       </Link>
+                      <Link href={`/lessons/${inProgress.id}/chatgpt`} className="btn btn-soft btn-sm">
+                        💬 No ChatGPT
+                      </Link>
                       <Link href={`/lessons/${inProgress.id}`} className="btn btn-secondary btn-sm">
                         Visão do adulto
                       </Link>
@@ -104,14 +107,18 @@ export default async function StudentSubjectPage(props: { params: Promise<{ stud
                   <>
                     <p className="eyebrow text-primary-strong">Aula de hoje</p>
                     <p className="text-sm text-muted">O planejador escolhe o próximo passo.</p>
-                    <form action={startTodayAction} className="mt-3">
-                      <input type="hidden" name="studentId" value={student.id} />
-                      <input type="hidden" name="subjectId" value={subjectId} />
-                      <input type="hidden" name="surface" value="play" />
-                      <button type="submit" className="btn btn-primary btn-sm">
-                        Começar aula →
-                      </button>
-                    </form>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {(["play", "chatgpt"] as const).map((surface) => (
+                        <form key={surface} action={startTodayAction}>
+                          <input type="hidden" name="studentId" value={student.id} />
+                          <input type="hidden" name="subjectId" value={subjectId} />
+                          <input type="hidden" name="surface" value={surface} />
+                          <button type="submit" className={`btn btn-sm ${surface === "play" ? "btn-primary" : "btn-soft"}`}>
+                            {surface === "play" ? "Começar aula →" : "💬 No ChatGPT"}
+                          </button>
+                        </form>
+                      ))}
+                    </div>
                   </>
                 ) : null}
               </div>

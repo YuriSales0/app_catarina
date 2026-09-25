@@ -19,13 +19,18 @@ import { cancelLesson } from "./service";
  */
 export type StartingChoice = "BEGINNER" | "TEST" | "CHOSEN" | "CONFIRM_SUGGESTED";
 
-export async function setStartingPoint(access: StudentAccess, subjectId: string, choice: StartingChoice, dbh: DbOrTx = db()): Promise<Placement> {
+export async function setStartingPoint(access: StudentAccess, subjectId: string, choice: StartingChoice, dbh: DbOrTx = db(), options: { curriculumVersionChanged?: boolean } = {}): Promise<Placement> {
   if (!roleAllows(access.role, "MANAGE_ENROLMENT")) throw new NotFoundError();
   return dbh.transaction(async (tx) => {
     const enrolment = await tx.query.studentSubjects.findFirst({ where: and(eq(s.studentSubjects.studentId, access.studentId), eq(s.studentSubjects.subjectId, subjectId)) });
     if (!enrolment) throw new NotFoundError();
     const now = new Date();
     const current = placementOf(enrolment.metadata);
+    // The same choice again changes nothing and cancels nothing: a second click must not throw away a level check under way.
+    const sameVersion = options.curriculumVersionChanged !== true;
+    if (sameVersion && current && ((choice === "TEST" && current.status === "PENDING_TEST") || (choice !== "TEST" && choice !== "CONFIRM_SUGGESTED" && current.method === choice && current.status === "SET" && !current.start_unit_key))) {
+      return current;
+    }
     let placement: Placement;
     if (choice === "CONFIRM_SUGGESTED") {
       if (current?.status !== "RESULT_READY" || !current.result) throw new ValidationError("Não há resultado de teste de nível para confirmar.");
