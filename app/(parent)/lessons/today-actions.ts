@@ -18,12 +18,16 @@ export async function startTodayAction(formData: FormData): Promise<void> {
   const subjectId = z.string().uuid().parse(formData.get("subjectId"));
   const surface = z.enum(["play", "lesson", "chatgpt"]).catch("play").parse(formData.get("surface"));
   const access = await requireStudentAccess(actor, studentId, "RUN_LESSON");
-  const open = (await listLessons(access, subjectId, 10)).find((l) => l.status === "IN_PROGRESS" || l.status === "PLANNED");
+  const recent = await listLessons(access, subjectId, 10);
+  const open = recent.find((l) => l.status === "IN_PROGRESS" || l.status === "PLANNED");
   let lessonId = open?.id;
   if (!lessonId) {
     const plan = await getNextLessonPlan(access, subjectId);
     if (plan.outcome !== "PLANNED") redirect(`/students/${studentId}/subjects/${subjectId}/next-lesson`);
-    const lesson = await createLessonFromPlan(access, plan, { idempotencyKey: `engine:${plan.curriculum_version_id}:${plan.primary_objective!.id}:${plan.generated_at.slice(0, 13)}` });
+    // A double click makes one lesson; once that lesson is cancelled or completed, the key moves on with the lesson count.
+    const latest = recent.reduce((n, l) => Math.max(n, l.lessonNumber), 0);
+    const kind = plan.placement_test ? "level-check" : "lesson";
+    const lesson = await createLessonFromPlan(access, plan, { idempotencyKey: `engine:${plan.curriculum_version_id}:${plan.primary_objective!.id}:${kind}:after-${latest}` });
     lessonId = lesson.id;
   }
   redirect(surface === "play" ? `/play/${lessonId}` : surface === "chatgpt" ? `/lessons/${lessonId}/chatgpt` : `/lessons/${lessonId}`);

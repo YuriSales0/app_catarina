@@ -100,7 +100,9 @@ export async function createLessonFromPlan(access: StudentAccess, plan: NextLess
   return dbh.transaction(async (tx) => {
     if (opts.idempotencyKey) {
       const existing = await tx.query.lessons.findFirst({ where: and(eq(s.lessons.studentId, access.studentId), eq(s.lessons.idempotencyKey, opts.idempotencyKey)) });
-      if (existing) return existing;
+      // A repeated request gets the same lesson, unless that lesson was cancelled: then it is a new request.
+      if (existing && existing.status !== "CANCELLED") return existing;
+      if (existing) opts = { ...opts, idempotencyKey: undefined };
     }
     await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${access.studentId + ":" + validated.subject_id}))`);
     const [{ next }] = await tx

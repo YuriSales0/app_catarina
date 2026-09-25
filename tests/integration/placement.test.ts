@@ -6,7 +6,7 @@ import { seedDemo } from "@/scripts/seed-demo";
 import { requireStudentAccess, type StudentAccess } from "@/lib/authorization/access";
 import { createStudent, enrolStudentInSubject } from "@/lib/students/service";
 import { createStudentSchema } from "@/schemas/students";
-import { createLessonFromPlan, startLesson, recordEvidence, completeLesson, getLesson } from "@/lib/lessons/service";
+import { createLessonFromPlan, startLesson, recordEvidence, completeLesson, getLesson, cancelLesson } from "@/lib/lessons/service";
 import { getNextLessonPlan } from "@/lib/learning/next-lesson";
 import { setStartingPoint, getStartingPoint } from "@/lib/lessons/starting-point";
 import { buildExternalLesson } from "@/lib/lessons/external";
@@ -103,5 +103,15 @@ describe("starting point and level check", () => {
     await startLesson(access, lesson.id, db);
     await setStartingPoint(access, englishId, "TEST", db);
     expect((await getLesson(access, lesson.id, db)).lesson.status).toBe("IN_PROGRESS");
+  });
+
+  it("a cancelled lesson is never handed back for a new request with the same key", async () => {
+    const plan = await getNextLessonPlan(access, englishId, {}, db);
+    const first = await createLessonFromPlan(access, plan, { idempotencyKey: "same-key" }, db);
+    expect((await createLessonFromPlan(access, plan, { idempotencyKey: "same-key" }, db)).id).toBe(first.id);
+    await cancelLesson(access, first.id, db);
+    const second = await createLessonFromPlan(access, plan, { idempotencyKey: "same-key" }, db);
+    expect(second.id).not.toBe(first.id);
+    expect(second.status).toBe("PLANNED");
   });
 });
