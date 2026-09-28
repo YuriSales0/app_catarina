@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { acceptedAlternatives, isNonAttempt, matchAnswer, normalizeAnswer } from "@/lib/assessment/answer-match";
+import { acceptedAlternatives, isNonAttempt, matchAnswer, normalizeAnswer, portugueseShare } from "@/lib/assessment/answer-match";
+import { gradeExternalAttempt } from "@/lib/lessons/external";
 
 describe("matchAnswer", () => {
   it("matches exactly after normalisation, including number words and digits", () => {
@@ -62,5 +63,17 @@ describe("matchAnswer", () => {
     expect(isNonAttempt("")).toBe(false);
     expect(isNonAttempt("não sei, blue?")).toBe(false);
     expect(matchAnswer("hum... blue", ["blue"]).result).toBe("CORRECT");
+  });
+  it("ChatGPT's judgement is the base; the system only raises it, except for an English answer given only in Portuguese", () => {
+    expect(gradeExternalAttempt("CORRECT", "Helo!", "hello").result).toBe("CORRECT");
+    expect(gradeExternalAttempt("INCORRECT", "Pode falar hello de volta", "hello").result).toBe("CORRECT");
+    expect(gradeExternalAttempt("INCORRECT", "Hum.", "yellow").result).toBe("NOT_ASSESSED");
+    expect(portugueseShare("Marrom.")).toBe(1);
+    expect(portugueseShare("It's brown")).toBe(0);
+    expect(gradeExternalAttempt("CORRECT", "Marrom.", "brown")).toMatchObject({ result: "PARTIALLY_CORRECT", reason: "external_judgement:CORRECT,portuguese_only" });
+    expect(gradeExternalAttempt("CORRECT", "Verde na tela. É como um mercadinho.", "green").result).toBe("PARTIALLY_CORRECT");
+    // Portuguese expected (a translation question) or English words in the answer: ChatGPT decides.
+    expect(gradeExternalAttempt("CORRECT", "Verde, mais uma que é bem parecida é o cinza, que é gray", "Verde").result).toBe("CORRECT");
+    expect(gradeExternalAttempt("CORRECT", "Where were you yesterday", "I was at the park.").result).toBe("CORRECT");
   });
 });

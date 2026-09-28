@@ -67,6 +67,12 @@ export function normalizeAnswer(text: string): string[] {
   return tokens(text).map((t) => t.w);
 }
 
+/** Share of the words (hesitations aside) that are Portuguese: 0 for an English answer, 1 for "Marrom.". */
+export function portugueseShare(text: string): number {
+  const words = tokens(text).filter((t) => !FILLER.test(t.w));
+  return words.length ? words.filter((t) => t.pt).length / words.length : 0;
+}
+
 /** "não sei", "hum", "I don't know": the child did not try, so there is nothing to grade. */
 export function isNonAttempt(response: string): boolean {
   const words = normalizeAnswer(response);

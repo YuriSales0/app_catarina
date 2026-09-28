@@ -183,7 +183,15 @@ below runs in CI (`.github/workflows/ci.yml`) against Postgres 16.
       This applies to typed, live voice and ChatGPT answers.
     - For a ChatGPT closing, ChatGPT's judgement is the base (still LOW
       confidence); the system check can only raise it, never lower it. The
-      grader reference keeps both judgements.
+      grader reference keeps both judgements. One exception holds ChatGPT to
+      its own rule: an English answer given only in Portuguese ("Marrom."
+      for brown) is partial, never correct.
+    - `applyGradingFixes` (`lib/lessons/regrade.ts`) applies a reviewed
+      batch of regrades as CORRECTION rows that keep the original grader and
+      confidence, audits each one as SYSTEM and recomputes state. It is
+      idempotent. The regrade of the 29 past ChatGPT attempts was reviewed
+      with the family but is not applied yet: writing to production needs
+      the owner's go-ahead.
     - The closing template no longer carries a pre-filled duration (20 was
       copied back every time). The duration is recorded only when ChatGPT
       reports it, never computed from the paste time.

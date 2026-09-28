@@ -3,7 +3,7 @@ import type { DbOrTx } from "@/lib/db/create-db";
 import type { StudentAccess } from "@/lib/authorization/access";
 import { ConflictError, ValidationError } from "@/lib/authorization/errors";
 import { buildLessonContext } from "@/lib/context/build";
-import { matchAnswer, isNonAttempt, ANSWER_MATCH_POLICY } from "@/lib/assessment/answer-match";
+import { matchAnswer, isNonAttempt, portugueseShare, ANSWER_MATCH_POLICY } from "@/lib/assessment/answer-match";
 import { ACTIVITY } from "@/lib/copy/pt";
 import { externalClosingSchema, extractClosingJson, type ExternalClosing } from "@/schemas/external-closing";
 import { renderExternalLessonPrompt, renderExternalClosingRequest, renderExternalPlacementPrompt, materialFor, EXTERNAL_PROMPT_VERSION } from "./external-prompt";
@@ -115,13 +115,18 @@ const RESULT_RANK: Record<EvidenceResult, number> = { NOT_ASSESSED: -1, INCORREC
  * Grades one attempt reported by ChatGPT. ChatGPT heard the child, so its
  * judgement is the base; the system's answer check can only confirm or raise
  * it (a transcript written from memory is too loose to mark an answer down).
- * "não sei" or "hum" is no attempt, whatever the judgement.
+ * "não sei" or "hum" is no attempt, whatever the judgement. One exception
+ * holds ChatGPT to its own rule: an English answer given only in Portuguese
+ * ("Marrom." for brown) is partial, never correct.
  */
 export function gradeExternalAttempt(judgement: EvidenceResult, said: string | null, expected: string | null) {
   const base = { policy: ANSWER_MATCH_POLICY.version, reason: `external_judgement:${judgement}` };
   if (said && isNonAttempt(said)) return { ...base, result: "NOT_ASSESSED" as const, method: "no_attempt", reason: `${base.reason},no_attempt` };
   const m = said && expected ? matchAnswer(said, [expected]) : null;
   if (m && RESULT_RANK[m.result] > RESULT_RANK[judgement]) return { ...base, result: m.result, method: `${m.method}_match`, reason: `${base.reason},raised_by_system` };
+  if (m && m.result === "INCORRECT" && judgement === "CORRECT" && portugueseShare(expected!) === 0 && portugueseShare(said!) >= 0.5) {
+    return { ...base, result: "PARTIALLY_CORRECT" as const, method: "external_judgement", reason: `${base.reason},portuguese_only` };
+  }
   return { ...base, result: judgement, method: "external_judgement", reason: m ? `${base.reason},system:${m.result}` : base.reason };
 }
 
