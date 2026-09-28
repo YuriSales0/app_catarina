@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { matchAnswer, normalizeAnswer } from "@/lib/assessment/answer-match";
+import { acceptedAlternatives, isNonAttempt, matchAnswer, normalizeAnswer } from "@/lib/assessment/answer-match";
 
 describe("matchAnswer", () => {
   it("matches exactly after normalisation, including number words and digits", () => {
@@ -35,5 +35,32 @@ describe("matchAnswer", () => {
   it("keeps a negation when the accepted answer has one", () => {
     expect(matchAnswer("I don't have a dog", ["I don't have a dog"]).match).toBe(true);
     expect(matchAnswer("no I don't have a dog", ["I don't have a dog"]).match).toBe(true);
+  });
+  // Real answers from a lesson run in ChatGPT, which v2 graded as wrong.
+  it("accepts each alternative of an answer written with ou, or or a slash", () => {
+    expect(matchAnswer("Bye-bye", ["bye ou goodbye"]).result).toBe("CORRECT");
+    expect(matchAnswer("goodbye", ["bye or goodbye"]).result).toBe("CORRECT");
+    expect(matchAnswer("goodbye", ["bye / goodbye"]).result).toBe("CORRECT");
+    expect(acceptedAlternatives(["bye ou goodbye"])).toEqual(["bye ou goodbye", "bye", "goodbye"]);
+    // A whole sentence with "or" inside is one answer, not two.
+    expect(acceptedAlternatives(["Do you want tea or coffee"])).toEqual(["Do you want tea or coffee"]);
+    expect(matchAnswer("coffee", ["Do you want tea or coffee"]).result).toBe("INCORRECT");
+  });
+  it("accepts a right word inside a Portuguese sentence, but still refuses English hedging and negations", () => {
+    expect(matchAnswer("Pode falar hello de volta", ["hello"]).result).toBe("CORRECT");
+    expect(matchAnswer("Blue, mas também um pouco misturado com gray", ["blue"]).result).toBe("CORRECT");
+    expect(matchAnswer("acho que é blue", ["blue"]).result).toBe("CORRECT");
+    expect(matchAnswer("I think maybe it could be a cat", ["cat"]).match).toBe(false);
+    expect(matchAnswer("não é blue", ["blue"]).result).toBe("INCORRECT");
+    expect(matchAnswer("Marrom", ["brown"]).result).toBe("INCORRECT");
+  });
+  it("treats 'não sei', 'hum' and 'I don't know' as no attempt, not a wrong answer", () => {
+    for (const said of ["Hum", "hmmm", "Não sei", "não sei não", "sei lá", "hum... não lembro", "I don't know"]) {
+      expect(isNonAttempt(said)).toBe(true);
+      expect(matchAnswer(said, ["hello"])).toEqual({ match: false, method: "no_attempt", result: "NOT_ASSESSED" });
+    }
+    expect(isNonAttempt("")).toBe(false);
+    expect(isNonAttempt("não sei, blue?")).toBe(false);
+    expect(matchAnswer("hum... blue", ["blue"]).result).toBe("CORRECT");
   });
 });

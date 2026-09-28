@@ -31,6 +31,11 @@ export type EnginePolicy = {
    * objective of the earlier units has reached it. Unset (v1) means no gate.
    */
   unitGateStatus?: "INTRODUCED" | "PRACTISING" | "DEVELOPING";
+  /**
+   * Status an objective of a unit that is not open yet must already have to
+   * be taught (as review) before its unit opens. Unset means unitGateStatus.
+   */
+  unitSecureStatus?: "PRACTISING" | "DEVELOPING" | "PROFICIENT";
 };
 
 export const ENGINE_POLICY_V1: EnginePolicy = {
@@ -65,5 +70,14 @@ export const ENGINE_POLICY_V1: EnginePolicy = {
  */
 export const ENGINE_POLICY_V2: EnginePolicy = { ...ENGINE_POLICY_V1, version: "engine-policy.v2", unitGateStatus: "PRACTISING" };
 
-export const CURRENT_ENGINE_POLICY = ENGINE_POLICY_V2;
-export const ENGINE_VERSION = "engine.v2";
+/**
+ * v3: a level check that went well on a later unit (colours, animals) left
+ * those objectives DEVELOPING, above the v2 gate, so a beginner confirmed to
+ * start at unit 1 was taught unit 2 next. Units not open yet now stay closed
+ * for every objective that is not secure (PROFICIENT); only reviews reach
+ * them.
+ */
+export const ENGINE_POLICY_V3: EnginePolicy = { ...ENGINE_POLICY_V2, version: "engine-policy.v3", unitSecureStatus: "PROFICIENT" };
+
+export const CURRENT_ENGINE_POLICY = ENGINE_POLICY_V3;
+export const ENGINE_VERSION = "engine.v3";

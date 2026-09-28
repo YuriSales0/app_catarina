@@ -131,8 +131,8 @@ export function selectNextObjective(input: EngineInput, policy: EnginePolicy): E
       rejected.push({ objective_code: o.code, reason: "PLACED_OUT" });
       continue;
     }
-    // Later units stay closed, also for objectives a level check only touched.
-    if (o.unitOrder > openUpTo && policy.unitGateStatus && rank(o.status) < rank(policy.unitGateStatus)) {
+    // Later units stay closed for every objective not yet secure, also ones a level check touched.
+    if (o.unitOrder > openUpTo && policy.unitGateStatus && rank(o.status) < rank(policy.unitSecureStatus ?? policy.unitGateStatus)) {
       rejected.push({ objective_code: o.code, reason: "UNIT_NOT_OPEN" });
       continue;
     }

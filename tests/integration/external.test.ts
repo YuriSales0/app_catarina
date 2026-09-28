@@ -54,7 +54,7 @@ describe("lesson in an external ChatGPT", () => {
     expect(detail.evidence).toHaveLength(0);
   });
 
-  it("records each attempt as external AI grading with low confidence, re-checks keyed answers, and completes the lesson with the closing", async () => {
+  it("records each attempt with ChatGPT's judgement as the base (the system can only raise it) and completes the lesson with the closing", async () => {
     const plan = (await getLesson(access, lessonId, db)).activities;
     const first = plan.find((a) => a.objectiveId)!;
     const { recorded } = await recordExternalClosing(
@@ -67,20 +67,28 @@ describe("lesson in an external ChatGPT", () => {
             { prompt: "Say hello to the puppet", expected: "hello", child_said: "Helo!", result: "CORRECT" },
             { prompt: "The puppet is leaving. What do you say?", expected: null, child_said: "bye bye", result: "CORRECT" },
             { prompt: "Good afternoon?", expected: "good afternoon", child_said: "boa tarde", result: "PARTIALLY_CORRECT" },
+            // Real answers v2 marked down: a right word inside Portuguese, alternatives, a hesitation.
+            { prompt: "What does the puppet say back?", expected: "hello", child_said: "Pode falar hello de volta", result: "INCORRECT" },
+            { prompt: "How do we say tchau?", expected: "bye ou goodbye", child_said: "Bye-bye", result: "PARTIALLY_CORRECT" },
+            { prompt: "And good morning?", expected: "good morning", child_said: "Hum", result: "INCORRECT" },
           ],
         },
       ]),
       db,
     );
-    expect(recorded).toBe(3);
+    expect(recorded).toBe(6);
     const detail = await getLesson(access, lessonId, db);
     expect(detail.lesson.status).toBe("COMPLETED");
     expect(detail.lesson.actualDurationMinutes).toBe(17);
     const rows = detail.evidence;
     expect(rows.every((r) => r.gradedBy === "AI_PROVIDER" && r.confidence === "LOW")).toBe(true);
-    expect(rows.map((r) => r.result)).toEqual(["PARTIALLY_CORRECT", "CORRECT", "INCORRECT"]);
-    expect(rows[0].graderRef).toMatchObject({ provider: "chatgpt_external", input: "external_report", method: "near_match", reason: "external_judgement:CORRECT" });
-    expect(rows[1].graderRef).toMatchObject({ method: "external_judgement" });
+    expect(rows.map((r) => r.result)).toEqual(["CORRECT", "CORRECT", "PARTIALLY_CORRECT", "CORRECT", "CORRECT", "NOT_ASSESSED"]);
+    // A near miss in the transcript does not mark down what ChatGPT heard as right.
+    expect(rows[0].graderRef).toMatchObject({ provider: "chatgpt_external", input: "external_report", method: "external_judgement", policy: "answer-match.v3", reason: "external_judgement:CORRECT,system:PARTIALLY_CORRECT" });
+    expect(rows[1].graderRef).toMatchObject({ method: "external_judgement", reason: "external_judgement:CORRECT" });
+    expect(rows[2].graderRef).toMatchObject({ method: "external_judgement", reason: "external_judgement:PARTIALLY_CORRECT,system:INCORRECT" });
+    expect(rows[3].graderRef).toMatchObject({ method: "phrase_match", reason: "external_judgement:INCORRECT,raised_by_system" });
+    expect(rows[5].graderRef).toMatchObject({ method: "no_attempt", reason: "external_judgement:INCORRECT,no_attempt" });
     expect(detail.events.some((e) => e.eventType === "ACTIVITY_COMPLETED" && e.activityId === first.id && (e.payload as { surface?: string }).surface === "chatgpt")).toBe(true);
     expect(detail.events.some((e) => e.eventType === "AI_PROPOSAL_RECEIVED" && (e.payload as { kind?: string }).kind === "external_closing")).toBe(true);
     const report = lessonReportSchema.parse(detail.report!.payload);
@@ -93,6 +101,18 @@ describe("lesson in an external ChatGPT", () => {
 
   it("a second paste changes nothing", async () => {
     await expect(recordExternalClosing(access, lessonId, closingFor([]), db)).rejects.toBeInstanceOf(ConflictError);
-    expect((await getLesson(access, lessonId, db)).evidence).toHaveLength(3);
+    expect((await getLesson(access, lessonId, db)).evidence).toHaveLength(6);
+  });
+
+  it("records the duration only when ChatGPT reports it, never the time until the paste", async () => {
+    const other = await createManualLesson(access, { subjectId: (await getLesson(access, lessonId, db)).lesson.subjectId, primaryObjectiveId: (await getLesson(access, lessonId, db)).lesson.primaryObjectiveId!, reviewObjectiveIds: [] }, db);
+    const { closingRequest } = await buildExternalLesson(access, other.id, db);
+    expect(closingRequest).toContain('"minutes": null');
+    expect(closingRequest).not.toContain('"minutes": 20');
+    const closing = "```json\n" + JSON.stringify({ format: "learning-os-closing.v1", lesson_code: lessonCode(other.id), minutes: null, activities: [], summary: "Conversamos um pouco." }) + "\n```";
+    await recordExternalClosing(access, other.id, closing, db);
+    const detail = await getLesson(access, other.id, db);
+    expect(detail.lesson.status).toBe("COMPLETED");
+    expect(detail.lesson.actualDurationMinutes).toBeNull();
   });
 });

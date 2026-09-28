@@ -351,7 +351,12 @@ export async function correctEvidence(access: StudentAccess, input: CorrectEvide
   });
 }
 
-export async function completeLesson(access: StudentAccess, input: CompleteLessonInput, dbh: DbOrTx = db()) {
+/**
+ * `durationFromClock: false` is for a lesson run outside the app (ChatGPT):
+ * the time between start and completion here is only when the closing was
+ * pasted, so the duration is recorded only when reported.
+ */
+export async function completeLesson(access: StudentAccess, input: CompleteLessonInput & { durationFromClock?: boolean }, dbh: DbOrTx = db()) {
   requireCapability(access, "RUN_LESSON");
   return dbh.transaction(async (tx) => {
     const lesson = await loadOwnedLesson(tx, access, input.lessonId, true);
@@ -362,7 +367,7 @@ export async function completeLesson(access: StudentAccess, input: CompleteLesso
     if (lesson.status !== "IN_PROGRESS") throw new ConflictError("Only a lesson in progress can be completed.");
     if (input.teacherNote) await appendEvent(tx, access, lesson.id, "TEACHER_NOTE", { text: input.teacherNote, by_user_id: access.userId });
     const completedAt = new Date();
-    const actual = input.actualDurationMinutes ?? (lesson.startedAt ? Math.max(1, Math.round((completedAt.getTime() - lesson.startedAt.getTime()) / 60_000)) : null);
+    const actual = input.actualDurationMinutes ?? (input.durationFromClock !== false && lesson.startedAt ? Math.max(1, Math.round((completedAt.getTime() - lesson.startedAt.getTime()) / 60_000)) : null);
     const [updated] = await tx
       .update(s.lessons)
       .set({ status: "COMPLETED", completedAt, actualDurationMinutes: actual })

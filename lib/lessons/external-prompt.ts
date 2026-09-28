@@ -12,8 +12,12 @@ import type { LessonOverview } from "./voice";
  * per activity, and forbids ending before the last activity. The closing is
  * a separate request the parent sends after leaving voice mode, because a
  * voice conversation can only speak, never write a block of text.
+ *
+ * v3: the closing template no longer comes with the duration filled in (a
+ * placeholder of 20 minutes was copied back every time); ChatGPT reports it
+ * only when it knows it.
  */
-export const EXTERNAL_PROMPT_VERSION = "external-prompt.v2" as const;
+export const EXTERNAL_PROMPT_VERSION = "external-prompt.v3" as const;
 
 export type ExternalActivity = {
   sequence: number;
@@ -166,7 +170,7 @@ export function renderExternalClosingRequest(input: { childName: string; lessonC
   const template = {
     format: EXTERNAL_CLOSING_FORMAT,
     lesson_code: input.lessonCode,
-    minutes: 20,
+    minutes: null,
     activities: input.activities.map((a) => ({
       activity: a.sequence,
       attempts: [{ prompt: "o que você perguntou", expected: "a resposta esperada, ou null", child_said: "o que a criança disse", result: "CORRECT" }],
@@ -186,7 +190,7 @@ export function renderExternalClosingRequest(input: { childName: string; lessonC
     `- activities: uma entrada para cada atividade que realmente aconteceu, com o número dela (${input.activities.map((a) => `${a.sequence} = ${a.label}`).join("; ")}). Deixe de fora as que não aconteceram.`,
     "- attempts: cada pergunta que você fez e a PRIMEIRA resposta dela, na ordem. Não invente: se não lembrar exatamente o que ela disse, use child_said null e result NOT_ASSESSED.",
     "- result: CORRECT quando o sentido está certo e dá para reconhecer as palavras (mesmo com sotaque); PARTIALLY_CORRECT quando acertou parte, misturou línguas ou respondeu a ideia certa em português; INCORRECT quando o sentido está errado; NOT_ASSESSED quando não deu para ouvir ou não houve tentativa.",
-    "- minutes: quanto tempo a aula durou, aproximadamente.",
+    "- minutes: quanto tempo a aula durou, em minutos, se você souber pela conversa; senão deixe null. Não chute.",
     "- Nada de texto depois do bloco.",
   ].join("\n");
 }

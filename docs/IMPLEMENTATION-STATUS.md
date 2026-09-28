@@ -172,6 +172,26 @@ below runs in CI (`.github/workflows/ci.yml`) against Postgres 16.
     as the recording; the voice prompt carries a trimmed pack. In a
     simulation with a 4 s model, record_answer went from seconds to ~5 ms
     and next_activity to ~0.2 s.
+  - Grading from what children really say, after reviewing a real ChatGPT
+    lesson where the re-check marked down 29 of ~70 answers
+    (`answer-match.v3`, `external-prompt.v3`, `engine-policy.v3`):
+    - An accepted answer with alternatives ("bye ou goodbye", "bye /
+      goodbye") accepts each short alternative. Portuguese words around the
+      answer ("pode falar hello de volta") are not extra words; English ones
+      still are, so hedging stays refused. Portuguese negations refuse a
+      match. "não sei", "hum" or "I don't know" is NOT_ASSESSED, not wrong.
+      This applies to typed, live voice and ChatGPT answers.
+    - For a ChatGPT closing, ChatGPT's judgement is the base (still LOW
+      confidence); the system check can only raise it, never lower it. The
+      grader reference keeps both judgements.
+    - The closing template no longer carries a pre-filled duration (20 was
+      copied back every time). The duration is recorded only when ChatGPT
+      reports it, never computed from the paste time.
+    - Engine v3: units not open yet stay closed for every objective below
+      PROFICIENT, including ones a level check left DEVELOPING or
+      PRACTISING. Before this, a beginner confirmed to start at unit 1 was
+      sent to unit 2's colours. Secure objectives there are still reviewed
+      when due.
   - Enrolments made before the level cards carried no target language; the
     context pack now falls back to the curriculum's, which had made the AI
     produce Portuguese-only practice.

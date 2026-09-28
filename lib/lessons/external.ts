@@ -3,7 +3,7 @@ import type { DbOrTx } from "@/lib/db/create-db";
 import type { StudentAccess } from "@/lib/authorization/access";
 import { ConflictError, ValidationError } from "@/lib/authorization/errors";
 import { buildLessonContext } from "@/lib/context/build";
-import { matchAnswer, ANSWER_MATCH_POLICY } from "@/lib/assessment/answer-match";
+import { matchAnswer, isNonAttempt, ANSWER_MATCH_POLICY } from "@/lib/assessment/answer-match";
 import { ACTIVITY } from "@/lib/copy/pt";
 import { externalClosingSchema, extractClosingJson, type ExternalClosing } from "@/schemas/external-closing";
 import { renderExternalLessonPrompt, renderExternalClosingRequest, renderExternalPlacementPrompt, materialFor, EXTERNAL_PROMPT_VERSION } from "./external-prompt";
@@ -108,6 +108,23 @@ export function parseClosing(pasted: string): ExternalClosing {
   return parsed.data;
 }
 
+type EvidenceResult = "CORRECT" | "PARTIALLY_CORRECT" | "INCORRECT" | "NOT_ASSESSED";
+const RESULT_RANK: Record<EvidenceResult, number> = { NOT_ASSESSED: -1, INCORRECT: 0, PARTIALLY_CORRECT: 1, CORRECT: 2 };
+
+/**
+ * Grades one attempt reported by ChatGPT. ChatGPT heard the child, so its
+ * judgement is the base; the system's answer check can only confirm or raise
+ * it (a transcript written from memory is too loose to mark an answer down).
+ * "não sei" or "hum" is no attempt, whatever the judgement.
+ */
+export function gradeExternalAttempt(judgement: EvidenceResult, said: string | null, expected: string | null) {
+  const base = { policy: ANSWER_MATCH_POLICY.version, reason: `external_judgement:${judgement}` };
+  if (said && isNonAttempt(said)) return { ...base, result: "NOT_ASSESSED" as const, method: "no_attempt", reason: `${base.reason},no_attempt` };
+  const m = said && expected ? matchAnswer(said, [expected]) : null;
+  if (m && RESULT_RANK[m.result] > RESULT_RANK[judgement]) return { ...base, result: m.result, method: `${m.method}_match`, reason: `${base.reason},raised_by_system` };
+  return { ...base, result: judgement, method: "external_judgement", reason: m ? `${base.reason},system:${m.result}` : base.reason };
+}
+
 /**
  * Records a pasted closing: validates everything first, then starts the
  * lesson if needed, records each attempt, closes the reported activities and
@@ -136,7 +153,7 @@ export async function recordExternalClosing(access: StudentAccess, lessonId: str
       for (const at of reported.attempts) {
         const said = at.child_said?.trim() || null;
         const key = at.expected?.trim() || null;
-        const m = said && key ? matchAnswer(said, [key]) : null;
+        const graded = gradeExternalAttempt(at.result, said, key);
         await recordEvidence(
           access,
           {
@@ -146,14 +163,14 @@ export async function recordExternalClosing(access: StudentAccess, lessonId: str
             prompt: at.prompt,
             studentResponse: said ?? undefined,
             expectedResponse: key ?? undefined,
-            result: m ? m.result : at.result,
+            result: graded.result,
             evidenceType: activity.activityType === "ASSESSMENT" ? "ASSESSMENT" : "PRACTICE",
             confidence: "LOW",
             errorTags: [],
           },
           {
             gradedBy: "AI_PROVIDER",
-            graderRef: { provider: EXTERNAL_PROVIDER, promptVersion: EXTERNAL_PROMPT_VERSION, method: m ? `${m.method}_match` : "external_judgement", policy: m ? ANSWER_MATCH_POLICY.version : undefined, input: "external_report", reason: `external_judgement:${at.result}` },
+            graderRef: { provider: EXTERNAL_PROVIDER, promptVersion: EXTERNAL_PROMPT_VERSION, method: graded.method, policy: graded.policy, input: "external_report", reason: graded.reason },
           },
           dbh,
         );
@@ -165,7 +182,7 @@ export async function recordExternalClosing(access: StudentAccess, lessonId: str
     }
   }
   await recordLessonEvent(access, { lessonId, eventType: "AI_PROPOSAL_RECEIVED", payload: { kind: "external_closing", provider: EXTERNAL_PROVIDER, prompt_version: EXTERNAL_PROMPT_VERSION, proposal: closing } }, dbh);
-  const result = await completeLesson(access, { lessonId, teacherNote: formatClosingNote(closing), actualDurationMinutes: closing.minutes ?? undefined }, dbh);
+  const result = await completeLesson(access, { lessonId, teacherNote: formatClosingNote(closing), actualDurationMinutes: closing.minutes ?? undefined, durationFromClock: false }, dbh);
   metric("ai_proposal_received", { lessonId, kind: "external_closing", provider: EXTERNAL_PROVIDER });
   return { recorded, report: result.report };
 }

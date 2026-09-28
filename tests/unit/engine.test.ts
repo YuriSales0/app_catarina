@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { selectNextObjective, type EngineInput, type EngineObjective } from "@/lib/learning/engine";
-import { ENGINE_POLICY_V1, ENGINE_POLICY_V2 } from "@/lib/learning/engine-policy";
+import { ENGINE_POLICY_V1, ENGINE_POLICY_V2, ENGINE_POLICY_V3 } from "@/lib/learning/engine-policy";
 import type { PrerequisiteEdge } from "@/lib/learning/prerequisites";
 import type { ObjectiveStatus } from "@/lib/db/enums";
 import { OBJECTIVE_STATUSES } from "@/lib/db/enums";
@@ -172,6 +172,30 @@ describe("Next Lesson Engine", () => {
     // Once every objective of the unit is at least practised, the next unit opens.
     const later = [obj("A", 0, 1, "PRACTISING"), obj("B", 0, 2, "PRACTISING"), obj("C", 1, 1)];
     expect(selectNextObjective(base(later, [], { recentLessons: [{ id: "l2", primaryObjectiveId: idOf("A"), completedAt: NOW, status: "COMPLETED" }, { id: "l3", primaryObjectiveId: idOf("B"), completedAt: NOW, status: "COMPLETED" }] }), ENGINE_POLICY_V2).rejected.find((r) => r.objective_code === "C")).toBeUndefined();
+  });
+
+  it("v3 keeps later units closed for objectives a level check left below secure", () => {
+    // Catarina: confirmed to start at unit 1, where only the greeting is under way;
+    // the level check left colours (unit 2) DEVELOPING and family (unit 3) PRACTISING.
+    const objectives = [
+      obj("A", 0, 1, "PRACTISING"),
+      obj("B", 0, 2),
+      obj("C", 1, 1, "DEVELOPING"),
+      obj("D", 2, 1, "PRACTISING"),
+      obj("E", 3, 1, "PROFICIENT", { nextReviewAt: new Date(NOW.getTime() - DAY) }),
+    ];
+    const recentLessons = [{ id: "l1", primaryObjectiveId: idOf("A"), completedAt: NOW, status: "COMPLETED" }];
+    // v2 let the touched objective of unit 2 through.
+    expect(selectNextObjective(base(objectives.slice(0, 4), [], { recentLessons }), ENGINE_POLICY_V2).primary?.objective.code).toBe("C");
+    const v3 = selectNextObjective(base(objectives, [], { recentLessons }), ENGINE_POLICY_V3);
+    expect(["A", "B", "E"]).toContain(v3.primary?.objective.code);
+    expect(v3.rejected.find((r) => r.objective_code === "C")?.reason).toBe("UNIT_NOT_OPEN");
+    expect(v3.rejected.find((r) => r.objective_code === "D")?.reason).toBe("UNIT_NOT_OPEN");
+    // A secure objective of a later unit is still reviewed when due.
+    expect(v3.rejected.find((r) => r.objective_code === "E")).toBeUndefined();
+    // Without a review due, the next lesson is in unit 1.
+    const noReview = objectives.slice(0, 4);
+    expect(["A", "B"]).toContain(selectNextObjective(base(noReview, [], { recentLessons }), ENGINE_POLICY_V3).primary?.objective.code);
   });
 
   it("units placed out at enrolment are not taught and count as met prerequisites", () => {

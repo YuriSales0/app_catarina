@@ -57,7 +57,7 @@ describe("getNextLessonPlan", () => {
   it("a plan from the engine creates a lesson through the same store as a manual one", async () => {
     const plan = await getNextLessonPlan(access, mathsId, {}, db);
     const lesson = await createLessonFromPlan(access, plan, {}, db);
-    expect(lesson.planEngineVersion).toBe("engine.v2");
+    expect(lesson.planEngineVersion).toBe("engine.v3");
     expect(lesson.primaryObjectiveId).toBe(plan.primary_objective!.id);
     await startLesson(access, lesson.id, db);
     for (let i = 0; i < 3; i++) {
