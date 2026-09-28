@@ -7,7 +7,7 @@ import { resolveLessonStudent } from "@/lib/lessons/resolve";
 import { getAIProvider } from "@/lib/ai";
 import { VOICE_JUDGEMENTS } from "@/lib/ai/realtime";
 import { getAiQuality } from "@/lib/students/service";
-import { openVoiceSession, voiceBeginLesson, voiceRecordAnswer, voiceNextActivity, voiceFinish, type VoiceSessionTicket } from "@/lib/lessons/voice";
+import { openVoiceSession, voiceBeginLesson, voiceRecordAnswer, voiceNextActivity, voiceFinish, voicePrefetchNext, type VoiceSessionTicket } from "@/lib/lessons/voice";
 import { log } from "@/lib/logging/logger";
 
 /**
@@ -62,5 +62,16 @@ export async function voiceToolAction(lessonId: string, name: string, rawArgs: s
   } catch (err) {
     log.warn("voice.tool_failed", { lessonId, tool: name, error: (err as Error).message });
     return { error: "the system could not complete this step; carry on with the lesson" };
+  }
+}
+
+/** Prepares the next activity in the background while the child works on the current one. */
+export async function voicePrefetchAction(lessonId: string): Promise<{ prefetched: boolean }> {
+  try {
+    const { access, provider } = await context(lessonId);
+    return await voicePrefetchNext(access, provider, lessonId);
+  } catch (err) {
+    log.warn("voice.prefetch_failed", { lessonId, error: (err as Error).message });
+    return { prefetched: false };
   }
 }

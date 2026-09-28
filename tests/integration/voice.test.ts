@@ -7,7 +7,7 @@ import { seedDemo } from "@/scripts/seed-demo";
 import { requireStudentAccess, type StudentAccess } from "@/lib/authorization/access";
 import { createManualLesson, startLesson, getLesson } from "@/lib/lessons/service";
 import { setAiProcessingConsent } from "@/lib/students/service";
-import { voiceBrief, voiceBeginLesson, voiceRecordAnswer, voiceNextActivity, voiceFinish, lessonOverview } from "@/lib/lessons/voice";
+import { voiceBrief, voiceBeginLesson, voiceRecordAnswer, voiceNextActivity, voiceFinish, voicePrefetchNext, lessonOverview } from "@/lib/lessons/voice";
 import { getPlayState } from "@/lib/lessons/play";
 import { buildLessonContext } from "@/lib/context/build";
 import type { ContextPack } from "@/schemas/context-pack";
@@ -102,9 +102,19 @@ describe("live voice lesson tools", () => {
     expect(await voiceRecordAnswer(access, "standard", lessonId, { item_number: 9, child_said: "x", judgement: "CORRECT" }, db)).toMatchObject({ recorded: false, reason: "unknown_item" });
   });
 
+  it("the next activity is written ahead of time, once, so moving on does not wait for a model", async () => {
+    const early = new FakeAIProvider().on("generateLessonActivity", activityFor);
+    expect(await voicePrefetchNext(access, early, lessonId, db)).toEqual({ prefetched: true });
+    expect(early.calls).toHaveLength(1);
+    expect(await voicePrefetchNext(access, early, lessonId, db)).toEqual({ prefetched: false });
+    expect(early.calls).toHaveLength(1);
+  });
+
   it("next_activity closes the activity and briefs the next one; finish_lesson completes the lesson", async () => {
     const fake = new FakeAIProvider().on("generateLessonActivity", activityFor);
     const next = await voiceNextActivity(access, fake, lessonId, db);
+    // Prepared ahead of time: moving on did not call the model.
+    expect(fake.calls).toHaveLength(0);
     expect(next).toMatchObject({ lesson_complete: false, activity: { activity_number: 2 } });
     // A reconnect after this point resumes instead of opening again.
     const { pack } = await buildLessonContext(access, englishId, lessonId, {}, db);

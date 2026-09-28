@@ -17,7 +17,7 @@ import { VoiceLesson } from "@/components/student/voice-lesson";
 import { ReadAloud } from "@/components/student/read-aloud";
 import { voiceAvailable } from "@/lib/lessons/voice";
 import { playStartAction, playNextAction, playMarkAction, playFinishAction, playPrepareAction, playAnswerAction } from "./actions";
-import { startVoiceAction, voiceToolAction } from "./voice-actions";
+import { startVoiceAction, voiceToolAction, voicePrefetchAction } from "./voice-actions";
 import type { Opening } from "@/lib/lessons/opening";
 
 export const metadata = { title: "Aula" };
@@ -71,7 +71,7 @@ export default async function PlayPage(props: { params: Promise<{ lessonId: stri
             Adulto
           </Link>
         </div>
-        <VoiceLesson lessonId={lesson.id} childName={student.name} total={activities.length} completed={completedCount} start={startVoiceAction} runTool={voiceToolAction} screenModeHref={`/play/${lesson.id}?modo=tela`} />
+        <VoiceLesson lessonId={lesson.id} childName={student.name} total={activities.length} completed={completedCount} start={startVoiceAction} runTool={voiceToolAction} prefetch={voicePrefetchAction} screenModeHref={`/play/${lesson.id}?modo=tela`} />
         {lesson.status === "IN_PROGRESS" ? (
           <details className="mb-6 rounded-2xl bg-surface-2 px-4 py-3 text-sm">
             <summary className="cursor-pointer font-bold text-muted">Para o adulto</summary>

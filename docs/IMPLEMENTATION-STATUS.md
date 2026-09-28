@@ -162,6 +162,16 @@ below runs in CI (`.github/workflows/ci.yml`) against Postgres 16.
     units is being practised, so a beginner no longer jumps from the days of
     the week to the past tense. A level check does not count as a recent
     lesson, nor as the course's first lesson (the opening still comes).
+  - Live voice latency, after a real lesson where every answer was followed
+    by seconds of silence: record_answer is answered in the browser from the
+    activity brief it already holds, and the server records and grades the
+    attempt in the background, in order, with the transcript captured for
+    that answer; the next activity is written while the current one runs
+    (`voicePrefetchNext`), so next_activity answers at once; turn detection
+    moved from low to medium eagerness; Lumi gives feedback in the same turn
+    as the recording; the voice prompt carries a trimmed pack. In a
+    simulation with a 4 s model, record_answer went from seconds to ~5 ms
+    and next_activity to ~0.2 s.
   - Enrolments made before the level cards carried no target language; the
     context pack now falls back to the curriculum's, which had made the AI
     produce Portuguese-only practice.

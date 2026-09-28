@@ -9,13 +9,17 @@ import { Lumi } from "@/components/brand/lumi";
  * WebRTC straight to the voice model with a short-lived secret minted by the
  * server. Hands-free after one tap, so a child who cannot read can do the
  * whole lesson alone. The model's tool calls are forwarded to the server,
- * which decides and records; this component only relays and shows state.
+ * which decides and records; this component relays and shows state, and
+ * keeps the conversation moving: recordings go to the server in the
+ * background and the next activity is prepared ahead of time.
  */
 
 type Ticket = { clientSecret: string; callsUrl: string; activitiesTotal: number; completed: number };
 type StartResult = { ok: true; ticket: Ticket } | { ok: false; message: string };
 type Phase = "idle" | "connecting" | "live" | "paused" | "ending" | "error";
 type FunctionCallItem = { type: "function_call"; name: string; call_id: string; arguments: string };
+/** The activity as the server handed it over; kept here to answer record_answer without a round trip. */
+type ActivityBrief = { activity_number: number; items: Array<{ number: number; kind: string; done: boolean }> };
 
 /** A hard stop so a forgotten tab never keeps a paid session open. */
 const MAX_SESSION_MS = 45 * 60_000;
@@ -28,6 +32,7 @@ export function VoiceLesson({
   completed,
   start,
   runTool,
+  prefetch,
   screenModeHref,
 }: {
   lessonId: string;
@@ -36,6 +41,7 @@ export function VoiceLesson({
   completed: number;
   start: (lessonId: string) => Promise<StartResult>;
   runTool: (lessonId: string, name: string, args: string, heard: string | null) => Promise<Record<string, unknown>>;
+  prefetch: (lessonId: string) => Promise<unknown>;
   screenModeHref: string;
 }) {
   const router = useRouter();
@@ -57,6 +63,8 @@ export function VoiceLesson({
   /** After finish_lesson: wait for the goodbye to start, then end when it stops. */
   const finishing = useRef<"no" | "awaiting_goodbye" | "goodbye_playing">("no");
   const timers = useRef<number[]>([]);
+  const queue = useRef<Promise<unknown>>(Promise.resolve());
+  const activity = useRef<ActivityBrief | null>(null);
 
   const send = (event: Record<string, unknown>) => {
     if (dc.current?.readyState === "open") dc.current.send(JSON.stringify(event));
@@ -91,16 +99,68 @@ export function VoiceLesson({
     return said;
   };
 
+  /** Server work, in order: recordings, prefetches, then anything that must see them (next activity, finish). */
+  const enqueue = <T,>(job: () => Promise<T>): Promise<T> => {
+    const run = queue.current.then(job);
+    queue.current = run.then(
+      () => undefined,
+      () => undefined,
+    );
+    return run;
+  };
+
+  /**
+   * record_answer is answered at once from the activity the server handed
+   * over, so the conversation never waits on the network; the server records
+   * the attempt (and grades it) in the background, with the transcript that
+   * belongs to this answer.
+   */
+  const answerLocally = (call: FunctionCallItem): Record<string, unknown> | null => {
+    const act = activity.current;
+    if (!act) return null;
+    let n = NaN;
+    try {
+      n = Number((JSON.parse(call.arguments) as { item_number?: unknown }).item_number);
+    } catch {
+      return null;
+    }
+    const item = act.items.find((it) => it.number === n);
+    const progress = () => {
+      const left = act.items.filter((it) => it.kind !== "TEACH" && !it.done);
+      return { items_left: left.length, activity_complete: left.length === 0, next_item: left[0]?.number ?? null };
+    };
+    if (!item) return { recorded: false, reason: "unknown_item", items: act.items.length };
+    if (item.kind === "TEACH") return { recorded: false, reason: "teach_items_are_not_recorded" };
+    if (item.done) return { recorded: false, reason: "already_recorded", ...progress() };
+    item.done = true;
+    const said = takeHeard();
+    void enqueue(async () => runTool(lessonId, call.name, call.arguments, await said)).catch((err) => console.warn("record failed", err));
+    return { recorded: true, ...progress() };
+  };
+
+  const takeBrief = (result: Record<string, unknown>) => {
+    const brief = result.activity as ActivityBrief | undefined;
+    if (result.lesson_complete) {
+      activity.current = null;
+      setStars((s) => ({ ...s, done: s.total }));
+      return;
+    }
+    if (!brief) return;
+    activity.current = { ...brief, items: brief.items.map((it) => ({ ...it })) };
+    setStars((s) => ({ ...s, done: brief.activity_number - 1 }));
+    // While the child works on this activity, the next one is written.
+    void enqueue(() => prefetch(lessonId)).catch(() => undefined);
+  };
+
   const handleCalls = async (calls: FunctionCallItem[]) => {
-    setThinking(true);
     for (const call of calls) {
-      const said = call.name === "record_answer" ? await takeHeard() : null;
-      const result = await runTool(lessonId, call.name, call.arguments, said);
-      if (call.name === "next_activity" || call.name === "begin_lesson") {
-        const activity = result.activity as { activity_number?: number } | undefined;
-        if (result.lesson_complete) setStars((s) => ({ ...s, done: s.total }));
-        else if (activity?.activity_number) setStars((s) => ({ ...s, done: activity.activity_number! - 1 }));
+      let result = call.name === "record_answer" ? answerLocally(call) : null;
+      if (!result) {
+        setThinking(true);
+        result = await enqueue(async () => runTool(lessonId, call.name, call.arguments, call.name === "record_answer" ? await takeHeard() : null));
+        setThinking(false);
       }
+      if (call.name === "next_activity" || call.name === "begin_lesson") takeBrief(result);
       if (call.name === "finish_lesson") {
         finishing.current = "awaiting_goodbye";
         setStars((s) => ({ ...s, done: Math.max(s.done, s.total) }));
@@ -109,7 +169,6 @@ export function VoiceLesson({
       }
       send({ type: "conversation.item.create", item: { type: "function_call_output", call_id: call.call_id, output: JSON.stringify(result) } });
     }
-    setThinking(false);
     send({ type: "response.create" });
   };
 

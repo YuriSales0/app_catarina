@@ -6,6 +6,18 @@ const pack = {
   context_version: "context.v2",
   pack_id: "pack_abcdefabcdef",
   student: { display_name: "Catarina", age_years: 5, instruction_language: "pt-BR", target_language: "en", timezone: "America/Sao_Paulo" },
+  subject: { name: "English", slug: "english" },
+  curriculum: { name: "English Starters", version: "1.0.0", source: "FAMILY" },
+  current_unit: { name: "Hello!", description: "", position: 1 },
+  primary_objective: { ref: "obj_1", code: "EN.S1.GREET", title: "Greet and say goodbye", description: "Use hello and goodbye", difficulty: 1, skills: [], teaching_notes: {} },
+  current_student_state: { status: "NOT_STARTED" },
+  relevant_recent_evidence: [{ ref: "ev_1", prompt: "an old attempt that the voice teacher does not need" }],
+  mastered_relevant_concepts: [],
+  recurring_errors: [{ human_label: "Silent initial h" }],
+  previous_lesson_summary: null,
+  long_term: { trend: "STABLE" },
+  pedagogical_constraints: { correction_style: "GENTLE_RECAST" },
+  teacher_instructions: { text: null },
 } as unknown as ContextPack;
 
 const overview: VoiceLessonOverview = {
@@ -78,7 +90,7 @@ describe("live voice session", () => {
     expect(english).toContain("an owl who teaches English");
     expect(english).toContain("Speak Brazilian Portuguese for everything except the English being taught");
     expect(english).toContain("say goodbye in English");
-    const maths = { ...pack, subject: { name: "Mathematics", slug: "mathematics" }, student: { ...pack.student, target_language: null } } as ContextPack;
+    const maths = { ...pack, subject: { name: "Mathematics", slug: "mathematics" }, curriculum: { ...pack.curriculum, name: "Maths Year 1" }, student: { ...pack.student, target_language: null } } as ContextPack;
     const text = renderVoiceInstructions({ pack: maths, overview });
     expect(text).toContain("an owl who teaches Mathematics");
     expect(text).toContain("Speak Brazilian Portuguese throughout");
@@ -93,6 +105,14 @@ describe("live voice session", () => {
     const resume = renderVoiceInstructions({ pack, overview: { ...overview, mode: "RESUME" } });
     expect(resume).toContain("WELCOME BACK");
     expect(resume).not.toContain("PART 1 - OPENING");
+  });
+
+  it("keeps the voice prompt short: the pack goes in trimmed, and feedback comes in the same turn as the recording", () => {
+    const text = renderVoiceInstructions({ pack, overview });
+    expect(text).toContain('"recurring_errors":["Silent initial h"]');
+    expect(text).not.toContain("an old attempt that the voice teacher does not need");
+    expect(text).toContain("in that same turn say your short feedback AND call record_answer");
+    expect(text).toContain("Never go silent to record");
   });
 
   it("the session exposes exactly four tools and transcribes the child independently", () => {

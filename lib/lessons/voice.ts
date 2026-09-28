@@ -218,6 +218,28 @@ export async function voiceBeginLesson(access: StudentAccess, provider: AIProvid
   return { lesson_complete: true, closing: closingOf(await getPlayState(access, lessonId, dbh)) };
 }
 
+/**
+ * Prepares the next activity's content while the current one is running, so
+ * next_activity answers at once instead of leaving the child in silence while
+ * a model writes it. Idempotent: an activity that already has a proposal
+ * (accepted or rejected) is left alone.
+ */
+export async function voicePrefetchNext(access: StudentAccess, provider: AIProvider, lessonId: string, dbh: DbOrTx = db()) {
+  const state = await getPlayState(access, lessonId, dbh);
+  if (!state.current) return { prefetched: false };
+  const completed = new Set(state.events.filter((e) => e.eventType === "ACTIVITY_COMPLETED" && e.activityId).map((e) => e.activityId!));
+  const next = state.activities.find((a) => a.sequence > state.current!.sequence && !completed.has(a.id));
+  if (!next || !next.objectiveId || next.activityType === "REVIEW") return { prefetched: false };
+  const prepared = state.events.some((e) => e.activityId === next.id && (e.eventType === "AI_PROPOSAL_RECEIVED" || e.eventType === "AI_PROPOSAL_REJECTED") && (e.payload as { kind?: string }).kind === "activity");
+  if (prepared) return { prefetched: false };
+  try {
+    await requestActivityContent(access, provider, lessonId, next.id, dbh);
+  } catch (err) {
+    log.warn("voice.prefetch_failed", { lessonId, error: (err as Error).message });
+  }
+  return { prefetched: true };
+}
+
 /** next_activity: closes the current activity and briefs the next one, or hands over the closing. */
 export async function voiceNextActivity(access: StudentAccess, provider: AIProvider, lessonId: string, dbh: DbOrTx = db()) {
   const next = await playNextActivity(access, lessonId, dbh);
