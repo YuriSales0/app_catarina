@@ -33,7 +33,7 @@ describe("students, guardians, enrolments and the demo seed", () => {
     const demoCurricula = await db.select().from(s.curricula).where(eq(s.curricula.isDemo, true));
     expect(demoCurricula.map((c) => c.slug).sort()).toEqual(["demo-english-basics", "demo-maths-early-number"]);
     const catalogue = await db.select().from(s.curricula).where(eq(s.curricula.isDemo, false));
-    expect(catalogue.map((c) => c.slug).sort()).toEqual(["cambridge-yle-movers", "cambridge-yle-starters"]);
+    expect(catalogue.map((c) => c.slug).sort()).toEqual(["alfabetizacion-es", "cambridge-yle-movers", "cambridge-yle-starters"]);
   });
 
   it("creates a student with the creator as OWNER and a processing consent", async () => {
