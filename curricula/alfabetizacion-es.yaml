@@ -1,0 +1,626 @@
+# Alfabetización inicial en español para niños de 5 a 6 años.
+#
+# Provenance: authored for this family following the usual progression of
+# Spanish early literacy (Educación Infantil, 5 años): phonological awareness
+# first, then the five vowels, then consonants in the frequent order
+# m, p, l, s, t, d, n, and syllables before words and short sentences.
+# Spanish is close to fully phonetic, so every letter is taught by its SOUND
+# and its syllables (ma, me, mi, mo, mu), not by its name.
+#
+# Gamified as a map: every unit is an island, every lesson a mission, every
+# letter the child learns a sticker for the letter album.
+
+schema_version: curriculum-file.v1
+subject: literacy
+subject_name: Alfabetización
+slug: alfabetizacion-es
+name: "La Isla de las Letras (alfabetización en español)"
+description: >
+  Primer camino para aprender a leer y escribir en español, para niños de 5 a 6 años.
+  Seis islas: jugar con los sonidos, las vocales, las primeras consonantes (m, p, l, s),
+  t, n y d, escribir su nombre y sus palabras, y nuevas letras (c, f, b, r). Cada letra se aprende
+  por su sonido, en sílabas y dentro de palabras de la vida del niño.
+version: 1.0.0
+source: FAMILY
+visibility: PUBLIC
+instruction_language: es
+target_language: es
+is_demo: false
+provenance:
+  origin: family-authored
+  aligned_to: Progresión habitual de lectoescritura en Educación Infantil (5 años), método fonético-silábico
+  mode: literacy
+  notes: Contenido original. Cada unidad es una isla del mapa; cada letra aprendida es una pegatina del álbum.
+
+skills:
+  - key: phonological
+    name: Conciencia fonológica
+    description: Oír y jugar con los sonidos, las sílabas y las rimas de las palabras.
+  - key: letters
+    name: Letras y sonidos
+    description: Reconocer cada letra y decir su sonido.
+  - key: decoding
+    name: Leer
+    description: Unir sonidos en sílabas, sílabas en palabras y palabras en frases.
+  - key: writing
+    name: Escribir
+    description: Trazar letras y escribir sílabas, palabras y su nombre.
+  - key: comprehension
+    name: Comprender
+    description: Saber qué significa lo que se ha leído.
+
+error_tags:
+  NAME_NOT_SOUND: Dice el nombre de la letra (eme) en vez de su sonido (mmm)
+  VOWEL_CONFUSION: Confunde vocales (e e i, o y u)
+  MIRROR_LETTER: Confunde letras en espejo (b y d, p y q)
+  SIMILAR_LETTER: Confunde letras que se parecen (m y n, l y t)
+  NO_BLENDING: Dice los sonidos sueltos sin unirlos (m-a en vez de ma)
+  SYLLABLE_ORDER: Cambia el orden de las sílabas (sopa por paso)
+  SYLLABLE_COUNT: Cuenta mal las sílabas
+  INITIAL_SOUND: No identifica el sonido inicial
+  RHYME: No reconoce la rima
+  GUESSING: Adivina la palabra por el dibujo o la primera letra sin leerla
+  OTHER_LANGUAGE: Usa un sonido o una palabra de otra lengua (por ejemplo, o final como u)
+  COMPREHENSION: No entendió la consigna o lo que leyó
+
+units:
+  - key: L1
+    name: "Isla 1: Jugamos con los sonidos"
+    description: Antes de las letras, el oído. Rimas, palmadas por sílabas y el primer sonido de las palabras.
+    objectives:
+      - key: LIT.L1.RHYME
+        title: "¿Riman? Palabras que suenan igual al final"
+        description: Reconocer si dos palabras riman y decir una palabra que rime con otra.
+        difficulty: 1
+        estimated_sessions: 2
+        skills: [phonological]
+        error_tags: [RHYME, COMPREHENSION]
+        teaching_notes:
+          vocabulary: [gato, pato, rato, sol, col, mesa, fresa, luna, cuna, ratón, botón]
+          structures: ["Gato rima con pato.", "¿Riman sol y col?"]
+          example_prompts:
+            - "¿Riman gato y pato?"
+            - "¿Riman luna y mesa?"
+            - "Dime una palabra que rime con ratón."
+          activity_ideas:
+            - "El juego del sí o no: Lumi dice dos palabras y la niña dice si riman."
+            - "Completa la rima: 'Tengo un gato que se llama...' (pato, Renato)."
+            - "Cazarrimas: buscar en casa algo que rime con 'mesa'."
+          success_criteria:
+            - "Dice si dos palabras riman en 4 de 5 pares."
+            - "Inventa una rima, aunque sea una palabra inventada."
+
+      - key: LIT.L1.CLAP
+        title: "Palmadas de sílabas"
+        description: Separar palabras en sílabas con palmadas y contar cuántas tienen.
+        difficulty: 1
+        estimated_sessions: 2
+        skills: [phonological]
+        prerequisites: [{ key: LIT.L1.RHYME, strength: SOFT }]
+        error_tags: [SYLLABLE_COUNT]
+        teaching_notes:
+          vocabulary: [sol, pan, mamá, papá, casa, luna, pelota, mariposa, Aurora]
+          structures: ["ca-sa: dos palmadas", "pe-lo-ta: tres palmadas"]
+          example_prompts:
+            - "Da palmadas: ca-sa. ¿Cuántas palmadas?"
+            - "¿Cuántas palmadas tiene 'pelota'?"
+            - "¿Cuántas palmadas tiene tu nombre?"
+          activity_ideas:
+            - "El robot que habla a trozos: Lumi habla como un robot (ma-ri-po-sa) y la niña adivina la palabra."
+            - "Saltos de sílabas: un salto por cada sílaba."
+            - "Ordenar de corta a larga: sol, casa, pelota."
+          success_criteria:
+            - "Cuenta bien las sílabas de palabras de 1 a 3 sílabas."
+            - "Une sílabas dichas por separado y dice la palabra."
+
+      - key: LIT.L1.FIRST
+        title: "¿Con qué sonido empieza?"
+        description: Oír el primer sonido de una palabra y encontrar palabras que empiezan igual.
+        difficulty: 2
+        estimated_sessions: 2
+        skills: [phonological]
+        prerequisites: [LIT.L1.CLAP]
+        error_tags: [INITIAL_SOUND, NAME_NOT_SOUND]
+        teaching_notes:
+          vocabulary: [mmm, sss, lll, aaa, ooo, mesa, mono, sol, sapo, luna, oso, árbol]
+          structures: ["Mmmesa empieza con mmm.", "¿Sol empieza como sapo?"]
+          example_prompts:
+            - "¿Con qué sonido empieza 'mmmesa'?"
+            - "¿Sol y sapo empiezan igual?"
+            - "Dime algo de tu casa que empiece con sss."
+          activity_ideas:
+            - "Veo veo con sonidos: 'Veo veo una cosa que empieza con mmm'."
+            - "El tren de los sonidos: solo suben las palabras que empiezan con sss."
+            - "Estirar el primer sonido como un chicle: sssssol."
+          success_criteria:
+            - "Dice el primer sonido (no el nombre de la letra) de palabras sencillas."
+            - "Encuentra dos palabras que empiezan con el mismo sonido."
+
+  - key: L2
+    name: "Isla 2: Las vocales"
+    description: Las cinco vocales, su sonido, su forma y su trazo. Cada vocal es una pegatina del álbum.
+    objectives:
+      - key: LIT.L2.A
+        title: "La A de Aurora"
+        description: Reconocer la A (mayúscula y minúscula), decir su sonido, oírla al principio de palabras y trazarla.
+        difficulty: 1
+        estimated_sessions: 1
+        skills: [letters, phonological, writing]
+        prerequisites: [{ key: LIT.L1.FIRST, strength: SOFT }]
+        error_tags: [VOWEL_CONFUSION, INITIAL_SOUND]
+        teaching_notes:
+          vocabulary: [A, a, Aurora, árbol, abeja, avión, agua, ala]
+          structures: ["Esta es la A. Suena aaa.", "Aurora empieza con A."]
+          example_prompts:
+            - "¿Qué letra es esta? (A)"
+            - "¿Avión empieza con aaa?"
+            - "Busca la A en tu nombre."
+          activity_ideas:
+            - "La A abre la boca grande como un cocodrilo: aaa."
+            - "Trazar la A en el aire, en la arena o con el dedo en la mesa."
+            - "Cazar la A en el nombre AURORA: ¿cuántas hay?"
+          success_criteria:
+            - "Señala o dice la A entre otras letras."
+            - "Dice palabras que empiezan por A."
+
+      - key: LIT.L2.E
+        title: "La E de elefante"
+        description: Reconocer la E, decir su sonido, oírla al principio de palabras y trazarla.
+        difficulty: 1
+        estimated_sessions: 1
+        skills: [letters, phonological, writing]
+        prerequisites: [LIT.L2.A]
+        error_tags: [VOWEL_CONFUSION, OTHER_LANGUAGE]
+        teaching_notes:
+          vocabulary: [E, e, elefante, estrella, escalera, enano, erizo]
+          structures: ["Esta es la E. Suena eee.", "Estrella empieza con E."]
+          example_prompts:
+            - "¿Qué letra es esta? (E)"
+            - "¿Elefante empieza con eee o con aaa?"
+          activity_ideas:
+            - "La E sonríe: decir eee con una sonrisa grande."
+            - "La escalera de la E: tres escalones."
+          success_criteria:
+            - "Distingue la E de la A al verla y al oírla."
+
+      - key: LIT.L2.I
+        title: "La I de iglú"
+        description: Reconocer la I, decir su sonido, oírla al principio de palabras y trazarla.
+        difficulty: 1
+        estimated_sessions: 1
+        skills: [letters, phonological, writing]
+        prerequisites: [LIT.L2.E]
+        error_tags: [VOWEL_CONFUSION]
+        teaching_notes:
+          vocabulary: [I, i, iglú, isla, imán, indio, iguana]
+          structures: ["Esta es la I. Suena iii.", "La i pequeña lleva un puntito."]
+          example_prompts:
+            - "¿Qué letra es esta? (I)"
+            - "¿Isla empieza con iii o con eee?"
+          activity_ideas:
+            - "La I es un palito con sombrero de punto: ¡pon el punto!"
+            - "Ratoncito que dice iii."
+          success_criteria:
+            - "Distingue I y E al oírlas."
+
+      - key: LIT.L2.O
+        title: "La O de oso"
+        description: Reconocer la O, decir su sonido, oírla al principio de palabras y trazarla.
+        difficulty: 1
+        estimated_sessions: 1
+        skills: [letters, phonological, writing]
+        prerequisites: [LIT.L2.I]
+        error_tags: [VOWEL_CONFUSION, OTHER_LANGUAGE]
+        teaching_notes:
+          vocabulary: [O, o, oso, ojo, oreja, ola, ocho]
+          structures: ["Esta es la O. Suena ooo.", "La O es redonda como una rueda."]
+          example_prompts:
+            - "¿Qué letra es esta? (O)"
+            - "¿Oso empieza con ooo?"
+          activity_ideas:
+            - "La boca hace una O de sorpresa: ¡ooo!"
+            - "Buscar cosas redondas como la O."
+          success_criteria:
+            - "Reconoce la O y la distingue de la U al oírla."
+
+      - key: LIT.L2.U
+        title: "La U de uva"
+        description: Reconocer la U, decir su sonido, oírla al principio de palabras y trazarla.
+        difficulty: 1
+        estimated_sessions: 1
+        skills: [letters, phonological, writing]
+        prerequisites: [LIT.L2.O]
+        error_tags: [VOWEL_CONFUSION]
+        teaching_notes:
+          vocabulary: [U, u, uva, uña, uno, unicornio]
+          structures: ["Esta es la U. Suena uuu.", "La U es como una taza."]
+          example_prompts:
+            - "¿Qué letra es esta? (U)"
+            - "¿Uva empieza con uuu o con ooo?"
+          activity_ideas:
+            - "El lobo hace uuu."
+            - "La U es una taza: ¿qué le echamos?"
+          success_criteria:
+            - "Distingue U y O al oírlas y al verlas."
+
+      - key: LIT.L2.ALL
+        title: "Las cinco vocales"
+        description: Reconocer las cinco vocales mezcladas, decir su sonido y encontrar la vocal que falta en una palabra.
+        difficulty: 2
+        estimated_sessions: 2
+        skills: [letters, phonological]
+        prerequisites: [LIT.L2.A, LIT.L2.E, LIT.L2.I, LIT.L2.O, LIT.L2.U]
+        error_tags: [VOWEL_CONFUSION]
+        teaching_notes:
+          vocabulary: [A, E, I, O, U, oso, uva, árbol, isla, elefante]
+          structures: ["A, E, I, O, U.", "Oso empieza con O."]
+          example_prompts:
+            - "¿Qué vocal es esta?"
+            - "¿Con qué vocal empieza 'isla'?"
+            - "Escucha: o-s-o. ¿Qué vocal se repite?"
+          activity_ideas:
+            - "La canción de las vocales."
+            - "Lumi se equivoca: muestra una E y dice 'aaa'; la niña lo corrige."
+            - "Carrera de vocales: Lumi muestra una vocal y la niña dice su sonido lo más rápido posible."
+          success_criteria:
+            - "Nombra las cinco vocales desordenadas sin ayuda."
+            - "Dice la vocal inicial de palabras conocidas."
+
+  - key: L3
+    name: "Isla 3: M, P, L y S"
+    description: Las primeras consonantes. Cada una se une a las vocales para formar sílabas (ma, me, mi, mo, mu) y palabras de verdad.
+    objectives:
+      - key: LIT.L3.M
+        title: "La M: ma, me, mi, mo, mu"
+        description: Decir el sonido de la M, unirlo a las vocales y leer las sílabas ma, me, mi, mo, mu y las palabras mamá, mimo, mima, Ema.
+        difficulty: 2
+        estimated_sessions: 2
+        skills: [letters, decoding, writing]
+        prerequisites: [LIT.L2.ALL]
+        error_tags: [NAME_NOT_SOUND, NO_BLENDING, SIMILAR_LETTER]
+        teaching_notes:
+          vocabulary: [M, m, ma, me, mi, mo, mu, mamá, mimo, mima, Ema, amo]
+          structures: ["mmm + a = ma", "ma-má: mamá", "Mi mamá me mima."]
+          example_prompts:
+            - "¿Cómo suena la M? (mmm)"
+            - "M con A, ¿qué dice? (ma)"
+            - "Lee esta sílaba: mo"
+            - "Lee esta palabra: mamá"
+          activity_ideas:
+            - "La M es la letra rica: mmm, qué rico."
+            - "El tren de sílabas: el vagón M se engancha a cada vocal."
+            - "Ruleta de sílabas: Lumi muestra una sílaba al azar y la niña la lee."
+          success_criteria:
+            - "Lee ma, me, mi, mo, mu en desorden."
+            - "Lee mamá y mima uniendo las sílabas."
+
+      - key: LIT.L3.P
+        title: "La P: pa, pe, pi, po, pu"
+        description: Decir el sonido de la P, leer sus sílabas y palabras como papá, pipa, pomo, mapa, puma.
+        difficulty: 2
+        estimated_sessions: 2
+        skills: [letters, decoding, writing]
+        prerequisites: [LIT.L3.M]
+        error_tags: [NAME_NOT_SOUND, NO_BLENDING, MIRROR_LETTER]
+        teaching_notes:
+          vocabulary: [P, p, pa, pe, pi, po, pu, papá, pipa, mapa, puma, Pepe, mopa]
+          structures: ["p + a = pa", "ma-pa: mapa", "Papá ama a mamá."]
+          example_prompts:
+            - "¿Cómo suena la P?"
+            - "Lee: pe"
+            - "Lee esta palabra: mapa"
+            - "¿Qué palabra es: pu-ma?"
+          activity_ideas:
+            - "La P sopla una vela: p, p, p."
+            - "Palabras locas: cambiar la primera sílaba (mapa, papa)."
+          success_criteria:
+            - "Lee las sílabas de P y M mezcladas."
+            - "Lee palabras de dos sílabas con M y P."
+
+      - key: LIT.L3.L
+        title: "La L: la, le, li, lo, lu"
+        description: Decir el sonido de la L, leer sus sílabas y palabras como lupa, ala, Lola, pala, malo, mula.
+        difficulty: 2
+        estimated_sessions: 2
+        skills: [letters, decoding, writing]
+        prerequisites: [LIT.L3.P]
+        error_tags: [NAME_NOT_SOUND, NO_BLENDING, SIMILAR_LETTER]
+        teaching_notes:
+          vocabulary: [L, l, la, le, li, lo, lu, lupa, ala, Lola, pala, malo, mula, pelo]
+          structures: ["l + u = lu", "lu-pa: lupa", "Lola mima a la mula."]
+          example_prompts:
+            - "¿Cómo suena la L?"
+            - "Lee: li"
+            - "Lee esta palabra: pala"
+          activity_ideas:
+            - "La L canta: lalalá."
+            - "La lupa mágica: Lumi enseña una palabra y la niña la lee con su lupa."
+          success_criteria:
+            - "Lee las sílabas de M, P y L mezcladas."
+            - "Lee palabras como pala, lupa, pelo."
+
+      - key: LIT.L3.S
+        title: "La S: sa, se, si, so, su"
+        description: Decir el sonido de la S, leer sus sílabas y palabras como sopa, mesa, oso, piso, sala, Susi.
+        difficulty: 2
+        estimated_sessions: 2
+        skills: [letters, decoding, writing]
+        prerequisites: [LIT.L3.L]
+        error_tags: [NAME_NOT_SOUND, NO_BLENDING, SYLLABLE_ORDER]
+        teaching_notes:
+          vocabulary: [S, s, sa, se, si, so, su, sopa, mesa, oso, piso, sala, sapo, Susi, peso]
+          structures: ["s + o = so", "so-pa: sopa", "El oso se asoma."]
+          example_prompts:
+            - "¿Cómo suena la S? (sss, como una serpiente)"
+            - "Lee: su"
+            - "Lee esta palabra: sopa"
+            - "¿Es sopa o paso?"
+          activity_ideas:
+            - "La serpiente S: sssss."
+            - "Palabras al revés: so-pa y pa-so, ¿son iguales?"
+          success_criteria:
+            - "Lee palabras de dos sílabas con M, P, L y S."
+            - "No cambia el orden de las sílabas (sopa / paso)."
+
+      - key: LIT.L3.WORDS
+        title: "Leo mis primeras palabras"
+        description: Leer palabras de dos y tres sílabas con m, p, l, s y vocales, y saber qué significan.
+        difficulty: 3
+        estimated_sessions: 3
+        skills: [decoding, comprehension]
+        prerequisites: [LIT.L3.M, LIT.L3.P, LIT.L3.L, LIT.L3.S]
+        error_tags: [NO_BLENDING, GUESSING, SYLLABLE_ORDER]
+        teaching_notes:
+          vocabulary: [mamá, papá, mesa, sopa, pala, lupa, oso, paloma, pelusa, pomelo, sapo, mula]
+          structures: ["pa-lo-ma: paloma", "Mi oso se asoma."]
+          example_prompts:
+            - "Lee esta palabra: paloma"
+            - "Lee: sapo. ¿Qué es un sapo?"
+            - "¿Cuál dice 'mesa': mesa o masa?"
+          activity_ideas:
+            - "Palabra y dibujo: leer la palabra y decir qué dibujo es."
+            - "El cofre del tesoro: cada palabra leída es una moneda."
+          success_criteria:
+            - "Lee palabras de tres sílabas uniendo sílabas sin ayuda."
+            - "Explica qué significa la palabra leída."
+
+      - key: LIT.L3.SENT
+        title: "Mis primeras frases"
+        description: Leer frases muy cortas con las letras conocidas y responder a una pregunta sobre ellas.
+        difficulty: 3
+        estimated_sessions: 3
+        skills: [decoding, comprehension]
+        prerequisites: [LIT.L3.WORDS]
+        error_tags: [GUESSING, COMPREHENSION]
+        teaching_notes:
+          vocabulary: [mi, la, el, se, es, y, a, mamá, oso, sopa, mesa]
+          structures: ["Mi mamá me ama.", "El oso se asoma.", "Lola pela la papa.", "Susi pasa la sopa."]
+          example_prompts:
+            - "Lee: Mi mamá me ama."
+            - "Lee: El oso se asoma. ¿Quién se asoma?"
+          activity_ideas:
+            - "Frases tontas: leer una frase y decir si es verdad o mentira (El oso pela la sopa)."
+            - "Dibujar lo que dice la frase."
+          success_criteria:
+            - "Lee una frase de 3 o 4 palabras."
+            - "Responde quién o qué en la frase leída."
+
+  - key: L4
+    name: "Isla 4: T, N y D"
+    description: Tres letras nuevas y muchas palabras más para leer.
+    objectives:
+      - key: LIT.L4.T
+        title: "La T: ta, te, ti, to, tu"
+        description: Decir el sonido de la T, leer sus sílabas y palabras como tomate, pato, pelota, maleta, tela.
+        difficulty: 2
+        estimated_sessions: 2
+        skills: [letters, decoding, writing]
+        prerequisites: [LIT.L3.WORDS]
+        error_tags: [NAME_NOT_SOUND, NO_BLENDING, SIMILAR_LETTER]
+        teaching_notes:
+          vocabulary: [T, t, ta, te, ti, to, tu, tomate, pato, pelota, maleta, tela, moto, tapa]
+          structures: ["t + o = to", "to-ma-te: tomate", "Tito toma té."]
+          example_prompts:
+            - "¿Cómo suena la T? (como un reloj: t, t, t)"
+            - "Lee: ti"
+            - "Lee esta palabra: tomate"
+          activity_ideas:
+            - "El reloj de la T: tic, tac."
+            - "Ruleta de sílabas con T, M, P, L, S."
+          success_criteria:
+            - "Lee sílabas y palabras con T."
+            - "No confunde la t con la l."
+
+      - key: LIT.L4.N
+        title: "La N: na, ne, ni, no, nu"
+        description: Decir el sonido de la N, leer sus sílabas y palabras como nata, nota, mono, luna, enano, Nina.
+        difficulty: 2
+        estimated_sessions: 2
+        skills: [letters, decoding, writing]
+        prerequisites: [LIT.L4.T]
+        error_tags: [NAME_NOT_SOUND, SIMILAR_LETTER, NO_BLENDING]
+        teaching_notes:
+          vocabulary: [N, n, na, ne, ni, no, nu, nata, nota, mono, luna, enano, Nina, mano]
+          structures: ["n + i = ni", "lu-na: luna", "La luna se asoma."]
+          example_prompts:
+            - "¿Cómo suena la N?"
+            - "¿Es la m o la n? (la n tiene un solo puente)"
+            - "Lee esta palabra: luna"
+          activity_ideas:
+            - "Puentes: la n tiene un puente, la m tiene dos."
+            - "No y sí: Lumi dice frases y la niña contesta leyendo la tarjeta 'no'."
+          success_criteria:
+            - "Distingue m y n al leer."
+            - "Lee palabras con N como luna y mano."
+
+      - key: LIT.L4.D
+        title: "La D: da, de, di, do, du"
+        description: Decir el sonido de la D, leer sus sílabas y palabras como dedo, dado, nido, moda, todo.
+        difficulty: 3
+        estimated_sessions: 2
+        skills: [letters, decoding, writing]
+        prerequisites: [LIT.L4.T]
+        error_tags: [NAME_NOT_SOUND, MIRROR_LETTER, NO_BLENDING]
+        teaching_notes:
+          vocabulary: [D, d, da, de, di, do, du, dedo, dado, todo, moda, nido, día]
+          structures: ["d + e = de", "de-do: dedo", "Mi dedo toma el dado."]
+          example_prompts:
+            - "¿Cómo suena la D?"
+            - "¿Es la b o la d? (d: la barriga mira a la izquierda)"
+            - "Lee esta palabra: dado"
+          activity_ideas:
+            - "El truco de la d: la barriguita va primero, como en 'd'."
+            - "Lanzar un dado y leer la palabra del número."
+          success_criteria:
+            - "Lee sílabas con D y no la confunde con la b."
+
+      - key: LIT.L4.READ
+        title: "Leo palabras y frases con T, D y N"
+        description: Leer palabras y frases cortas combinando todas las letras conocidas y comprenderlas.
+        difficulty: 3
+        estimated_sessions: 3
+        skills: [decoding, comprehension]
+        prerequisites: [LIT.L4.D, LIT.L4.N, LIT.L3.SENT]
+        error_tags: [GUESSING, COMPREHENSION, NO_BLENDING]
+        teaching_notes:
+          vocabulary: [tomate, dedo, luna, mono, nido, pelota, patata, minuto, maleta]
+          structures: ["El mono toma la pelota.", "Nina pela un tomate.", "Mi dedo apunta a la luna."]
+          example_prompts:
+            - "Lee: El mono toma la pelota. ¿Qué toma el mono?"
+            - "Lee: Nina pela un tomate."
+          activity_ideas:
+            - "Detective de frases: leer y responder ¿quién?, ¿qué?"
+            - "Historias de una línea: la niña lee y Lumi la convierte en un cuento."
+          success_criteria:
+            - "Lee frases de 4 o 5 palabras con letras conocidas."
+            - "Contesta una pregunta sobre lo leído."
+
+  - key: L5
+    name: "Isla 5: Escribo mi nombre y mis palabras"
+    description: De leer a escribir. El nombre propio, sílabas dictadas y palabras cortas.
+    objectives:
+      - key: LIT.L5.NAME
+        title: "Escribo mi nombre"
+        description: Reconocer su nombre escrito, decir sus letras y escribirlo en mayúsculas.
+        difficulty: 2
+        estimated_sessions: 2
+        skills: [writing, letters]
+        prerequisites: [LIT.L2.ALL]
+        error_tags: [MIRROR_LETTER, SYLLABLE_ORDER]
+        teaching_notes:
+          vocabulary: [AURORA, A, U, R, O, nombre]
+          structures: ["AU-RO-RA", "Mi nombre empieza con A."]
+          example_prompts:
+            - "¿Cuál de estas palabras es tu nombre?"
+            - "¿Con qué letra empieza tu nombre?"
+            - "¿Cuántas A tiene tu nombre?"
+          activity_ideas:
+            - "Escribir el nombre con plastilina, con el dedo en harina o con rotulador."
+            - "Firmar como una artista al terminar cada dibujo."
+          success_criteria:
+            - "Reconoce su nombre entre otros."
+            - "Escribe su nombre con todas las letras en orden."
+
+      - key: LIT.L5.DICT
+        title: "Escribo lo que oigo"
+        description: Escribir sílabas y palabras de dos sílabas dictadas, con las letras conocidas.
+        difficulty: 3
+        estimated_sessions: 3
+        skills: [writing, phonological]
+        prerequisites: [LIT.L3.WORDS, LIT.L5.NAME]
+        error_tags: [SYLLABLE_ORDER, VOWEL_CONFUSION, MIRROR_LETTER]
+        teaching_notes:
+          vocabulary: [ma, pe, lo, su, mapa, sopa, mesa, pala, oso, lupa]
+          structures: ["Oigo me-sa: escribo M-E-S-A."]
+          example_prompts:
+            - "Escribe la sílaba 'pa'. ¿Qué letras usaste?"
+            - "Escribe 'sopa'. ¿Cuántas sílabas tiene?"
+          activity_ideas:
+            - "Dictado mágico: el adulto revisa el papel y Lumi celebra cada palabra."
+            - "La lista del picnic: escribir mesa, sopa y pala para no olvidarlas."
+          success_criteria:
+            - "Escribe sílabas dictadas con la letra correcta."
+            - "Escribe palabras de dos sílabas con letras conocidas."
+
+  - key: L6
+    name: "Isla 6: Nuevas letras: C, F, B y R"
+    description: Más letras para leer cuentos de verdad.
+    objectives:
+      - key: LIT.L6.C
+        title: "La C: ca, co, cu"
+        description: Leer las sílabas ca, co, cu y palabras como casa, cama, coco, cuna, saco.
+        difficulty: 3
+        estimated_sessions: 2
+        skills: [letters, decoding]
+        prerequisites: [LIT.L4.READ]
+        error_tags: [NAME_NOT_SOUND, NO_BLENDING]
+        teaching_notes:
+          vocabulary: [C, c, ca, co, cu, casa, cama, coco, cuna, saco, poco, cosa]
+          structures: ["c + a = ca", "ca-sa: casa", "Mi casa tiene una cama."]
+          example_prompts:
+            - "Lee: ca, co, cu"
+            - "Lee esta palabra: casa"
+          activity_ideas:
+            - "La C es una boca abierta que dice ca, co, cu."
+          success_criteria:
+            - "Lee ca, co, cu y palabras con ellas."
+
+      - key: LIT.L6.F
+        title: "La F: fa, fe, fi, fo, fu"
+        description: Leer sílabas con F y palabras como foca, fila, café, sofá, foto.
+        difficulty: 3
+        estimated_sessions: 2
+        skills: [letters, decoding]
+        prerequisites: [LIT.L4.READ]
+        error_tags: [NAME_NOT_SOUND, NO_BLENDING]
+        teaching_notes:
+          vocabulary: [F, f, fa, fe, fi, fo, fu, foca, fila, café, sofá, foto]
+          structures: ["f + o = fo", "fo-ca: foca", "La foca toma café."]
+          example_prompts:
+            - "¿Cómo suena la F? (como un gato enfadado: fff)"
+            - "Lee: foca"
+          activity_ideas:
+            - "El gato enfadado: fff."
+          success_criteria:
+            - "Lee sílabas y palabras con F."
+
+      - key: LIT.L6.B
+        title: "La B: ba, be, bi, bo, bu"
+        description: Leer sílabas con B y palabras como boca, bebé, bota, lobo, bola.
+        difficulty: 3
+        estimated_sessions: 2
+        skills: [letters, decoding]
+        prerequisites: [LIT.L4.READ]
+        error_tags: [MIRROR_LETTER, NO_BLENDING]
+        teaching_notes:
+          vocabulary: [B, b, ba, be, bi, bo, bu, boca, bebé, bota, lobo, bola, nube]
+          structures: ["b + o = bo", "lo-bo: lobo", "El bebé bebe."]
+          example_prompts:
+            - "¿Es la b o la d? (b: la barriga va después del palo)"
+            - "Lee: lobo"
+          activity_ideas:
+            - "La b tiene la barriga delante, como un bebé que ha comido mucho."
+          success_criteria:
+            - "Lee sílabas con B sin confundirla con la d."
+
+      - key: LIT.L6.R
+        title: "La R: ra, re, ri, ro, ru"
+        description: Leer sílabas con R al principio de palabra y palabras como rana, ropa, rosa, ratón, perro.
+        difficulty: 4
+        estimated_sessions: 3
+        skills: [letters, decoding, phonological]
+        prerequisites: [LIT.L4.READ]
+        error_tags: [NAME_NOT_SOUND, OTHER_LANGUAGE]
+        teaching_notes:
+          vocabulary: [R, r, ra, re, ri, ro, ru, rana, ropa, rosa, ratón, rueda, perro, pera]
+          structures: ["r + a = ra", "ra-na: rana", "La rana se ríe."]
+          example_prompts:
+            - "¿Cómo suena la R? (como una moto: rrr)"
+            - "Lee: rosa"
+            - "¿Perro o pero? ¿Cuál es el animal?"
+          activity_ideas:
+            - "La moto de la R: rrrrr."
+            - "Trabalenguas cortos: 'Erre con erre, perro'."
+          success_criteria:
+            - "Lee sílabas con R inicial."
+            - "Lee palabras como rana y rosa."

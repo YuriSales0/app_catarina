@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Lumi } from "@/components/brand/lumi";
+import { parseShowArgs, type ShowOnScreen } from "@/lib/literacy";
+import { VOICE_SCREEN_ES, type VoiceScreenCopy } from "@/lib/copy/es";
 
 /**
  * The live voice lesson, in the browser: microphone in, Lumi's voice out, over
@@ -25,6 +27,45 @@ type ActivityBrief = { activity_number: number; items: Array<{ number: number; k
 const MAX_SESSION_MS = 45 * 60_000;
 const TRANSCRIPT_WAIT_MS = 1500;
 
+/** The screen's words. Portuguese for the language lessons; Spanish for literacy taught in Spanish. */
+const VOICE_SCREEN_PT: VoiceScreenCopy = {
+  connecting: "Chamando o Lumi…",
+  paused: "Pausado",
+  ending: "Até a próxima!",
+  speaking: "O Lumi está falando",
+  listening: "Estou ouvindo…",
+  thinking: "Pensando…",
+  yourTurn: "Sua vez! Pode falar",
+  hello: (name: string) => `Oi, ${name}!`,
+  intro: "A aula de hoje é uma conversa com o Lumi.",
+  start: "Conversar",
+  again: "De novo",
+  startLabel: "Conversar com o Lumi",
+  micHint: "Adulto: na primeira vez, o navegador pede permissão para usar o microfone.",
+  screenMode: "Fazer pela tela, sem voz",
+  pause: "Pausar",
+  resume: "Continuar",
+  hideCaptions: "Esconder legenda",
+  showCaptions: "Mostrar legenda",
+  stars: (done: number, total: number) => `${done} de ${total} estrelas`,
+  touched: (card: string) => `(A criança tocou no cartão: ${card})`,
+  readHere: "Olhe aqui",
+};
+
+/** Waits, briefly, for transcripts still on their way. Outside the component: it reads the clock. */
+async function waitForTranscripts(pending: { current: number }): Promise<void> {
+  const started = Date.now();
+  while (pending.current > 0 && Date.now() - started < TRANSCRIPT_WAIT_MS) await new Promise((r) => setTimeout(r, 100));
+}
+
+/** Sizes for what Lumi puts on the screen: the shorter it is, the bigger. */
+const BOARD_SIZE: Record<Exclude<ShowOnScreen["style"], "choice">, string> = {
+  letter: "text-[9rem] leading-none",
+  syllable: "text-8xl",
+  word: "text-6xl sm:text-7xl",
+  sentence: "text-3xl sm:text-4xl leading-snug",
+};
+
 export function VoiceLesson({
   lessonId,
   childName,
@@ -34,6 +75,7 @@ export function VoiceLesson({
   runTool,
   prefetch,
   screenModeHref,
+  lang = "pt",
 }: {
   lessonId: string;
   childName: string;
@@ -43,7 +85,10 @@ export function VoiceLesson({
   runTool: (lessonId: string, name: string, args: string, heard: string | null) => Promise<Record<string, unknown>>;
   prefetch: (lessonId: string) => Promise<unknown>;
   screenModeHref: string;
+  /** "es": the child's screen in Spanish (literacy taught in Spanish). */
+  lang?: "pt" | "es";
 }) {
+  const T = lang === "es" ? VOICE_SCREEN_ES : VOICE_SCREEN_PT;
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState<string | null>(null);
@@ -53,6 +98,8 @@ export function VoiceLesson({
   const [caption, setCaption] = useState("");
   const [showCaptions, setShowCaptions] = useState(true);
   const [stars, setStars] = useState({ done: completed, total });
+  /** What Lumi put on the screen (literacy lessons): a letter, syllable, word, sentence or cards. */
+  const [board, setBoard] = useState<ShowOnScreen | null>(null);
 
   const pc = useRef<RTCPeerConnection | null>(null);
   const dc = useRef<RTCDataChannel | null>(null);
@@ -92,8 +139,7 @@ export function VoiceLesson({
 
   /** The child's words for this answer: the independent transcript, waiting briefly if it is still on its way. */
   const takeHeard = async (): Promise<string | null> => {
-    const started = Date.now();
-    while (pendingTranscripts.current > 0 && Date.now() - started < TRANSCRIPT_WAIT_MS) await new Promise((r) => setTimeout(r, 100));
+    await waitForTranscripts(pendingTranscripts);
     const said = heard.current.at(-1) ?? null;
     heard.current = [];
     return said;
@@ -154,13 +200,23 @@ export function VoiceLesson({
 
   const handleCalls = async (calls: FunctionCallItem[]) => {
     for (const call of calls) {
+      if (call.name === "show_on_screen") {
+        // The browser alone executes it: nothing to record, nothing to wait for.
+        const shown = parseShowArgs(call.arguments);
+        if (shown) setBoard(shown);
+        send({ type: "conversation.item.create", item: { type: "function_call_output", call_id: call.call_id, output: JSON.stringify(shown ? { shown: true } : { shown: false, reason: "invalid: a style, a text, and 2-4 options for choice" }) } });
+        continue;
+      }
       let result = call.name === "record_answer" ? answerLocally(call) : null;
       if (!result) {
         setThinking(true);
         result = await enqueue(async () => runTool(lessonId, call.name, call.arguments, call.name === "record_answer" ? await takeHeard() : null));
         setThinking(false);
       }
-      if (call.name === "next_activity" || call.name === "begin_lesson") takeBrief(result);
+      if (call.name === "next_activity" || call.name === "begin_lesson") {
+        takeBrief(result);
+        if (call.name === "next_activity") setBoard(null);
+      }
       if (call.name === "finish_lesson") {
         finishing.current = "awaiting_goodbye";
         setStars((s) => ({ ...s, done: Math.max(s.done, s.total) }));
@@ -284,6 +340,14 @@ export function VoiceLesson({
     }
   };
 
+  /** A touched card is the child's answer: it goes to Lumi as a message and stands in for the transcript. */
+  const pick = (card: string) => {
+    if (phase !== "live") return;
+    heard.current.push(card);
+    send({ type: "conversation.item.create", item: { type: "message", role: "user", content: [{ type: "input_text", text: T.touched(card) }] } });
+    send({ type: "response.create" });
+  };
+
   const pause = () => {
     mic.current?.getTracks().forEach((t) => (t.enabled = false));
     send({ type: "response.cancel" });
@@ -301,23 +365,23 @@ export function VoiceLesson({
 
   const status =
     phase === "connecting"
-      ? { icon: "🔌", text: "Chamando o Lumi…" }
+      ? { icon: "🔌", text: T.connecting }
       : phase === "paused"
-        ? { icon: "⏸️", text: "Pausado" }
+        ? { icon: "⏸️", text: T.paused }
         : phase === "ending"
-          ? { icon: "⭐", text: "Até a próxima!" }
+          ? { icon: "⭐", text: T.ending }
           : speaking
-            ? { icon: "🔊", text: "O Lumi está falando" }
+            ? { icon: "🔊", text: T.speaking }
             : listening
-              ? { icon: "👂", text: "Estou ouvindo…" }
+              ? { icon: "👂", text: T.listening }
               : thinking
-                ? { icon: "💭", text: "Pensando…" }
-                : { icon: "🎤", text: "Sua vez! Pode falar" };
+                ? { icon: "💭", text: T.thinking }
+                : { icon: "🎤", text: T.yourTurn };
 
   return (
     <div className="flex flex-1 flex-col items-center text-center">
       <audio ref={audio} autoPlay />
-      <ol className="flex gap-1.5" aria-label={`${stars.done} de ${stars.total} estrelas`}>
+      <ol className="flex gap-1.5" aria-label={T.stars(stars.done, stars.total)}>
         {Array.from({ length: stars.total }, (_, i) => (
           <li key={i} aria-hidden className={`text-3xl transition ${i < stars.done ? "animate-pop" : "opacity-25 grayscale"}`}>
             ⭐
@@ -328,31 +392,49 @@ export function VoiceLesson({
       {phase === "idle" || phase === "error" ? (
         <div className="mt-10 flex flex-col items-center">
           <Lumi size={150} mood="happy" className="animate-float" />
-          <h1 className="mt-4 font-display text-4xl font-semibold">Oi, {childName}!</h1>
-          <p className="mt-2 text-lg text-muted">A aula de hoje é uma conversa com o Lumi.</p>
-          <button type="button" onClick={begin} className="kid-btn mt-8 flex h-40 w-40 flex-col items-center justify-center gap-1 rounded-full bg-primary text-primary-foreground shadow-lift hover:bg-primary-strong" aria-label="Conversar com o Lumi">
+          <h1 className="mt-4 font-display text-4xl font-semibold">{T.hello(childName)}</h1>
+          <p className="mt-2 text-lg text-muted">{T.intro}</p>
+          <button type="button" onClick={begin} className="kid-btn mt-8 flex h-40 w-40 flex-col items-center justify-center gap-1 rounded-full bg-primary text-primary-foreground shadow-lift hover:bg-primary-strong" aria-label={T.startLabel}>
             <span className="text-6xl" aria-hidden>
               🎤
             </span>
-            <span className="text-xl">{phase === "error" ? "De novo" : "Conversar"}</span>
+            <span className="text-xl">{phase === "error" ? T.again : T.start}</span>
           </button>
           {error ? (
             <p role="alert" className="mt-6 max-w-md rounded-2xl bg-peach px-5 py-3 text-peach-ink">
               {error}
             </p>
           ) : (
-            <p className="mt-6 max-w-sm text-sm text-muted">Adulto: na primeira vez, o navegador pede permissão para usar o microfone.</p>
+            <p className="mt-6 max-w-sm text-sm text-muted">{T.micHint}</p>
           )}
           <a href={screenModeHref} className="mt-4 text-sm font-bold text-muted hover:text-foreground">
-            Fazer pela tela, sem voz
+            {T.screenMode}
           </a>
         </div>
       ) : (
         <div className="mt-8 flex w-full flex-1 flex-col items-center">
-          <div className="relative flex h-64 w-64 items-center justify-center">
+          <div className={`relative flex items-center justify-center transition-all ${board ? "h-28 w-28" : "h-64 w-64"}`}>
             <span aria-hidden className={`absolute inset-0 rounded-full bg-lavender transition-transform duration-300 ${speaking ? "scale-100 animate-pulse" : listening ? "scale-90 bg-mint" : "scale-75"}`} />
-            <Lumi size={170} mood={speaking ? "cheer" : thinking ? "think" : "happy"} className="relative" />
+            <Lumi size={board ? 80 : 170} mood={speaking ? "cheer" : thinking ? "think" : "happy"} className="relative" />
           </div>
+          {board ? (
+            <section aria-label={T.readHere} aria-live="polite" className="animate-pop mt-4 w-full rounded-3xl bg-surface px-6 py-8 shadow-lift">
+              {board.style === "choice" ? (
+                <>
+                  {board.text ? <p className="font-display text-2xl font-semibold text-muted">{board.text}</p> : null}
+                  <div className="mt-4 flex flex-wrap justify-center gap-4">
+                    {board.options.map((o) => (
+                      <button key={o} type="button" onClick={() => pick(o)} className="kid-btn min-w-28 rounded-3xl bg-sun px-6 py-5 font-display text-6xl font-semibold text-sun-ink shadow-lift hover:scale-105">
+                        {o}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <p className={`font-display font-semibold tracking-wide break-words ${BOARD_SIZE[board.style]}`}>{board.text}</p>
+              )}
+            </section>
+          ) : null}
           <p className="mt-4 flex items-center gap-2 font-display text-3xl font-semibold" role="status" aria-live="polite">
             <span aria-hidden>{status.icon}</span>
             {status.text}
@@ -361,16 +443,16 @@ export function VoiceLesson({
 
           <div className="mt-auto flex items-center gap-4 pt-10 pb-4">
             {phase === "paused" ? (
-              <button type="button" onClick={resume} className="kid-btn flex h-24 w-24 items-center justify-center rounded-full bg-primary text-5xl text-primary-foreground shadow-lift" aria-label="Continuar">
+              <button type="button" onClick={resume} className="kid-btn flex h-24 w-24 items-center justify-center rounded-full bg-primary text-5xl text-primary-foreground shadow-lift" aria-label={T.resume}>
                 ▶️
               </button>
             ) : (
-              <button type="button" onClick={pause} disabled={phase !== "live"} className="kid-btn flex h-24 w-24 items-center justify-center rounded-full bg-sun text-5xl text-sun-ink shadow-lift disabled:opacity-50" aria-label="Pausar">
+              <button type="button" onClick={pause} disabled={phase !== "live"} className="kid-btn flex h-24 w-24 items-center justify-center rounded-full bg-sun text-5xl text-sun-ink shadow-lift disabled:opacity-50" aria-label={T.pause}>
                 ⏸️
               </button>
             )}
             <button type="button" onClick={() => setShowCaptions((v) => !v)} className="btn btn-ghost btn-sm" aria-pressed={showCaptions}>
-              {showCaptions ? "Esconder legenda" : "Mostrar legenda"}
+              {showCaptions ? T.hideCaptions : T.showCaptions}
             </button>
           </div>
         </div>

@@ -33,6 +33,7 @@ const FILLER = /^(h+m+|h+u+m+|u+h+m*|u+m+|a+h+n*|e+h+|e+r+m*|hein)$/;
 const NON_ATTEMPTS = new Set([
   "nao sei", "eu nao sei", "nao sei nao", "sei la", "nao lembro", "nao me lembro", "eu nao lembro", "esqueci", "eu esqueci", "nao faco ideia", "nao sei falar",
   "i dont know", "dont know", "i dont remember", "i forgot", "no idea", "idk",
+  "no se", "yo no se", "no lo se", "ni idea", "no me acuerdo", "no lo recuerdo", "se me olvido",
 ]);
 /** Common Portuguese words, written without accents as normalisation leaves them. */
 const PORTUGUESE_WORDS = new Set(

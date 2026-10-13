@@ -32,7 +32,7 @@ const baseFile = () => ({
 
 describe("curriculum validation", () => {
   it("accepts every shipped curriculum file", () => {
-    for (const f of ["english-starters", "english-movers", "demo-english", "demo-mathematics"]) {
+    for (const f of ["english-starters", "english-movers", "alfabetizacion-es", "demo-english", "demo-mathematics"]) {
       const r = parseCurriculumYaml(readFileSync(`curricula/${f}.yaml`, "utf8"));
       expect(r.ok, `${f}: ${!r.ok ? r.errors.join("; ") : ""}`).toBe(true);
     }

@@ -203,6 +203,27 @@ below runs in CI (`.github/workflows/ci.yml`) against Postgres 16.
   - Enrolments made before the level cards carried no target language; the
     context pack now falls back to the curriculum's, which had made the AI
     produce Portuguese-only practice.
+- **Literacy in Spanish, gamified (2026-10-13):** a second kind of track,
+  learning to read and write in the child's own language.
+  - Curriculum `curricula/alfabetizacion-es.yaml` (subject `literacy`, taught
+    in Spanish): six islands, from sounds and rhymes through the vowels, m p
+    l s, t n d, writing, then c f b r; 25 objectives. A unit test checks that
+    no written word uses a letter not taught yet. Loaded by `deploy:migrate`.
+  - Literacy mode is chosen by the subject (`lib/literacy`). Lumi speaks only
+    Spanish, teaches letters by sound, then syllables, words and sentences
+    (`literacy.v1`, `lib/ai/literacy.ts`); activity generation, the ChatGPT
+    script (with the paper cards the adult holds), the level check and the
+    closing rules have literacy versions; the Portuguese rule in grading does
+    not apply.
+  - The live voice lesson gets a fifth tool, `show_on_screen`, executed by the
+    browser alone: a letter, syllable, word, sentence or 2-4 cards the child
+    can touch (a touch is the answer). Transcription is pinned to Spanish.
+  - Game layer: lessons are missions on an island, activities are levels that
+    win stars, the end of a mission gives a sticker; the letter album
+    (`lib/lessons/album.ts`) shows grey, coloured and gold stickers from the
+    system's own state, never setting it. The child's screens are in Spanish
+    for literacy; adult screens stay in Portuguese.
+  - First steps offer the track (Inglês or Alfabetização em espanhol).
 - **pnpm hoisted linker** because the isolated layout produced two copies of
   Next.js and broke the production build.
 

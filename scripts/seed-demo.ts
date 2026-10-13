@@ -49,6 +49,7 @@ export async function seedDemo(dbh: ReturnType<typeof createDb>) {
   // Catalogue (real, public).
   const startersVersionId = await importFile(dbh, "curricula/english-starters.yaml", { demo: false });
   await importFile(dbh, "curricula/english-movers.yaml", { demo: false });
+  await importFile(dbh, "curricula/alfabetizacion-es.yaml", { demo: false });
   // Demo curricula.
   const demoEnglishVersionId = await importFile(dbh, "curricula/demo-english.yaml", { demo: true });
   const demoMathsVersionId = await importFile(dbh, "curricula/demo-mathematics.yaml", { demo: true });

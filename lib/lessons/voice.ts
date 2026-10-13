@@ -13,6 +13,9 @@ import { hasAiConsent, requestActivityContent } from "./ai-proposals";
 import { recordEvidence } from "./service";
 import { log, metric } from "@/lib/logging/logger";
 import { ACTIVITY } from "@/lib/copy/pt";
+import { KID_ACTIVITY_ES } from "@/lib/copy/es";
+import { isLiteracyPack } from "@/lib/literacy";
+import { isLiteracySubjectId } from "./mode";
 import type { ContextPack } from "@/schemas/context-pack";
 
 /**
@@ -47,7 +50,7 @@ export async function voiceAvailable(studentId: string, providerId: string, dbh:
 }
 
 /** Items for the current activity, from the AI proposal when there is one, else from the curriculum's own prompts. */
-function briefFrom(state: PlayState): VoiceActivityBrief | null {
+function briefFrom(state: PlayState, literacy = false): VoiceActivityBrief | null {
   const current = state.current;
   if (!current) return null;
   const done = new Set(state.currentEvidence.map((e) => e.prompt));
@@ -73,7 +76,7 @@ function briefFrom(state: PlayState): VoiceActivityBrief | null {
     activity_number: state.completedCount + 1,
     activities_total: state.activities.length,
     activity_type: current.activityType,
-    label: ACTIVITY[current.activityType].kid,
+    label: literacy ? KID_ACTIVITY_ES[current.activityType] : ACTIVITY[current.activityType].kid,
     purpose: current.instructions,
     intro,
     scene: proposal?.scene ?? null,
@@ -85,6 +88,7 @@ function briefFrom(state: PlayState): VoiceActivityBrief | null {
 
 /** The lesson as a whole, for the opening: theme, why it matters, the can-do goal, the module and the plan. */
 export function lessonOverview(state: PlayState, pack: ContextPack): VoiceLessonOverview {
+  const kid = (t: keyof typeof ACTIVITY) => (isLiteracyPack(pack) ? KID_ACTIVITY_ES[t] : ACTIVITY[t].kid);
   const primary = state.primaryObjective;
   const notes = (primary.teachingNotes ?? {}) as Notes;
   const opening = (state.lesson.planPayload as { opening?: Opening | null }).opening ?? null;
@@ -101,7 +105,7 @@ export function lessonOverview(state: PlayState, pack: ContextPack): VoiceLesson
     situation_ideas: (notes.activity_ideas ?? []).slice(0, 3),
     module: opening ? { name: opening.unit_name, goals: opening.unit_objectives.map((o) => o.title) } : { name: pack.current_unit.name, goals: [] },
     previous_lesson: prev ? { practised: prev.objectives_practised.map((o) => o.title), went_well: prev.what_went_well.slice(0, 2), was_hard: prev.what_was_hard.slice(0, 2) } : null,
-    plan: state.activities.map((a) => ({ step: a.sequence, activity_type: a.activityType, label: ACTIVITY[a.activityType].kid, minutes: a.plannedMinutes ?? 0, done: done.has(a.id) })),
+    plan: state.activities.map((a) => ({ step: a.sequence, activity_type: a.activityType, label: kid(a.activityType), minutes: a.plannedMinutes ?? 0, done: done.has(a.id) })),
     minutes: state.lesson.plannedDurationMinutes ?? 20,
   };
 }
@@ -128,10 +132,10 @@ export async function voiceBrief(access: StudentAccess, provider: AIProvider, le
     }
     state = await getPlayState(access, lessonId, dbh);
   }
-  return briefFrom(state);
+  return briefFrom(state, await isLiteracySubjectId(state.lesson.subjectId, dbh));
 }
 
-export type VoiceSessionTicket = { clientSecret: string; expiresAt: number; callsUrl: string; model: string; activitiesTotal: number; completed: number };
+export type VoiceSessionTicket = { clientSecret: string; expiresAt: number; callsUrl: string; model: string; activitiesTotal: number; completed: number; literacy: boolean };
 
 /** Starts (if needed) the lesson and mints a client secret for a live voice session configured for it. */
 export async function openVoiceSession(access: StudentAccess, provider: AIProvider, quality: AiQuality, lessonId: string, dbh: DbOrTx = db()): Promise<VoiceSessionTicket> {
@@ -149,7 +153,11 @@ export async function openVoiceSession(access: StudentAccess, provider: AIProvid
   const { pack } = await buildLessonContext(access, state.lesson.subjectId, lessonId, {}, dbh);
   const overview = lessonOverview(await getPlayState(access, lessonId, dbh), pack);
   const model = realtimeModelFor(quality);
+  const literacy = isLiteracyPack(pack);
   const session = buildRealtimeSession({
+    literacy,
+    // Literacy answers are single sounds and syllables; naming the language keeps "ma" from being heard as English.
+    language: literacy ? pack.student.instruction_language : undefined,
     model,
     voice: env.OPENAI_REALTIME_VOICE,
     transcriptionModel: env.OPENAI_TRANSCRIBE_MODEL,
@@ -162,7 +170,7 @@ export async function openVoiceSession(access: StudentAccess, provider: AIProvid
     throw new ValidationError("The voice service did not answer. Try again in a moment.");
   }
   metric("voice_session_opened", { lessonId, model });
-  return { clientSecret: secret.value.value, expiresAt: secret.value.expiresAt, callsUrl: realtimeCallsUrl(env.OPENAI_BASE_URL), model, activitiesTotal: state.activities.length, completed: state.completedCount };
+  return { clientSecret: secret.value.value, expiresAt: secret.value.expiresAt, callsUrl: realtimeCallsUrl(env.OPENAI_BASE_URL), model, activitiesTotal: state.activities.length, completed: state.completedCount, literacy };
 }
 
 export type VoiceAnswerInput = { item_number: number; child_said: string; judgement: VoiceJudgement; heard?: string | null };

@@ -7,6 +7,10 @@ import { matchAnswer, isNonAttempt, portugueseShare, ANSWER_MATCH_POLICY } from 
 import { ACTIVITY } from "@/lib/copy/pt";
 import { externalClosingSchema, extractClosingJson, type ExternalClosing } from "@/schemas/external-closing";
 import { renderExternalLessonPrompt, renderExternalClosingRequest, renderExternalPlacementPrompt, materialFor, EXTERNAL_PROMPT_VERSION } from "./external-prompt";
+import { renderLiteracyExternalPrompt, renderLiteracyPlacementPrompt, cardsFor } from "./literacy-prompt";
+import { isLiteracyPack } from "@/lib/literacy";
+import { isLiteracySubjectId } from "./mode";
+import { KID_ACTIVITY_ES } from "@/lib/copy/es";
 import { lessonOverview } from "./voice";
 import { getPlayState } from "./play";
 import { getLesson, startLesson, recordEvidence, recordLessonEvent, completeLesson } from "./service";
@@ -37,6 +41,7 @@ export async function buildExternalLesson(access: StudentAccess, lessonId: strin
   if (state.lesson.status === "COMPLETED" || state.lesson.status === "CANCELLED") throw new ConflictError("Esta aula já terminou.");
   const { pack } = await buildLessonContext(access, state.lesson.subjectId, lessonId, {}, dbh);
   const overview = lessonOverview(state, pack);
+  const literacy = isLiteracyPack(pack);
   type Notes = { vocabulary?: string[]; structures?: string[] };
   const notesOf = (o: { teachingNotes: unknown } | undefined | null) => (o?.teachingNotes ?? {}) as Notes;
   const objectiveById = new Map(state.objectives.map((o) => [o.id, o]));
@@ -45,7 +50,7 @@ export async function buildExternalLesson(access: StudentAccess, lessonId: strin
     const isReview = Boolean(objective && objective.id !== state.primaryObjective.id);
     return {
       sequence: a.sequence,
-      label: ACTIVITY[a.activityType].kid,
+      label: literacy ? KID_ACTIVITY_ES[a.activityType] : ACTIVITY[a.activityType].kid,
       activity_type: a.activityType,
       instructions: a.instructions,
       minutes: a.plannedMinutes ?? 0,
@@ -64,8 +69,9 @@ export async function buildExternalLesson(access: StudentAccess, lessonId: strin
     });
     const labelled = activities.map((a) => ({ ...a, label: a.activity_type === "ORIENTATION" ? "Abertura do teste" : `Teste: ${probes.find((p) => p.sequence === a.sequence)?.unit_name ?? a.label}` }));
     return {
-      prompt: renderExternalPlacementPrompt({ pack, probes }),
-      closingRequest: renderExternalClosingRequest({ childName: pack.student.display_name, lessonCode: code, activities: labelled }),
+      prompt: literacy ? renderLiteracyPlacementPrompt({ pack, probes }) : renderExternalPlacementPrompt({ pack, probes }),
+      closingRequest: renderExternalClosingRequest({ childName: pack.student.display_name, lessonCode: code, activities: labelled, literacy }),
+      cards: literacy ? cardsFor(probes.flatMap((p) => p.vocabulary.slice(0, 4)), []) : [],
       code,
       state,
     };
@@ -73,8 +79,9 @@ export async function buildExternalLesson(access: StudentAccess, lessonId: strin
   const primary = notesOf(state.primaryObjective);
   const material = materialFor(overview.stage, primary.vocabulary ?? [], (primary.structures ?? []).slice(0, 6), pack.pedagogical_constraints.max_new_vocabulary_items);
   return {
-    prompt: renderExternalLessonPrompt({ pack, overview, activities, material }),
-    closingRequest: renderExternalClosingRequest({ childName: pack.student.display_name, lessonCode: code, activities }),
+    prompt: literacy ? renderLiteracyExternalPrompt({ pack, overview, activities, cards: cardsFor(primary.vocabulary ?? [], primary.structures ?? []) }) : renderExternalLessonPrompt({ pack, overview, activities, material }),
+    closingRequest: renderExternalClosingRequest({ childName: pack.student.display_name, lessonCode: code, activities, literacy }),
+    cards: literacy ? cardsFor(primary.vocabulary ?? [], primary.structures ?? []) : [],
     code,
     state,
   };
@@ -119,12 +126,13 @@ const RESULT_RANK: Record<EvidenceResult, number> = { NOT_ASSESSED: -1, INCORREC
  * holds ChatGPT to its own rule: an English answer given only in Portuguese
  * ("Marrom." for brown) is partial, never correct.
  */
-export function gradeExternalAttempt(judgement: EvidenceResult, said: string | null, expected: string | null) {
+export function gradeExternalAttempt(judgement: EvidenceResult, said: string | null, expected: string | null, literacy = false) {
   const base = { policy: ANSWER_MATCH_POLICY.version, reason: `external_judgement:${judgement}` };
   if (said && isNonAttempt(said)) return { ...base, result: "NOT_ASSESSED" as const, method: "no_attempt", reason: `${base.reason},no_attempt` };
   const m = said && expected ? matchAnswer(said, [expected]) : null;
   if (m && RESULT_RANK[m.result] > RESULT_RANK[judgement]) return { ...base, result: m.result, method: `${m.method}_match`, reason: `${base.reason},raised_by_system` };
-  if (m && m.result === "INCORRECT" && judgement === "CORRECT" && portugueseShare(expected!) === 0 && portugueseShare(said!) >= 0.5) {
+  // The Portuguese rule is about English lessons; a literacy answer is in the child's own language.
+  if (!literacy && m && m.result === "INCORRECT" && judgement === "CORRECT" && portugueseShare(expected!) === 0 && portugueseShare(said!) >= 0.5) {
     return { ...base, result: "PARTIALLY_CORRECT" as const, method: "external_judgement", reason: `${base.reason},portuguese_only` };
   }
   return { ...base, result: judgement, method: "external_judgement", reason: m ? `${base.reason},system:${m.result}` : base.reason };
@@ -150,6 +158,7 @@ export async function recordExternalClosing(access: StudentAccess, lessonId: str
   if (attempts === 0 && !closing.summary) throw new ValidationError("O fechamento veio vazio: nenhuma tentativa e nenhum resumo.");
 
   if (detail.lesson.status === "PLANNED") await startLesson(access, lessonId, dbh);
+  const literacy = await isLiteracySubjectId(detail.lesson.subjectId, dbh);
   const completed = new Set(detail.events.filter((e) => e.eventType === "ACTIVITY_COMPLETED" && e.activityId).map((e) => e.activityId!));
   let recorded = 0;
   for (const reported of [...closing.activities].sort((a, b) => a.activity - b.activity)) {
@@ -158,7 +167,7 @@ export async function recordExternalClosing(access: StudentAccess, lessonId: str
       for (const at of reported.attempts) {
         const said = at.child_said?.trim() || null;
         const key = at.expected?.trim() || null;
-        const graded = gradeExternalAttempt(at.result, said, key);
+        const graded = gradeExternalAttempt(at.result, said, key, literacy);
         await recordEvidence(
           access,
           {

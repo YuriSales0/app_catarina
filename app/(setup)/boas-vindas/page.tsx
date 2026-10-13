@@ -16,12 +16,13 @@ import { Lumi, LumiSays } from "@/components/brand/lumi";
 import { Field, ageYears } from "@/components/ui";
 import { onboardChildAction, onboardLevelAction, onboardAiAction } from "./actions";
 import { startTodayAction } from "@/app/(parent)/lessons/today-actions";
+import { LITERACY_SUBJECT } from "@/lib/literacy";
 
 export const metadata = { title: "Primeiros passos" };
 
 const STEPS = ["Criança", "Nível", "IA", "Pronto"];
 
-export default async function WelcomePage(props: { searchParams: Promise<{ passo?: string; crianca?: string }> }) {
+export default async function WelcomePage(props: { searchParams: Promise<{ passo?: string; crianca?: string; trilha?: string }> }) {
   await requireActor();
   const sp = await props.searchParams;
   const step = Math.min(4, Math.max(1, Number(sp.passo) || 1));
@@ -32,7 +33,7 @@ export default async function WelcomePage(props: { searchParams: Promise<{ passo
     <div className="space-y-8">
       <Stepper current={step} />
       {step === 1 ? <ChildStep /> : null}
-      {step > 1 && childId ? <ChildSteps step={step} childId={childId} /> : null}
+      {step > 1 && childId ? <ChildSteps step={step} childId={childId} literacy={sp.trilha === "alfabetizacao"} /> : null}
     </div>
   );
 }
@@ -59,12 +60,42 @@ function Stepper({ current }: { current: number }) {
   );
 }
 
+/** Step 2's title and the choice of track: English, or literacy in Spanish when that curriculum is published. */
+async function StepTwoHeader({ name, avatar, childId, literacy }: { name: string; avatar: ReturnType<typeof avatarOf>; childId: string; literacy: boolean }) {
+  const hasLiteracy = await getSubjectBySlug(LITERACY_SUBJECT).then(
+    () => true,
+    () => false,
+  );
+  const tab = (active: boolean) => `rounded-full px-4 py-2 text-sm font-bold ${active ? "bg-primary text-primary-foreground" : "bg-surface-2 text-muted hover:text-foreground"}`;
+  return (
+    <>
+      <div className="flex items-center gap-4">
+        <Avatar choice={avatar} size="lg" />
+        <div>
+          <h1 className="font-display text-2xl font-semibold">Qual é o ponto de partida de {name}?</h1>
+          <p className="text-sm text-muted">Cada trilha começa do básico. Dá para mudar depois, e o avanço já feito é preservado.</p>
+        </div>
+      </div>
+      {hasLiteracy ? (
+        <nav aria-label="O que vai aprender" className="flex flex-wrap gap-2">
+          <Link href={`/boas-vindas?passo=2&crianca=${childId}`} className={tab(!literacy)} aria-current={!literacy ? "page" : undefined}>
+            🇬🇧 Inglês
+          </Link>
+          <Link href={`/boas-vindas?passo=2&crianca=${childId}&trilha=alfabetizacao`} className={tab(literacy)} aria-current={literacy ? "page" : undefined}>
+            🔤 Alfabetização em espanhol
+          </Link>
+        </nav>
+      ) : null}
+    </>
+  );
+}
+
 function ChildStep() {
   return (
     <div className="grid items-start gap-8 lg:grid-cols-[1fr_1.4fr]">
       <div className="lg:pt-6">
         <LumiSays mood="cheer" size={88}>
-          Oi! Eu sou o Lumi. Quem vai aprender inglês comigo?
+          Oi! Eu sou o Lumi. Quem vai aprender comigo?
         </LumiSays>
         <p className="mt-6 text-sm text-muted">O primeiro nome basta. A data de nascimento ajuda a sugerir o nível e a deixar as atividades do tamanho certo.</p>
       </div>
@@ -84,7 +115,7 @@ function ChildStep() {
   );
 }
 
-async function ChildSteps({ step, childId }: { step: number; childId: string }) {
+async function ChildSteps({ step, childId, literacy }: { step: number; childId: string; literacy: boolean }) {
   const actor = await requireActor();
   const { access, student } = await or404(async () => {
     const access = await requireStudentAccess(actor, childId, "VIEW");
@@ -93,6 +124,21 @@ async function ChildSteps({ step, childId }: { step: number; childId: string }) 
   const avatar = avatarOf(student);
   const age = ageYears(student.dateOfBirth);
 
+  if (step === 2 && literacy) {
+    return (
+      <div className="card space-y-6">
+        <StepTwoHeader name={student.name} avatar={avatar} childId={student.id} literacy />
+        <ActionForm action={onboardLevelAction} submitLabel="Continuar" size="lg" className="space-y-6">
+          <input type="hidden" name="studentId" value={student.id} />
+          <input type="hidden" name="track" value="literacy" />
+          <ExperiencePicker name={student.name} literacy />
+          <MinutesPicker value={15} />
+          <p className="text-xs text-muted">A alfabetização é em espanhol, com o Lumi falando só espanhol. As telas para o adulto continuam em português.</p>
+        </ActionForm>
+      </div>
+    );
+  }
+
   if (step === 2) {
     const english = await getSubjectBySlug("english");
     const versions = await listPublishedVersionsForSubject(actor, english.id);
@@ -100,13 +146,7 @@ async function ChildSteps({ step, childId }: { step: number; childId: string }) 
     const options = (real.length ? real : versions).map((v) => ({ versionId: v.versionId, curriculumName: v.curriculumName, version: v.version, isDemo: v.isDemo }));
     return (
       <div className="card space-y-6">
-        <div className="flex items-center gap-4">
-          <Avatar choice={avatar} size="lg" />
-          <div>
-            <h1 className="font-display text-2xl font-semibold">Qual é o ponto de partida de {student.name}?</h1>
-            <p className="text-sm text-muted">Cada trilha começa do básico. Dá para mudar depois, e o avanço já feito é preservado.</p>
-          </div>
-        </div>
+        <StepTwoHeader name={student.name} avatar={avatar} childId={student.id} literacy={false} />
         <ActionForm action={onboardLevelAction} submitLabel="Continuar" size="lg" className="space-y-6">
           <input type="hidden" name="studentId" value={student.id} />
           <ExperiencePicker name={student.name}>

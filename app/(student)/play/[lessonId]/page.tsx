@@ -19,6 +19,10 @@ import { voiceAvailable } from "@/lib/lessons/voice";
 import { playStartAction, playNextAction, playMarkAction, playFinishAction, playPrepareAction, playAnswerAction } from "./actions";
 import { startVoiceAction, voiceToolAction, voicePrefetchAction } from "./voice-actions";
 import type { Opening } from "@/lib/lessons/opening";
+import { isLiteracySubjectId } from "@/lib/lessons/mode";
+import { getLetterAlbum } from "@/lib/lessons/album";
+import { KID_ACTIVITY_ES } from "@/lib/copy/es";
+import { LetterAlbum } from "@/components/student/letter-album";
 
 export const metadata = { title: "Aula" };
 
@@ -58,7 +62,8 @@ export default async function PlayPage(props: { params: Promise<{ lessonId: stri
   });
   const { lesson, student, current, objective, activities, completedCount, attemptsInCurrent, primaryObjective } = state;
   const avatar = avatarOf(student);
-  const [provider, consent] = await Promise.all([getAIProvider(), hasAiConsent(student.id)]);
+  const [provider, consent, literacy] = await Promise.all([getAIProvider(), hasAiConsent(student.id), isLiteracySubjectId(lesson.subjectId)]);
+  const es = literacy;
   const live = lesson.status === "PLANNED" || lesson.status === "IN_PROGRESS";
   const voiceOn = live && Boolean(current) && modo !== "tela" && (await voiceAvailable(student.id, provider.id));
 
@@ -71,7 +76,7 @@ export default async function PlayPage(props: { params: Promise<{ lessonId: stri
             Adulto
           </Link>
         </div>
-        <VoiceLesson lessonId={lesson.id} childName={student.name} total={activities.length} completed={completedCount} start={startVoiceAction} runTool={voiceToolAction} prefetch={voicePrefetchAction} screenModeHref={`/play/${lesson.id}?modo=tela`} />
+        <VoiceLesson lessonId={lesson.id} childName={student.name} total={activities.length} completed={completedCount} start={startVoiceAction} runTool={voiceToolAction} prefetch={voicePrefetchAction} screenModeHref={`/play/${lesson.id}?modo=tela`} lang={es ? "es" : "pt"} />
         {lesson.status === "IN_PROGRESS" ? (
           <details className="mb-6 rounded-2xl bg-surface-2 px-4 py-3 text-sm">
             <summary className="cursor-pointer font-bold text-muted">Para o adulto</summary>
@@ -95,14 +100,15 @@ export default async function PlayPage(props: { params: Promise<{ lessonId: stri
           <Avatar choice={avatar} size="xl" className="animate-pop" />
           <Lumi size={110} mood="cheer" className="animate-float" />
         </div>
-        <h1 className="mt-6 font-display text-4xl font-semibold">Oi, {student.name}!</h1>
+        <h1 className="mt-6 font-display text-4xl font-semibold">{es ? `¡Hola, ${student.name}!` : `Oi, ${student.name}!`}</h1>
         <p className="mt-2 text-xl">
-          Hoje vamos aprender: <strong className="font-display">{primaryObjective.title}</strong>
+          {es ? "Misión de hoy: " : "Hoje vamos aprender: "}
+          <strong className="font-display">{primaryObjective.title}</strong>
         </p>
         <form action={playStartAction} className="mt-10 w-full">
           <input type="hidden" name="lessonId" value={lesson.id} />
           <button type="submit" className="kid-btn w-full bg-primary py-7 text-3xl text-primary-foreground shadow-lift hover:bg-primary-strong">
-            Começar! 🚀
+            {es ? "¡A la misión! 🚀" : "Começar! 🚀"}
           </button>
         </form>
         <Link href={`/lessons/${lesson.id}`} className="mt-8 text-sm font-bold text-muted hover:text-foreground">
@@ -114,6 +120,7 @@ export default async function PlayPage(props: { params: Promise<{ lessonId: stri
 
   if (lesson.status === "COMPLETED" || lesson.status === "CANCELLED") {
     const done = lesson.status === "COMPLETED";
+    const album = es ? await getLetterAlbum(await requireStudentAccess(actor, student.id, "VIEW"), lesson.subjectId).catch(() => null) : null;
     return (
       <main className="flex w-full max-w-xl flex-1 flex-col items-center justify-center text-center">
         {done ? <Confetti /> : null}
@@ -121,11 +128,11 @@ export default async function PlayPage(props: { params: Promise<{ lessonId: stri
           <Avatar choice={avatar} size="xl" className="animate-pop" />
           <Lumi size={120} mood="cheer" className="animate-float" />
         </div>
-        <h1 className="relative mt-6 font-display text-4xl font-semibold">{done ? `Parabéns, ${student.name}!` : `Até a próxima, ${student.name}!`}</h1>
+        <h1 className="relative mt-6 font-display text-4xl font-semibold">{es ? (done ? `¡Misión cumplida, ${student.name}!` : `¡Hasta la próxima, ${student.name}!`) : done ? `Parabéns, ${student.name}!` : `Até a próxima, ${student.name}!`}</h1>
         {done ? (
           <>
             <p className="relative mt-3 text-xl">
-              Você completou {completedCount} {completedCount === 1 ? "atividade" : "atividades"} hoje!
+              {es ? `¡Has ganado ${completedCount} ${completedCount === 1 ? "estrella" : "estrellas"} hoy!` : `Você completou ${completedCount} ${completedCount === 1 ? "atividade" : "atividades"} hoje!`}
             </p>
             <p className="relative mt-4 flex flex-wrap justify-center gap-1 text-4xl" aria-hidden>
               {Array.from({ length: Math.max(1, completedCount) }, (_, i) => (
@@ -136,11 +143,16 @@ export default async function PlayPage(props: { params: Promise<{ lessonId: stri
             </p>
           </>
         ) : (
-          <p className="relative mt-3 text-xl">Essa aula foi encerrada.</p>
+          <p className="relative mt-3 text-xl">{es ? "Esta misión ha terminado." : "Essa aula foi encerrada."}</p>
         )}
+        {album ? (
+          <div className="relative mt-8 w-full">
+            <LetterAlbum islands={album} />
+          </div>
+        ) : null}
         <div className="relative mt-10 flex flex-col items-center gap-3">
           <Link href="/criancas" className="kid-btn bg-primary text-primary-foreground shadow-lift">
-            Voltar ao início
+            {es ? "Volver al mapa" : "Voltar ao início"}
           </Link>
           <Link href={`/lessons/${lesson.id}/report`} className="text-sm font-bold text-muted hover:text-foreground">
             Adulto: ver como foi a aula
@@ -188,7 +200,7 @@ export default async function PlayPage(props: { params: Promise<{ lessonId: stri
           <div className="mt-8 text-center">
             <div className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 font-display text-lg font-semibold ${TONE[ACTIVITY[current.activityType].tone].bg} ${TONE[ACTIVITY[current.activityType].tone].ink}`}>
               <span aria-hidden>{ACTIVITY[current.activityType].emoji}</span>
-              <h1>{ACTIVITY[current.activityType].kid}</h1>
+              <h1>{es ? KID_ACTIVITY_ES[current.activityType] : ACTIVITY[current.activityType].kid}</h1>
             </div>
             {objective ? <p className="mt-3 font-display text-3xl font-semibold">{objective.title}</p> : null}
           </div>

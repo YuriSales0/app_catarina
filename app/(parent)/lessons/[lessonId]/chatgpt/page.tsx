@@ -62,6 +62,21 @@ export default async function ExternalLessonPage(props: { params: Promise<{ less
               <textarea id="roteiro" readOnly rows={14} className="input font-mono text-xs leading-relaxed" defaultValue={external.prompt} />
             </Section>
 
+            {external.cards.length ? (
+              <Section title="Antes de começar: prepare os cartões">
+                <p className="text-sm text-muted">
+                  Aula de alfabetização: o ChatGPT não mostra nada na tela durante a voz, então o Lumi vai pedir para você mostrar cartões. Escreva cada um em letra grande num papel (um por folha ou recorte) e deixe ao seu lado.
+                </p>
+                <ul className="mt-3 flex flex-wrap gap-2">
+                  {external.cards.map((c) => (
+                    <li key={c} className="rounded-xl bg-surface-2 px-3 py-2 font-display text-2xl font-semibold">
+                      {c}
+                    </li>
+                  ))}
+                </ul>
+              </Section>
+            ) : null}
+
             <Section title="3. Peça o fechamento" aside={<CopyButton targetId="pedido" label="Copiar pedido" />}>
               <p className="text-sm text-muted">
                 Quando a aula acabar, saia do modo voz e cole este pedido <strong>na mesma conversa</strong>. O ChatGPT responde com o bloco de fechamento da aula, montado a partir da conversa.

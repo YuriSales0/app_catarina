@@ -75,6 +75,8 @@ export async function enrolAction(_prev: ActionState, formData: FormData): Promi
         if (!v) continue;
         rest.subjectId = sub.id;
         rest.targetLanguage ??= v.targetLanguage ?? undefined;
+        // A curriculum taught in another language (literacy in Spanish) is taught in it by default.
+        rest.instructionLanguage ??= v.instructionLanguage ?? undefined;
         rest.targetLevel ??= describeLevel(v.curriculumName).cefr ?? undefined;
         break;
       }

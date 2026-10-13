@@ -166,7 +166,7 @@ export function renderExternalLessonPrompt(input: { pack: ContextPack; overview:
  * Self-contained, so it does not depend on the model remembering a format
  * from the start of a long voice conversation.
  */
-export function renderExternalClosingRequest(input: { childName: string; lessonCode: string; activities: Array<Pick<ExternalActivity, "sequence" | "label">> }): string {
+export function renderExternalClosingRequest(input: { childName: string; lessonCode: string; activities: Array<Pick<ExternalActivity, "sequence" | "label">>; literacy?: boolean }): string {
   const template = {
     format: EXTERNAL_CLOSING_FORMAT,
     lesson_code: input.lessonCode,
@@ -189,7 +189,9 @@ export function renderExternalClosingRequest(input: { childName: string; lessonC
     `- Mantenha lesson_code "${input.lessonCode}" e format como estão.`,
     `- activities: uma entrada para cada atividade que realmente aconteceu, com o número dela (${input.activities.map((a) => `${a.sequence} = ${a.label}`).join("; ")}). Deixe de fora as que não aconteceram.`,
     "- attempts: cada pergunta que você fez e a PRIMEIRA resposta dela, na ordem. Não invente: se não lembrar exatamente o que ela disse, use child_said null e result NOT_ASSESSED.",
-    "- result: CORRECT quando o sentido está certo e dá para reconhecer as palavras (mesmo com sotaque); PARTIALLY_CORRECT quando acertou parte, misturou línguas ou respondeu a ideia certa em português; INCORRECT quando o sentido está errado; NOT_ASSESSED quando não deu para ouvir ou não houve tentativa.",
+    input.literacy
+      ? "- result (leitura): CORRECT quando disse o som, a sílaba, a palavra ou o cartão certo, mesmo devagar ou som por som se depois juntou; PARTIALLY_CORRECT quando acertou parte (uma sílaba de duas, o nome da letra em vez do som, a palavra adivinhada com ajuda); INCORRECT quando foi outro som ou outra palavra; NOT_ASSESSED quando não deu para ouvir ou não houve tentativa."
+      : "- result: CORRECT quando o sentido está certo e dá para reconhecer as palavras (mesmo com sotaque); PARTIALLY_CORRECT quando acertou parte, misturou línguas ou respondeu a ideia certa em português; INCORRECT quando o sentido está errado; NOT_ASSESSED quando não deu para ouvir ou não houve tentativa.",
     "- minutes: quanto tempo a aula durou, em minutos, se você souber pela conversa; senão deixe null. Não chute.",
     "- Nada de texto depois do bloco.",
   ].join("\n");

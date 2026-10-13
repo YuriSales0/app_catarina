@@ -77,15 +77,20 @@ export function LevelPicker({ options, suggested, current }: { options: LevelOpt
  * family picks the track. Starting from zero is preselected: it is the safe
  * default and never skips anything.
  */
-export function ExperiencePicker({ name, children }: { name: string; children?: React.ReactNode }) {
-  const options = [
-    { value: "BEGINNER", emoji: "🌱", title: "Está começando agora", text: `Nunca estudou inglês ou só conhece palavras soltas. ${name} começa do comecinho: cumprimentos, pessoas, números, cores.` },
-    { value: "TEST", emoji: "🧭", title: "Já teve contato com inglês", text: "Na escola, em curso ou em casa. A primeira aula é um teste rápido de nível, sem nota, e o app sugere por onde começar. Você confirma." },
-    { value: "CHOSEN", emoji: "🗺️", title: "Prefiro escolher a trilha", text: "Você escolhe o nível abaixo e as aulas começam do início dele." },
-  ];
+export function ExperiencePicker({ name, children, literacy = false }: { name: string; children?: React.ReactNode; literacy?: boolean }) {
+  const options = literacy
+    ? [
+        { value: "BEGINNER", emoji: "🌱", title: "Está começando agora", text: `Ainda não lê. ${name} começa do comecinho: brincar com os sons, depois as vogais, depois as sílabas.` },
+        { value: "TEST", emoji: "🧭", title: "Já conhece algumas letras", text: "Reconhece vogais ou lê sílabas. A primeira aula é um jogo rápido de nível, sem nota, e o app sugere em que ilha começar. Você confirma." },
+      ]
+    : [
+        { value: "BEGINNER", emoji: "🌱", title: "Está começando agora", text: `Nunca estudou inglês ou só conhece palavras soltas. ${name} começa do comecinho: cumprimentos, pessoas, números, cores.` },
+        { value: "TEST", emoji: "🧭", title: "Já teve contato com inglês", text: "Na escola, em curso ou em casa. A primeira aula é um teste rápido de nível, sem nota, e o app sugere por onde começar. Você confirma." },
+        { value: "CHOSEN", emoji: "🗺️", title: "Prefiro escolher a trilha", text: "Você escolhe o nível abaixo e as aulas começam do início dele." },
+      ];
   return (
     <fieldset className="space-y-3">
-      <legend className="mb-1 text-sm font-bold">{name} já teve contato com inglês?</legend>
+      <legend className="mb-1 text-sm font-bold">{literacy ? `${name} já reconhece letras?` : `${name} já teve contato com inglês?`}</legend>
       {options.map((o) => (
         <label key={o.value} className="choice flex gap-4">
           <input type="radio" name="experience" value={o.value} defaultChecked={o.value === "BEGINNER"} required className="sr-only" />

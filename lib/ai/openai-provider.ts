@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isLiteracyPack, LITERACY_ACTIVITY_HINT } from "./literacy";
 import type { AIProvider, Result, ProviderError, ProviderMeta, ResponseItem, ExplanationRequest, AiQuality } from "./provider";
 import type { ContextPack } from "@/schemas/context-pack";
 import {
@@ -124,6 +125,12 @@ export class OpenAIProvider implements AIProvider {
     const task = opening
       ? `Produce the content for activity ${activity.sequence} (ORIENTATION) on objective ${activity.objective_ref}. This is a course or module opening. In child_facing_intro, in the instruction language and in words a child understands: welcome the child, explain how lessons work, and present the module goals exactly as listed in the activity instructions, without adding or removing goals. Then give ${activity.expected_evidence_count ?? 3} quick diagnostic items on the objective, asked before any teaching, easy to answer if the child already knows it. Mark each item checkable EXACT when one answer is right, SET when a few are, OPEN otherwise. Set activity_ref to ${activity.sequence}.`
       : `Produce the content for activity ${activity.sequence} (${activity.activity_type}) on objective ${activity.objective_ref}. Give a short child-facing intro in the instruction language and ${activity.expected_evidence_count ?? 4} items. Mark each item checkable EXACT when one answer is right, SET when a few are, OPEN otherwise. Set activity_ref to ${activity.sequence}. ${MEANING_FIRST} ${PACING_HINT}`;
+    if (isLiteracyPack(pack)) {
+      const literacyTask = `Produce the content for activity ${activity.sequence} (${activity.activity_type}) on objective ${activity.objective_ref}. ${LITERACY_ACTIVITY_HINT} ${
+        opening ? `This is a course or module opening: welcome the child in child_facing_intro, present the module goals exactly as listed in the activity instructions, then give ${activity.expected_evidence_count ?? 3} quick diagnostic items asked before any teaching.` : `Give a short child-facing intro and ${activity.expected_evidence_count ?? 4} items.`
+      } Mark each item checkable EXACT when one answer is right, SET when a few are, OPEN otherwise. Set activity_ref to ${activity.sequence}. Set scene to a one-sentence playful frame on today's island (or null) and model_dialogue to an empty list.`;
+      return this.call(activityProposalSchema, "activity_proposal", renderTeacherSystemPrompt(), this.packMessage(pack, literacyTask, activity), pack.pack_id, this.modelFor(opening || activity.activity_type === "GAME" ? "conversation" : "activity"));
+    }
     const withDialogue = ["EXPLANATION", "CONVERSATION", "GAME"].includes(activity.activity_type);
     const context = withDialogue
       ? " Also set scene: one or two sentences, in the instruction language, describing an everyday situation from a child's life where this language is used (meeting a friend at the park, a birthday party). And set model_dialogue: two to six short lines between two named characters (one of them may be Lumi, the owl teacher) in the target language, using only the objective's language and mastered concepts, each with its meaning in the instruction language. The items then come from that dialogue: for EXPLANATION, the key phrases to repeat; otherwise, turns the child takes in the same situation."

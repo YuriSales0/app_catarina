@@ -14,7 +14,7 @@ import { importValidatedCurriculum } from "@/lib/curriculum/import";
  * idempotently, using the privileged migrator connection. Runs only on
  * production builds; previews and local builds skip it.
  */
-const CATALOGUE = ["curricula/english-starters.yaml", "curricula/english-movers.yaml"];
+const CATALOGUE = ["curricula/english-starters.yaml", "curricula/english-movers.yaml", "curricula/alfabetizacion-es.yaml"];
 
 async function main() {
   const url = process.env.DATABASE_MIGRATOR_URL;
